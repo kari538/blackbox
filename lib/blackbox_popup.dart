@@ -1,0 +1,33 @@
+import 'package:flutter/material.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+
+class BlackboxPopup extends Alert {
+  BlackboxPopup({
+    @required this.context,
+    @required this.title,
+    @required this.desc,
+    this.buttons,
+  }){
+//  Function onPressed = (){Navigator.pop(context);};
+    buttons = buttons ?? [
+      DialogButton(
+        child: Text('OK', style: TextStyle(color: Colors.black)),
+        onPressed: (){Navigator.pop(context);},
+        color: Colors.white,
+      )
+    ];
+  }
+
+  String title;
+  String desc;
+  BuildContext context;
+  List<DialogButton> buttons;
+
+  AlertStyle style = AlertStyle(
+    isOverlayTapDismiss: false,
+//                        backgroundColor: Colors.deepPurple.shade200,
+    backgroundColor: Color(0xff7488c1),
+    overlayColor: Colors.black45,
+    isCloseButton: true,
+  );
+}
