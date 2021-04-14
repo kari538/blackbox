@@ -1,6 +1,6 @@
 # blackbox
 
-A new Flutter project.
+A Flutter board game.
 
 ## Getting Started
 
