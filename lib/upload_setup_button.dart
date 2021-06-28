@@ -2,13 +2,14 @@
 // import 'my_firebase_labels.dart';
 // import 'dart:convert';
 // import 'package:http/http.dart' as http;
+import 'package:blackbox/my_firebase_labels.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'screens/make_setup_screen.dart';
 import 'online_button.dart';
 import 'my_firebase.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'blackbox_popup.dart';
+import 'units/blackbox_popup.dart';
 import 'package:provider/provider.dart';
 import 'online_screens/reg_n_login_screen.dart';
 import 'game_hub_updates.dart';
@@ -98,7 +99,7 @@ class UploadSetupButton extends StatelessWidget {
       onPressed: () async {
         print("Token in onPressed is ${await token}");
 
-        // //TODO: Turn the below back from Cloud Function:
+        ///TODO: Turn the below back from Cloud Function:
         // fcmSendMsg(context);
 
         // http.Response res;
@@ -159,6 +160,7 @@ class UploadSetupButton extends StatelessWidget {
           String me = Provider.of<GameHubUpdates>(context, listen: false).providerUserIdMap[myPlayerId];
           print('Me in OnlineButton is $me.');
         }
+
         if (needLogin) {
           await Navigator.push(context, MaterialPageRoute(builder: (context) {
             return RegistrationAndLoginScreen(fromSetup: true);
@@ -166,16 +168,20 @@ class UploadSetupButton extends StatelessWidget {
           print("On return from new login, User is ${MyFirebase.authObject.currentUser.email}");
           myPlayerId = await getMyPlayerId();
         }
+
         List<int> atomArray = [];
         for (Atom atom in widget.thisGame.atoms) {
           atomArray.add(atom.position.x);
           atomArray.add(atom.position.y);
         }
+
         MyFirebase.storeObject.collection('setups').add({
           'sender': myPlayerId,
           'atoms': atomArray,
           'widthAndHeight': [widget.thisGame.widthOfPlayArea, widget.thisGame.heightOfPlayArea],
           'timestamp': FieldValue.serverTimestamp(),
+          kFieldShuffleA: widget.thisGame.beamImageIndexA,
+          kFieldShuffleB: widget.thisGame.beamImageIndexB,
           // 'playing': {}, //Why should I add this?? It just takes up unnecessary space and it's not logical!...
                             //I wanted to make it easier to avoid "called on null" but I'll just have to manage that some other way...
         });

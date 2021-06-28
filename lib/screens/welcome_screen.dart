@@ -29,40 +29,40 @@ class WelcomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            RaisedButton(
-              child: Text('Test'),
-              color: Colors.red,
-              onPressed: (){
-
-                print('pressed Test');
-                List list1 = [1, 2, 3];
-                List list2 = [1, 2, 3];
-                List list3 = [1, 3, 2];
-                print('list1 and list2 equal: ${list1.equals(list2)}');
-                print('list1 and list3 equal: ${list1.equals(list3)}');
-                Play thisGame = Play(numberOfAtoms: 4, heightOfPlayArea: 3, widthOfPlayArea: 3);
-                // // thisGame.getAtomsRandomly();
-                // // thisGame.atoms = [
-                // //   Atom(1, 1),
-                // //   Atom(2, 2),
-                // //   Atom(3, 3),
-                // //   Atom(4, 4),
-                // // ];
-                thisGame.online=false;
-                thisGame.showAtomSetting = true;
-                alternativeSolutions(context, thisGame);
-                // bool unique;
-                // unique = isSetupUnique([Atom(1, 1), Atom(1,2)]);
-                // print('Setup [1,1  1,2] unique: $unique');
-                // unique = isSetupUnique([Atom(1, 1), Atom(2,1)]);
-                // print('Setup [1,1  2,1] unique: $unique');
-                // unique = isSetupUnique([Atom(1, 1), Atom(2,2)]);
-                // print('Setup [1,1  2,2] unique: $unique');
-                // unique = isSetupUnique([Atom(2, 1), Atom(1,2)]);
-                // print('Setup [2,1  1,2] unique: $unique');
-                // print('thisGame.atoms on WelcomeScreen() are ${thisGame.atoms}');
-              },
-            ),
+            // RaisedButton(
+            //   child: Text('Test'),
+            //   color: Colors.red,
+            //   onPressed: (){
+            //
+            //     print('pressed Test');
+            //     List list1 = [1, 2, 3];
+            //     List list2 = [1, 2, 3];
+            //     List list3 = [1, 3, 2];
+            //     print('list1 and list2 equal: ${list1.equals(list2)}');
+            //     print('list1 and list3 equal: ${list1.equals(list3)}');
+            //     Play thisGame = Play(numberOfAtoms: 4, heightOfPlayArea: 3, widthOfPlayArea: 3);
+            //     // // thisGame.getAtomsRandomly();
+            //     // // thisGame.atoms = [
+            //     // //   Atom(1, 1),
+            //     // //   Atom(2, 2),
+            //     // //   Atom(3, 3),
+            //     // //   Atom(4, 4),
+            //     // // ];
+            //     thisGame.online=false;
+            //     thisGame.showAtomSetting = true;
+            //     alternativeSolutions(context, thisGame);
+            //     // bool unique;
+            //     // unique = isSetupUnique([Atom(1, 1), Atom(1,2)]);
+            //     // print('Setup [1,1  1,2] unique: $unique');
+            //     // unique = isSetupUnique([Atom(1, 1), Atom(2,1)]);
+            //     // print('Setup [1,1  2,1] unique: $unique');
+            //     // unique = isSetupUnique([Atom(1, 1), Atom(2,2)]);
+            //     // print('Setup [1,1  2,2] unique: $unique');
+            //     // unique = isSetupUnique([Atom(2, 1), Atom(1,2)]);
+            //     // print('Setup [2,1  1,2] unique: $unique');
+            //     // print('thisGame.atoms on WelcomeScreen() are ${thisGame.atoms}');
+            //   },
+            // ),
             RaisedButton(
               child: Text('Play'),
               onPressed: (){

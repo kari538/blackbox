@@ -7,7 +7,7 @@ import 'package:modal_progress_hud/modal_progress_hud.dart';
 //import 'package:blackbox/online_screens/choose_board_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blackbox/online_button.dart';
-import 'package:blackbox/blackbox_popup.dart';
+import 'file:///C:/Users/karol/AndroidStudioProjects/blackbox/lib/units/blackbox_popup.dart';
 import 'game_hub_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {

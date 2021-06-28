@@ -1,52 +1,64 @@
 import 'package:blackbox/my_firebase_labels.dart';
-import 'package:blackbox/blackbox_popup.dart';
+import 'file:///C:/Users/karol/AndroidStudioProjects/blackbox/lib/units/blackbox_popup.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 // import 'package:flutter/material.dart';
 
-void fcmSendMsg(BuildContext context) async {
+/// Send a BuildContext if you want to get a popup for errors
+void fcmSendMsg(String jsonString, [BuildContext context]) async {
   http.Response res;
   String desc = '';
   String code = '';
+  String apiAddress = kApiCloudFunctionsLink + kApiSendMsg;
+  // String jsonString = jsonEncode({
+  //   "notification": {
+  //     "title": "New Game Hub Setup",
+  //     "body": "fcmSendMsg(): A new blackbox setup has come in to game hub",
+  //   },
+  //   "data": {
+  //     "click_action": "FLUTTER_NOTIFICATION_CLICK",
+  //   },
+  //   // "token": "${await token}",
+  //   "topic": kTopicGameHubSetup,
+  // });
+  print("jsonString in fcmSendMsg() is $jsonString");
+  print('API address in fcmSendMsg() is $apiAddress');
 
-  String jsonBody = jsonEncode({
-    "notification": {
-      "title": "New Game Hub Setup",
-      "body": "fcmSendMsg(): A new blackbox setup has come in to game hub",
-    },
-    "data": {
-      "click_action": "FLUTTER_NOTIFICATION_CLICK",
-    },
-    // "token": "${await token}",
-    "topic": kTopicNewSetup,
-  });
-  print("jsonString is $jsonBody");
   Map<String, String> headers = {
-    "content-type": "application/json"
+    kApiContentType: kApiApplicationJson
   };
 
   try {
     res = await http.post(
-      'https://us-central1-blackbox-6b836.cloudfunctions.net/sendMsg',
+      // 'https://us-central1-blackbox-6b836.cloudfunctions.net/sendMsg',
+      apiAddress,
       headers: headers,
-      body: jsonBody,
+      body: jsonString,
     );
   } catch (e) {
-    print('Caught an error in sendMsg to topic $kTopicNewSetup API call!');
+    print('Caught an error in sendMsg API call! Msg: $jsonString');
     print('e is: ${e.toString()}');
 // errorMsg = e.toString();
-    BlackboxPopup(context: context, title: 'Error sending notification', desc: '$e').show();
+
+    // if (context.findAncestorStateOfType().mounted){ // Only works if it actually IS mounted... ;(
+    try {
+      context.findAncestorStateOfType();
+      print('The ancestor state of error popup is mounted.');
+      BlackboxPopup(context: context, title: 'Error sending notification', desc: '$e').show();
+    } catch (e) {
+      print('The ancestor state of error popup is not mounted.');
+    }
     if (res != null) print('Status code in apiCall() catch is ${res.statusCode}');
   }
   if (res != null) {
-    print('sendMsg to topic $kTopicNewSetup API call response body: ${res.body}');
-    print('sendMsg to topic $kTopicNewSetup API call response code: ${res.statusCode}');
+    print('sendMsg API call response body in fcmSendMsg(): ${res.body}');
+    print('sendMsg API call response code in fcmSendMsg(): ${res.statusCode}');
     desc = res.body;
     code = res.statusCode.toString();
   } else {
-    print('sendMsg to topic $kTopicNewSetup API call response is $res');
+    print('sendMsg API call response is $res');
   }
 // BlackboxPopup(context: context, title: 'Response $code', desc: '$desc').show();
-  print('code is $code and desc is $desc in Upload Setup Button');
+  print('code is $code and desc is $desc in fcmSendMsg()');
 }

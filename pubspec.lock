@@ -148,6 +148,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.2.0"
+  ffi:
+    dependency: transitive
+    description:
+      name: ffi
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.1.2"
   firebase_admin:
     dependency: "direct main"
     description:
@@ -504,6 +511,41 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.0"
+  wakelock:
+    dependency: "direct main"
+    description:
+      name: wakelock
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.5.2"
+  wakelock_macos:
+    dependency: transitive
+    description:
+      name: wakelock_macos
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.0+1"
+  wakelock_platform_interface:
+    dependency: transitive
+    description:
+      name: wakelock_platform_interface
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.2.1+1"
+  wakelock_web:
+    dependency: transitive
+    description:
+      name: wakelock_web
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.2.0+1"
+  wakelock_windows:
+    dependency: transitive
+    description:
+      name: wakelock_windows
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.0"
   web_socket_channel:
     dependency: transitive
     description:
@@ -511,6 +553,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.2.0"
+  win32:
+    dependency: transitive
+    description:
+      name: win32
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.5"
   x509:
     dependency: transitive
     description:
@@ -519,5 +568,5 @@ packages:
     source: hosted
     version: "0.1.4"
 sdks:
-  dart: ">=2.12.0-0.0 <3.0.0"
-  flutter: ">=1.16.0"
+  dart: ">=2.12.0 <3.0.0"
+  flutter: ">=2.0.0"

@@ -1,3 +1,6 @@
+import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'package:blackbox/units/final_answer_press.dart';
+import 'package:wakelock/wakelock.dart';
 import 'package:intl/intl.dart';
 import 'package:blackbox/my_firebase_labels.dart';
 import 'package:blackbox/units/small_widgets.dart';
@@ -52,6 +55,7 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
   Timestamp latestMove;
   String startedString = 'N/A';
   String latestMoveString = 'N/A';
+  bool showSpinner = false;
 
 //  StreamSubscription<auth.User> userListener;
   StreamSubscription playingListener;
@@ -67,6 +71,7 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
 
   @override
   void initState() {
+    Wakelock.enable();  // Prevents phone from sleeping for as long as this screen is open
 //    getCurrentUser();
     setupData = setup.data();
     print('setupData in FollowPlayingScreen is $setupData');
@@ -80,6 +85,26 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
     thisGame = Play(numberOfAtoms: 0, widthOfPlayArea: setupData['widthAndHeight'][0], heightOfPlayArea: setupData['widthAndHeight'][1]);
     thisGame.online = true;
     uploadFollowing();
+
+    if (setupData.containsKey(kFieldShuffleA) && setupData.containsKey(kFieldShuffleB)) {
+      thisGame.beamImageIndexA = [];
+      for (int i = 0; i < setupData[kFieldShuffleA].length; i++){
+        thisGame.beamImageIndexA.add(setupData[kFieldShuffleA][i]);
+      }
+
+      thisGame.beamImageIndexB = [];
+      for (int i = 0; i < setupData[kFieldShuffleB].length; i++){
+        thisGame.beamImageIndexB.add(setupData[kFieldShuffleB][i]);
+      }
+    }
+    print('In initState: beamImageIndexA is ${thisGame.beamImageIndexA} and beamImageIndexB is ${thisGame.beamImageIndexB}');
+
+    if (setupData[kFieldPlaying][playingId].containsKey(kSubFieldClearList)) {
+      List<dynamic> sentClearList = setupData[kFieldPlaying][playingId][kSubFieldClearList];
+      for (int i = 0; i < sentClearList.length; i += 2){
+        thisGame.clearList.add([sentClearList[i], sentClearList[i+1]]);
+      }
+    }
     getAtoms();
     getAndPlacePlayerAtoms(setupData);
     List<dynamic> receivedBeams = setupData[kFieldPlaying][playingId][kPlayingBeams] ?? [];
@@ -98,11 +123,11 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
   }
 
   @override
-  void dispose() {
+  void dispose() async {
 //    userListener.cancel();
     playingListener.cancel();
-    removeFollowing();
     super.dispose();
+    await removeFollowing();
   }
 
   void uploadFollowing() async {
@@ -118,20 +143,21 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
     followers.add(myName);
     MyFirebase.storeObject.collection(kSetupCollection).doc(widget.setup.id).update({
       '$kFieldPlaying.$playingId.$kSubFieldFollowing': followers
-    });  }
+    });
+  }
 
-  void removeFollowing() async {
+  Future removeFollowing() async {
     String myName = widget.me;
     if(myName== 'Me') myName = 'Anonymous';
     List<dynamic> followers = [];
     print('setupData in removeFollowing() is $setupData');
-    if(setupData[kFieldPlaying][widget.playingId].containsKey(kSubFieldFollowing)){
-      followers = setupData[kFieldPlaying][widget.playingId][kSubFieldFollowing];
+    if(setupData[kFieldPlaying][playingId].containsKey(kSubFieldFollowing)){
+      followers = setupData[kFieldPlaying][playingId][kSubFieldFollowing];
       print('followers List is $followers');
     }
     followers.remove(myName);
     print('followers after remove(myName) is $followers');
-    MyFirebase.storeObject.collection(kSetupCollection).doc(widget.setup.id).update({
+    await MyFirebase.storeObject.collection(kCollectionSetups).doc(widget.setup.id).update({
       '$kFieldPlaying.$playingId.$kSubFieldFollowing': followers,
     });
   }
@@ -145,11 +171,14 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
   }
 
   void getAndPlacePlayerAtoms(Map<String, dynamic> setupData) {
-    List<List<int>> receivedPlayerAtoms = [];
+    // List<List<int>> receivedPlayerAtoms = [];
+    List<Atom> receivedPlayerAtoms = [];
     if (setupData[kFieldPlaying].containsKey(playingId) && setupData[kFieldPlaying][playingId][kPlayingAtoms] != null) {
       for (int i = 0; i < setupData[kFieldPlaying][playingId][kPlayingAtoms].length; i += 2) {
         receivedPlayerAtoms
-            .add([setupData[kFieldPlaying][playingId][kPlayingAtoms][i], setupData[kFieldPlaying][playingId][kPlayingAtoms][i + 1]]);
+            .add(Atom(setupData[kFieldPlaying][playingId][kPlayingAtoms][i], setupData[kFieldPlaying][playingId][kPlayingAtoms][i + 1]));
+        // receivedPlayerAtoms
+        //     .add([setupData[kFieldPlaying][playingId][kPlayingAtoms][i], setupData[kFieldPlaying][playingId][kPlayingAtoms][i + 1]]);
       }
     }
     thisGame.playerAtoms = receivedPlayerAtoms;
@@ -166,7 +195,7 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
 
   void getPlayingStream() {
     int showedResults = 0;
-    playingListener = thisSetupStream.listen((event) {
+    playingListener = thisSetupStream.listen((event) async {
       Map<String, dynamic> eventData;
       if (event != null) eventData = event.data();
       print('FollowingPlayingScreen listener event data: $eventData');
@@ -193,11 +222,34 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
         if (latestMove != null) latestMoveString = DateFormat('d MMM, HH:mm:ss').format(latestMove.toDate());
       });
 
+      // Clear:
+      if (eventData[kFieldPlaying][playingId].containsKey(kSubFieldClearList) && eventData[kFieldPlaying][playingId][kSubFieldClearList].length != thisGame.clearList.length/2){
+        thisGame.clearList = [];
+        List<dynamic> sentClearArray = eventData[kFieldPlaying][playingId][kSubFieldClearList];
+        setState(() {
+          for (int i = 0; i < sentClearArray.length; i += 2){
+            thisGame.clearList.add([sentClearArray[i], sentClearArray[i+1]]);
+          }
+        });
+      }
+
       //Done:
       if (eventData[kFieldPlaying][playingId][kPlayingDone] == true) {
         //If this 'done' field doesn't yet exist, surely you'll manage...?
-        if (showedResults == 0) {
-//          thisGame.getAtomScore();
+        if (showedResults == 0) { // This is a safety since the stream might fire several times after "Done"...
+          eventData.remove(kFieldResults);
+          eventData.addAll({
+            kFieldResults: {
+              playingId: {
+                kSubFieldStartedPlaying: eventData[kFieldPlaying][playingId][kSubFieldStartedPlaying],
+                kSubFieldFinishedPlaying: eventData[kFieldPlaying][playingId][kSubFieldLatestMove],
+                kSubFieldPlayerAtoms: eventData[kFieldPlaying][playingId][kSubFieldPlayingAtoms],
+                kSubFieldSentBeams: eventData[kFieldPlaying][playingId][kSubFieldPlayingBeams],
+              }
+            }
+          });
+          print('eventData before navigating to SentResultsScreen(): $eventData');
+
           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
             return SentResultsScreen(setupData: eventData, resultPlayerId: playingId);
           }));
@@ -230,17 +282,27 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
   }
 
   Widget getMiddleElements({int x, int y}) {
-    bool sent = false;
+    bool sentCorrect = false;
+    bool sentWrong = false;
     bool hidden = false;
+    // bool showClear = true;
+    bool showClear = false;
 
-    for (List<int> sentAtom in thisGame.playerAtoms) {
-      if (ListEquality().equals([x, y], sentAtom)) {
+    // for (List<int> sentAtom in thisGame.playerAtoms) {
+    for (Atom sentAtom in thisGame.playerAtoms) {
+      if (ListEquality().equals([x, y], sentAtom.position.toList())) {
         //Sent Atom
-        sent = true;
-//        print('Show atom is true');
+        for (Atom correctAtom in thisGame.atoms) {
+          if (ListEquality().equals([x, y], correctAtom.position.toList())) {
+            sentCorrect = true;
+          }
+        } //        print('Show atom is true');
+        if (!sentCorrect) {
+          sentWrong = true;
+        }
       }
     }
-    if (sent == false) {
+    if (sentCorrect == false && sentWrong == false) {
       for (Atom hiddenAtom in thisGame.atoms) {
         if (ListEquality().equals([x, y], hiddenAtom.position.toList())) {
           //Hidden Atom
@@ -249,22 +311,37 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
       }
     }
 
+    for (List<int> clear in thisGame.clearList){
+      if (ListEquality().equals([x, y], clear)) showClear = true;
+    }
+
     return Expanded(
-      child: Container(
-        child: Center(
-          child: sent
-              ? Image(image: AssetImage('images/atom_yellow.png'))
-              : hidden
-                  ? Opacity(child: Image(image: AssetImage('images/atom_blue.png')), opacity: 0.8)
-                  : FittedBox(
-                      fit: BoxFit.contain,
-                      child: Text(
-                        '$x,$y',
-                        style: TextStyle(color: kBoardTextColor, fontSize: 15),
-                      ),
-                    ),
-        ),
-        decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridlineColor, width: 0.5)),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            child: Center(
+              child: sentCorrect
+                  ? Image(image: AssetImage('images/atom_yellow.png'))
+                  : sentWrong
+                    ? Opacity(child: Image(image: AssetImage('images/atom_yellow.png')), opacity: 0.5)
+                    : hidden
+                      // ? Image(image: AssetImage('images/atom_yellow_transp.png'))
+                      ? Opacity(child: Image(image: AssetImage('images/atom_blue.png')), opacity: 0.8)
+                      : FittedBox(
+                          fit: BoxFit.contain,
+                          child: Text(
+                            '$x,$y',
+                            style: TextStyle(color: kBoardTextColor, fontSize: 15),
+                          ),
+                        ),
+            ),
+            decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridlineColor, width: 0.5)),
+          ),
+          showClear
+              ? Image(image: AssetImage('images/clear.png'))
+              : SizedBox(),
+        ],
       ),
     );
   }
@@ -292,93 +369,93 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('blackbox')),
-      body: Center(
-        child: Column(
-          // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                //Left info texts:
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Text('online')
-                      InfoText('Setup no ${setupData['i']}'),
-                      InfoText('By ${Provider.of<GameHubUpdates>(context).getScreenName(setupData[kFieldSender])}'),
-                    ],
-                  ),
-                ),
-                //Right info texts:
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    InfoText('Started: $startedString'),
-                    InfoText('Last move: $latestMoveString'),
-                    // InfoText('Finished: $finishedString'),
-                    // InfoText('Time played: $timePlayedString'), //TODO: Sort this!! (Put the timestamps into variables first)
-                  ],
-                ),
-              ],
-            ),
-            // Row(
-            //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //   crossAxisAlignment: CrossAxisAlignment.start,
-            //   children: [
-            //     Column(
-            //       mainAxisAlignment: MainAxisAlignment.start,
-            //       crossAxisAlignment: CrossAxisAlignment.start,
-            //       children: [
-            //         InfoText('Setup no ${setup['i']}'),
-            //         InfoText('By ${Provider.of<GameHubUpdates>(context).getScreenName(setup[kFieldSender])}'),
-            //       ],
-            //     ),
-            //     Column(
-            //       mainAxisAlignment: MainAxisAlignment.start,
-            //       crossAxisAlignment: CrossAxisAlignment.end,
-            //       children: [
-            //         InfoText(
-            //             'Started: ${setup[kFieldPlaying][playingId][kSubFieldStartedPlaying] != null ? setup[kFieldPlaying][playingId][kSubFieldStartedPlaying].toDate() : 'N/A'}'),
-            //         InfoText(
-            //             'Last move: ${setup[kFieldPlaying][playingId][kSubFieldLatestMove] != null ? setup[kFieldPlaying][playingId][kSubFieldLatestMove].toDate() : 'N/A'}'),
-            //       ],
-            //     ),
-            //   ],
-            // ),
-            Expanded(
-              flex: 2,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      body: ModalProgressHUD(
+        inAsyncCall: showSpinner,
+        child: Center(
+          child: Column(
+            // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('You\'re watching ${Provider.of<GameHubUpdates>(context).getScreenName(playingId)} play',
-                      textAlign: TextAlign.center, style: kConversationResultsResultsStyle),
-//                  SizedBox(height: 10),
-                  GestureDetector(
-                    //Score count:
-                    child: Center(child: Text(thisGame.beamScore.toString(), style: TextStyle(fontSize: 30))),
-//                child: Center(child: Text('beam score', style: TextStyle(fontSize: 30))),
-                    onTap: () {
-                      setState(() {});
-                      print('Setting State in secret button-------------------------------------------------------------');
-                    },
+                  //Left info texts:
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Text('online')
+                        InfoText('Setup no ${setupData['i']}'),
+                        InfoText('By ${Provider.of<GameHubUpdates>(context).getScreenName(setupData[kFieldSender])}'),
+                      ],
+                    ),
+                  ),
+                  //Right info texts:
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      InfoText('Started: $startedString'),
+                      InfoText('Last move: $latestMoveString'),
+                    ],
                   ),
                 ],
               ),
-            ),
-            //Answer button:
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: <Widget>[
-                Padding(
-                  padding: EdgeInsets.all(10),
-                  child: Text('Number of atoms:   ${thisGame.atoms.length}'),
-//                  child: Text('Number of atoms:   '),
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //   crossAxisAlignment: CrossAxisAlignment.start,
+              //   children: [
+              //     Column(
+              //       mainAxisAlignment: MainAxisAlignment.start,
+              //       crossAxisAlignment: CrossAxisAlignment.start,
+              //       children: [
+              //         InfoText('Setup no ${setup['i']}'),
+              //         InfoText('By ${Provider.of<GameHubUpdates>(context).getScreenName(setup[kFieldSender])}'),
+              //       ],
+              //     ),
+              //     Column(
+              //       mainAxisAlignment: MainAxisAlignment.start,
+              //       crossAxisAlignment: CrossAxisAlignment.end,
+              //       children: [
+              //         InfoText(
+              //             'Started: ${setup[kFieldPlaying][playingId][kSubFieldStartedPlaying] != null ? setup[kFieldPlaying][playingId][kSubFieldStartedPlaying].toDate() : 'N/A'}'),
+              //         InfoText(
+              //             'Last move: ${setup[kFieldPlaying][playingId][kSubFieldLatestMove] != null ? setup[kFieldPlaying][playingId][kSubFieldLatestMove].toDate() : 'N/A'}'),
+              //       ],
+              //     ),
+              //   ],
+              // ),
+              Expanded(
+                flex: 2,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Text('You\'re watching ${Provider.of<GameHubUpdates>(context).getScreenName(playingId)} play',
+                        textAlign: TextAlign.center, style: kConversationResultsResultsStyle),
+//                  SizedBox(height: 10),
+                    GestureDetector(
+                      //Score count:
+                      child: Center(child: Text(thisGame.beamScore.toString(), style: TextStyle(fontSize: 30))),
+//                child: Center(child: Text('beam score', style: TextStyle(fontSize: 30))),
+                      onTap: () {
+                        setState(() {});
+                        print('Setting State in secret button-------------------------------------------------------------');
+                      },
+                    ),
+                  ],
                 ),
+              ),
+              //Answer button:
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Padding(
+                    padding: EdgeInsets.all(10),
+                    child: Text('Number of atoms:   ${thisGame.playerAtoms.length == 0 ? thisGame.atoms.length : '${thisGame.atoms.length - thisGame.playerAtoms.length} (${thisGame.atoms.length})'}'),
+//                  child: Text('Number of atoms:   '),
+                  ),
 //                Padding(
 //                  padding: const EdgeInsets.only(right: 10),
 //                  child: RaisedButton(
@@ -388,30 +465,31 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
 //                    },
 //                  ),
 //                )
-              ],
-            ),
-            //Play board:
-            Expanded(
-              flex: 3,
-              //Scaffold, Center, Column, Expanded, Padding, AspectRatio, Container, Board (returns Column)
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8.0, top: 8.0, right: 8.0, bottom: 20),
-                child: AspectRatio(
-                  aspectRatio: (thisGame.widthOfPlayArea + 2) / (thisGame.heightOfPlayArea + 2),
-                  child: Container(
-                    child:
+                ],
+              ),
+              //Play board:
+              Expanded(
+                flex: 3,
+                //Scaffold, Center, Column, Expanded, Padding, AspectRatio, Container, Board (returns Column)
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8.0, top: 8.0, right: 8.0, bottom: 20),
+                  child: AspectRatio(
+                    aspectRatio: (thisGame.widthOfPlayArea + 2) / (thisGame.heightOfPlayArea + 2),
+                    child: Container(
+                      child:
 //                    PlayBoard(playWidth: thisGame.widthOfPlayArea, playHeight: thisGame.heightOfPlayArea, thisGame: thisGame, refreshParent: refresh),
-                        BoardGrid(
-                            playWidth: thisGame.widthOfPlayArea,
-                            playHeight: thisGame.heightOfPlayArea,
-                            getEdgeTiles: getEdges,
-                            getMiddleTiles: getMiddleElements),
+                          BoardGrid(
+                              playWidth: thisGame.widthOfPlayArea,
+                              playHeight: thisGame.heightOfPlayArea,
+                              getEdgeTiles: getEdges,
+                              getMiddleTiles: getMiddleElements),
+                    ),
                   ),
                 ),
               ),
-            ),
 //            Image(image: AssetImage('images/ball.png'))
-          ],
+            ],
+          ),
         ),
       ),
     );

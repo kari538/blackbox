@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'screens/results_screen.dart';
 import 'package:flutter/cupertino.dart';
-import 'alternative_solutions_play.dart';
+// import 'alternative_solutions_play.dart';
 import 'package:collection/collection.dart';
 import 'atom_n_beam.dart';
 import 'play.dart';
@@ -16,8 +16,10 @@ int _heightOfPlayArea;
 List<List<Atom>> allUniqueSetups = [];
 
 Future<List<List<List<int>>>> alternativeSolutions(BuildContext context, Play sentGame) async {
-  AltSolPlay thisGame =
-      AltSolPlay(numberOfAtoms: sentGame.numberOfAtoms, widthOfPlayArea: sentGame.widthOfPlayArea, heightOfPlayArea: sentGame.heightOfPlayArea);
+  Play thisGame =
+    Play(numberOfAtoms: sentGame.numberOfAtoms, widthOfPlayArea: sentGame.widthOfPlayArea, heightOfPlayArea: sentGame.heightOfPlayArea);
+  // AltSolPlay thisGame =
+  //     AltSolPlay(numberOfAtoms: sentGame.numberOfAtoms, widthOfPlayArea: sentGame.widthOfPlayArea, heightOfPlayArea: sentGame.heightOfPlayArea);
   List<List<List<int>>> alternativeSolutions = [];
   _numberOfSquares = thisGame.widthOfPlayArea * thisGame.heightOfPlayArea;
   _numberOfSlots = (thisGame.widthOfPlayArea + thisGame.heightOfPlayArea) * 2;
@@ -43,11 +45,12 @@ Future<List<List<List<int>>>> alternativeSolutions(BuildContext context, Play se
   int gameNo = 0;
   int i = 0;
   do {
-    AltSolPlay uniqueGame = AltSolPlay(numberOfAtoms: _numberOfAtoms, widthOfPlayArea: _widthOfPlayArea, heightOfPlayArea: _heightOfPlayArea);
+    Play uniqueGame = Play(numberOfAtoms: _numberOfAtoms, widthOfPlayArea: _widthOfPlayArea, heightOfPlayArea: _heightOfPlayArea);
     uniqueGame.atoms = allUniqueSetups[gameNo];
+    uniqueGame.getScore();
     // Returns null if "Pop" is pressed:
     result = await Navigator.push(context, PageRouteBuilder(pageBuilder: (context, anim1, anim2) {
-      return ResultsScreen(thisGame: uniqueGame, setupData: {}, testing: [gameNo, allUniqueSetups.length]);
+      return ResultsScreen(thisGame: uniqueGame, setupData: {}, multiDisplay: [gameNo, allUniqueSetups.length]);
     }));
     if (result != null && gameNo + result >= 0 && gameNo + result < allUniqueSetups.length) gameNo += result;
   } while (result != null && i < 100);
@@ -79,14 +82,14 @@ Future<List<List<List<int>>>> alternativeSolutions(BuildContext context, Play se
   return alternativeSolutions;
 }
 
-List<List<dynamic>> fireAllBeams(AltSolPlay game, int numberOfSlots) {
-  for (int i = 1; i <= numberOfSlots; i++) {
-    print('Slot no $i');
-    dynamic result = game.getBeamResult(inSlot: i);
-    game.setEdgeTiles(inSlot: i, beamResult: result);
-  }
-  return game.beamsAndResults;
-}
+// List<List<dynamic>> fireAllBeams(AltSolPlay game, int numberOfSlots) {
+//   for (int i = 1; i <= numberOfSlots; i++) {
+//     print('Slot no $i');
+//     dynamic result = game.getBeamResult(inSlot: i);
+//     game.setEdgeTiles(inSlot: i, beamResult: result);
+//   }
+//   return game.beamsAndResults;
+// }
 
 ///---------------------------------------------------------------------------
 void findAllUniqueSetups() {

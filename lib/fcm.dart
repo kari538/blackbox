@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:blackbox/token.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -9,14 +10,17 @@ import 'my_firebase.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
-Future<String> token;
+// Future<String> token;
+// TODO: change to false:
+bool testingNotifications = true;
 
-void initializeFcm() async {
+void initializeFcm(String token) async {
   print('Initializing Firebase Cloud Messaging...');
   await MyFirebase.myFutureFirebaseApp;
+  FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+
   if (MyFirebase.authObject.currentUser != null) {
     String myUid = MyFirebase.authObject.currentUser.uid;
-    FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
     _firebaseMessaging.setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
@@ -28,31 +32,43 @@ void initializeFcm() async {
     );
     _firebaseMessaging.setAutoInitEnabled(true);
     //TODO: Make condition here! (Move this to registration of new user)! Lest they'll resubscribe every time they open the app...:
-    _firebaseMessaging.subscribeToTopic(kTopicNewSetup);
+    _firebaseMessaging.subscribeToTopic(kTopicGameHubSetup);
     _firebaseMessaging.subscribeToTopic(kTopicPlayingSetup);
     _firebaseMessaging.subscribeToTopic(kTopicResumedPlayingSetup);
+    _firebaseMessaging.subscribeToTopic(kTopicDeveloper);
 
     FirebaseMessaging.onMessage.listen((remoteMsg) {
-      print('onMessage');
+      print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n'
+          'onMessage');
       print(remoteMsg.notification.title);
       print(remoteMsg.notification.body);
       print(remoteMsg.data);
-      print(remoteMsg.data.isNotEmpty);
-      print(remoteMsg.data.containsKey(kMsgPlaying));
-      print(remoteMsg.data[kMsgPlaying] == myUid);
-      print(remoteMsg.data.keys);
-      if(remoteMsg.data.isNotEmpty &&  remoteMsg.data.containsKey(kMsgPlaying) && remoteMsg.data[kMsgPlaying] == myUid) {
+      // print(remoteMsg.data.isNotEmpty);
+      print('remoteMsg.data.containsKey(kMsgPlaying): ${remoteMsg.data.containsKey(kMsgPlaying)}');
+      // print(remoteMsg.data[kMsgPlaying] == myUid);
+      print('remoteMsg.data.keys ${remoteMsg.data.keys}');
+      if(remoteMsg.data.isNotEmpty && remoteMsg.data.containsKey(kMsgPlaying) && remoteMsg.data[kMsgPlaying] == myUid) {
+        // If I am the one playing:
         print('No notification because player is me.');
+        if (testingNotifications){
+          LocalNotifications.showNotification(title: "Testing Notifications!", notification: "No notification because player is me.", data: jsonEncode(remoteMsg.data));
+        }
       } else if (remoteMsg.data.isNotEmpty && remoteMsg.data.containsKey(kMsgSetupSender) && remoteMsg.data[kMsgSetupSender] == myUid){
-        LocalNotifications.showNotification("Someone is playing your setup!", "Someone is playing your setup now in the game hub");
+        // If someone is playing my setup:
+        LocalNotifications.showNotification(title: "Someone is playing your setup!", notification: "Someone is playing your setup no ${remoteMsg.data['i']} now, in the game hub.", data: jsonEncode(remoteMsg.data));
       } else {
-        LocalNotifications.showNotification('${remoteMsg.notification.title}', "${remoteMsg.notification.body}");
+        // If someone is playing someone's setup, or any other message:
+        LocalNotifications.showNotification(title: '${remoteMsg.notification.title}', notification: "${remoteMsg.notification.body}", data: jsonEncode(remoteMsg.data));
       }
     },
       onError: (error){
         print('Error in onMessage: $error');
       }
     );
+
+    FirebaseMessaging.onMessageOpenedApp.listen((event) {
+      print('Message opened app. Event is: $event');
+    });
 
     // FirebaseMessaging.onBackgroundMessage((message) => null);  //Can't here coz inside a class! Must be top-level.
 
@@ -61,20 +77,31 @@ void initializeFcm() async {
     // )
 
     // Get the token each time the application loads:
-    token =  _firebaseMessaging.getToken();
-    myGlobalToken = token;
-    print('My device token is ${await token}');
+    // token =  _firebaseMessaging.getToken();
+    if (token == '' || token == null) {
+      myGlobalToken = _firebaseMessaging.getToken();
+    } else {
+      myGlobalToken = Future(() => token);
+    }
+    print('My device token is ${await myGlobalToken}');
 
     // Save the initial token to the database:
-    await saveTokenToDatabase(await token);
+    await saveTokenToDatabase(await myGlobalToken);
 
-    // Any time the token refreshes, store this in the database too:
-    FirebaseMessaging.instance.onTokenRefresh.listen(saveTokenToDatabase);
   }
+  // Any time the token refreshes, store this in the database too:
+  // FirebaseMessaging.instance.onTokenRefresh.listen(saveTokenToDatabase);
+  // _firebaseMessaging.onTokenRefresh.listen(saveTokenToDatabase);
+  print('Starting onTokenRefresh.listen()');
+  _firebaseMessaging.onTokenRefresh.listen((initializeFcm) {
+    print('An event has come in in onTokenRefresh.listen()');
+  });
 }
 
-Future<void> saveTokenToDatabase(String token) async {
-  myGlobalToken = Future(() => token);
+Future<void> saveTokenToDatabase(String sentToken) async {
+  print('Running saveTokenToDatabase()');
+
+  // myGlobalToken = Future(() => sentToken);
 // TODO: Change user document IDs to Uids...
 //  String userId;
   String userEmail;
@@ -97,7 +124,7 @@ Future<void> saveTokenToDatabase(String token) async {
           .collection(kUserinfoCollection)
           .doc(myDocumentId)
           .update({
-        'tokens': FieldValue.arrayUnion([token]),
+        'tokens': FieldValue.arrayUnion([sentToken]),
       });
     } on Exception catch (e) {
       print(e);
@@ -118,6 +145,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage remoteMsg) async {
   // If you're going to use other Firebase services in the background, such as Firestore,
   // make sure you call `initializeApp` before using other Firebase services.
   // FirebaseApp app = await Firebase.initializeApp();
+  print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n'
+      'onBackgroundMessage()');
   await Firebase.initializeApp();
   // FirebaseAuth authObject = FirebaseAuth.instanceFor(app: app);
   FirebaseAuth authObject = FirebaseAuth.instance;
@@ -125,12 +154,19 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage remoteMsg) async {
   print("Handling a background message: ${remoteMsg.notification.title} ${remoteMsg.notification.body} ${remoteMsg.data}");
 
   if(remoteMsg.data.isNotEmpty &&  remoteMsg.data.containsKey(kMsgPlaying) && remoteMsg.data[kMsgPlaying] == myUid) {
+    // If I am the one playing:
     print('No notification because player is me.');
+    if (testingNotifications){
+      LocalNotifications.showNotification(title: "Testing Notifications!", notification: "No notification because player is me.", data: jsonEncode(remoteMsg.data));
+    }
   } else if (remoteMsg.data.isNotEmpty && remoteMsg.data.containsKey(kMsgSetupSender) && remoteMsg.data[kMsgSetupSender] == myUid){
-    LocalNotifications.showNotification("Someone is playing your setup!", "Someone is playing your setup now in the game hub");
+    // If somebody is playing my setup:
+    LocalNotifications.showNotification(title: "Someone is playing your setup!", notification: "Someone is playing your setup no ${remoteMsg.data['i']}."
+        "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn", data: jsonEncode(remoteMsg.data));
   } else {
+    // If I am neither the player nor the sender of the setup:
     // LocalNotifications.showNotification('${remoteMsg.notification.title}', "${remoteMsg.notification.body}");
-    print('A background msg has come in. No local notification.');
+    print('A background msg has come in. No local notification. Only Cloud notification.');
   }
 }
 

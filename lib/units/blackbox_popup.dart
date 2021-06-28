@@ -25,9 +25,25 @@ class BlackboxPopup extends Alert {
 
   AlertStyle style = AlertStyle(
     isOverlayTapDismiss: false,
-//                        backgroundColor: Colors.deepPurple.shade200,
-    backgroundColor: Color(0xff7488c1),
+    backgroundColor: Colors.deepPurple.shade200,
+    // backgroundColor: Color(0xff7488c1),
     overlayColor: Colors.black45,
     isCloseButton: true,
   );
+}
+
+
+class BlackboxPopupButton extends DialogButton {
+  BlackboxPopupButton({@required this.text, @required this.onPressed});
+  final String text;
+  final Function onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return DialogButton(
+        child: Text(text, style: TextStyle(color: Colors.black)),
+        color: Colors.white,
+        onPressed: onPressed,
+    );
+  }
 }

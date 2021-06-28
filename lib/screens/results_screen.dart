@@ -20,7 +20,8 @@ String finishedString = 'N/A';
 String timePlayedString = 'N/A';
 
 class ResultsScreen extends StatelessWidget {
-  ResultsScreen({@required this.thisGame, @required this.setupData, this.testing}) {
+  ResultsScreen(
+      {@required this.thisGame, @required this.setupData, this.multiDisplay, this.altSol = false, /*this.beamsAndResults,*/ this.alternativeSolutions}) {
     // setupData is {} if offline
     started = null;
     finished = null;
@@ -28,7 +29,7 @@ class ResultsScreen extends StatelessWidget {
     startedString = 'N/A';
     finishedString = 'N/A';
     timePlayedString = 'N/A';
-    thisGame.getAtomScore();
+    // thisGame.getAtomScore(); // Moved to PlayScreen()
     String resultPlayerId = thisGame.playerId;
     print('resultPlayerId is $resultPlayerId');
     print('setupData is $setupData and setupData.isNotEmpty is ${setupData.isNotEmpty}');
@@ -52,9 +53,12 @@ class ResultsScreen extends StatelessWidget {
     }
   }
 
-  final List<int> testing;
   final Play thisGame;
   final Map<String, dynamic> setupData;
+  final List<int> multiDisplay;
+  final bool altSol;
+  // final List beamsAndResults;
+  final List<dynamic> alternativeSolutions;
 
   Widget getEdges({int x, int y}) {
     int slotNo = Beam.convert(coordinates: Position(x, y), heightOfPlayArea: thisGame.heightOfPlayArea, widthOfPlayArea: thisGame.widthOfPlayArea);
@@ -73,25 +77,28 @@ class ResultsScreen extends StatelessWidget {
     bool misplaced = false;
     bool missed = false;
 
-    for (List<int> correctAtom in thisGame.correctAtoms) {
+    // for (List<int> correctAtom in thisGame.correctAtoms) {
+    for (Atom correctAtom in thisGame.correctAtoms) {
 //      if (ListEquality().equals(Position(x, y).toList(), correctAtom)) {
-      if (ListEquality().equals([x, y], correctAtom)) {
+      if (ListEquality().equals([x, y], correctAtom.position.toList())) {
         //correct Atom
         correct = true;
         print('Show atom is true');
       }
     }
     if (correct==false) {
-      for (List<int> misplacedAtom in thisGame.misplacedAtoms){
-        if (ListEquality().equals([x, y], misplacedAtom)) {
+      // for (List<int> misplacedAtom in thisGame.misplacedAtoms){
+      for (Atom misplacedAtom in thisGame.misplacedAtoms){
+        if (ListEquality().equals([x, y], misplacedAtom.position.toList())) {
           //misplaced Atom
           misplaced = true;
         }
       }
     }
     if (correct==false && misplaced==false) {
-      for (List<int> missedAtom in thisGame.missedAtoms){
-        if (ListEquality().equals([x, y], missedAtom)) {
+      // for (List<int> missedAtom in thisGame.missedAtoms){
+      for (Atom missedAtom in thisGame.missedAtoms){
+        if (ListEquality().equals([x, y], missedAtom.position.toList())) {
           //missed Atom
           missed = true;
         }
@@ -177,103 +184,125 @@ class ResultsScreen extends StatelessWidget {
                   )
                 : SizedBox(/*child: Text('offline')*/),
             Expanded(
-                flex: testing == null ? 4 : 2,
+              // flex: altSol ? testing != null ? 2 : 3 : 4,
+              flex: altSol
+                  ? 3
+                  : multiDisplay != null
+                      ? 3
+                      : 4,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Text(
-                      'Your score',
-                      style: TextStyle(fontSize: 35),
-                    ),
-                    Center(
-                      child: Container(
-//                        color: Colors.blue,
-                        width: 200,
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(
-                                flex: 2,
-                                child: Text(
-                                  'beam score:',
-                                  textAlign: TextAlign.right,
-                                )),
-                            Expanded(
-                              flex: 1,
-                              child: Padding(
-                                padding: EdgeInsets.only(right: 26.0),
-                                child: Text(
-                                  '${thisGame.beamScore}',
-                                  textAlign: TextAlign.right,
-                                ),
-                              ),
-                            ),
-                          ],
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Text(
+                          multiDisplay == null ? 'Your score' : 'Alternative\nsolutions',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 35),
                         ),
-                      ),
-                    ),
-                    Center(
-                      child: Container(
+                        multiDisplay == null ? Center(
+                          child: Container(
 //                        color: Colors.blue,
-                        width: 200,
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(
-                              flex: 2,
-                              child: Text(
-                                'atom penalty:',
-                                textAlign: TextAlign.right,
-                              ),
-                            ),
-                            Expanded(
-                              child: Padding(
-                                padding: EdgeInsets.only(right: 26.0),
-                                child: Text('${thisGame.atomScore} ', textAlign: TextAlign.right),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Center(
-                      child: Container(
-//                        color: Colors.blue,
-                        width: 200,
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(
-                              flex: 2,
-                              child: Text(
-                                'total:', //${(thisGame.beamScore + thisGame.atomScore) < 10 ? ' ' : ''}
-                                textAlign: TextAlign.right,
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Expanded(
-                              child: Padding(
-                                padding: EdgeInsets.only(right: 26.0),
-                                child: Text(
-                                  '${thisGame.beamScore + thisGame.atomScore}',
-                                  textAlign: TextAlign.right,
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                            width: 200,
+                            child: Row(
+                              children: <Widget>[
+                                Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      'beam score:',
+                                      textAlign: TextAlign.right,
+                                    )),
+                                Expanded(
+                                  flex: 1,
+                                  child: Padding(
+                                    padding: EdgeInsets.only(right: 26.0),
+                                    child: Text(
+                                      '${thisGame.beamScore}',
+                                      textAlign: TextAlign.right,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
+                            ),
+                          ),
+                        ) : SizedBox(),
+                        multiDisplay == null ? Center(
+                          child: Container(
+//                        color: Colors.blue,
+                            width: 200,
+                            child: Row(
+                              children: <Widget>[
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    'atom penalty:',
+                                    textAlign: TextAlign.right,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Padding(
+                                    padding: EdgeInsets.only(right: 26.0),
+                                    child: Text('${thisGame.atomScore} ', textAlign: TextAlign.right),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ) : SizedBox(),
+                        multiDisplay == null ? Center(
+                          child: Container(
+//                        color: Colors.blue,
+                            width: 200,
+                            child: Row(
+                              children: <Widget>[
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    'total:', //${(thisGame.beamScore + thisGame.atomScore) < 10 ? ' ' : ''}
+                                    textAlign: TextAlign.right,
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Padding(
+                                    padding: EdgeInsets.only(right: 26.0),
+                                    child: Text(
+                                      '${thisGame.beamScore + thisGame.atomScore}',
+                                      textAlign: TextAlign.right,
+                                      style: TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ) : SizedBox(),
+                      ],
+                    ),
+                      altSol ? SizedBox(height: 30) : SizedBox(),
+                      altSol
+                          ? Text(
+                              'Multiple solutions exist!',
+                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blue),
                             )
-                          ],
-                        ),
-                      ),
-                    ),
+                          : SizedBox(),
                   ],
-                )),
+                ),
+              ),
+            ),
             //Scaffold, Center, Column, Expanded, Padding, AspectRatio, Container, Board (returns Column)
             Expanded(
               flex: 6,
               child: Column(
                 children: <Widget>[
-                  SizedBox(child: Text('The correct answer:'), height: 30),
+                  multiDisplay == null ? SizedBox(child: Text('The correct answer:'), height: 30) : SizedBox(height: 30),
                   Expanded(
                     child: Padding(
 //              child: Padding(
-                      padding: const EdgeInsets.only(left: 8.0, top: 8.0, right: 8.0, bottom: 20),
+                      padding: const EdgeInsets.only(left: 8.0, top: 8.0, right: 8.0, bottom: 10),
                       child: AspectRatio(
                         aspectRatio: (thisGame.widthOfPlayArea + 2) / (thisGame.heightOfPlayArea + 2),
                         child: Container(
@@ -290,86 +319,49 @@ class ResultsScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  testing == null ? SizedBox() : Column(
-                    children: [
-                      Text("Setup ${testing[0]} (${testing[1]})"),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          TextButton(
-                              onPressed: () {
-                                Navigator.pop(context, -100);
-                              },
-                              child: Row(
-                                children: [
-                                  Icon(Icons.arrow_back_ios),
-                                  Text('-100'),
-                                ],
-                              )),
-                          ElevatedButton(
-                              child: Text('Pop'),
-                              onPressed: () {
-                                // Navigator.popUntil(context, (route) => route.isFirst);
-                                Navigator.pop(context, null);
-                              }),
-                          TextButton(
-                              onPressed: () {
-                                Navigator.pop(context, 100);
-                              },
-                              child: Row(
-                                children: [
-                                  Text('+100'),
-                                  Icon(Icons.arrow_forward_ios),
-                                ],
-                              )),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          TextButton(
-                              onPressed: () {
-                                Navigator.pop(context, -10);
-                              },
-                              child: Row(
-                                children: [
-                                  Icon(Icons.arrow_back_ios),
-                                  Text('-10'),
-                                ],
-                              )),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context, 10);
-                            },
-                            child: Row(
-                              children: [
-                                Text('+10'),
-                                Icon(Icons.arrow_forward_ios),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          TextButton(
-                              onPressed: () {
-                                Navigator.pop(context, -1);
-                              },
-                              child: Icon(Icons.arrow_back_ios)),
-                          TextButton(
-                              onPressed: () {
-                                Navigator.pop(context, 1);
-                              },
-                              child: Icon(Icons.arrow_forward_ios))
-                        ],
-                      ),
-                    ],
-                  ),
+                  altSol ?
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: ElevatedButton(
+                      child: Text('View other solutions'),
+                      onPressed: () async {
+                        int result = 0;
+                        int gameNo = 1;
+                        // int i = 0;
+                        Play displayGame;
+                        // displayGame.edgeTileChildren = alternativeSolutions[0];
+                        // Play displayGame = Play(numberOfAtoms: thisGame.numberOfAtoms, widthOfPlayArea: thisGame.widthOfPlayArea, heightOfPlayArea: thisGame.heightOfPlayArea);
+                        // displayGame.atoms = thisGame.atoms;
+                        // displayGame.showAtomSetting= true;  // Not working... Atoms don't show up
+                        // displayGame.fireAllBeams();
+                        // Play.fireAllBeams(displayGame);  // This is only done once...
+                        do {
+                          // uniqueGame.atoms = allUniqueSetups[gameNo];
+                          // displayGame.correctAtoms = alternativeSolutions[gameNo];
+                          //
+                          // for (Atom atom in alternativeSolutions[gameNo]) {
+                          //   displayGame.correctAtoms.add(atom.position.toList());
+                          // }
+                          displayGame = alternativeSolutions[gameNo];
+                          displayGame.edgeTileChildren = alternativeSolutions[0];
+                          print('alternativeSolutions[$gameNo] is ${alternativeSolutions[gameNo]}');
+                          // Returns null if "Pop" is pressed:
+                          result = await Navigator.push(context, PageRouteBuilder(pageBuilder: (context, anim1, anim2) {
+                            return ResultsScreen(thisGame: displayGame, setupData: {}, multiDisplay: [gameNo, alternativeSolutions.length-1]);
+                          }));
+                          if (result != null && gameNo + result > 0 && gameNo + result <= alternativeSolutions.length-1) gameNo += result;
+                          // displayGame.correctAtoms = [];
+                          // i++;
+                        } while (result != null /*&& i < 100*/);
+
+                      },
+                    )
+                  ) : SizedBox(),
+                  // testing == null ? SizedBox() : TestSetupsScrollWidget(testing: testing),
                 ],
               ),
             ),
+            multiDisplay == null ? SizedBox() : TestSetupsScrollWidget(testing: multiDisplay),
           ],
         ),
       ),
@@ -377,125 +369,93 @@ class ResultsScreen extends StatelessWidget {
   }
 }
 
-//Old version:
-//********************************************************************************************************************
-//class ResultsScreen extends StatelessWidget {
-//  ResultsScreen({@required this.thisGame});
-//
-//  final Play thisGame;
-//
-//  Widget getCorners() {
-////    return Expanded(child: Container(decoration: BoxDecoration(color: Colors.pink, border: Border.all(color: Colors.white)),));
-//    return Expanded(
-//        child: Container(
-//          color: kBoardEdgeColor,
-//        ));
-//  }
-//
-//  Widget getEdges({int x, int y, @required int heightOfPlayArea, @required int widthOfPlayArea}) {
-////    int slotNo = myBeam.convert({'x': element, 'y': row});
-//    int slotNo = Beam.convert(coordinates: Position(x, y), heightOfPlayArea: heightOfPlayArea, widthOfPlayArea: widthOfPlayArea);
-//    return Expanded(
-//      child: Container(
-//        child: Center(child: thisGame.edgeTileChildren[slotNo-1] ?? Text('$slotNo', style: TextStyle(color: kBoardEdgeTextColor))),
-//        decoration: BoxDecoration(color: kBoardEdgeColor),
-//      ),
-//    );
-//  }
-//
-//  Widget getMiddleElements({int x, int y, bool showAtom}) {
-//    return Expanded(
-//      child: Container(
-//        child: Center(
-//          child: showAtom ? Image(image: AssetImage('images/atom_yellow.png')) : Text('$x,$y', style: TextStyle(color: kBoardTextColor)),
-//        ),
-//        decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridlineColor, width: 0.5)),
-//      ),
-//    );
-//  }
-//
-//
-//
-//
-//  List<Widget> boardRows({int playWidth, int playHeight}) {
-//    int numberOfRows = playHeight + 2;
-//    int numberOfElements = playWidth + 2;
-//    List<Widget> boardRows = []; //List of Rows
-//    List<List<Widget>> allElements = List<List<Widget>>(numberOfRows); //2D List of row elements (Widgets)
-//
-//    for (int row = 0; row < numberOfRows; row++) {
-////      print('row is $row');
-//      allElements[row] = List<Widget>(numberOfElements);
-//      for (int element = 0; element < numberOfElements; element++) {
-////        print('element is $element');
-//        //Corners:
-//        if (element == 0 && (row == 0 || row == numberOfRows - 1) || element == numberOfElements - 1 && (row == 0 || row == numberOfRows - 1)) {
-//          allElements[row][element] = getCorners();
-//          //Other edges:
-//        } else if (row == 0 || row == numberOfRows - 1 || element == 0 || element == numberOfElements - 1) {
-//          allElements[row][element] = getEdges(x: element, y: row, heightOfPlayArea: thisGame.heightOfPlayArea, widthOfPlayArea: thisGame.widthOfPlayArea);
-//        } else {
-//          //Middle rows, middle elements:
-//          bool showAtom = false;
-//          for (Atom atom in thisGame.atoms) {
-//            if (ListEquality().equals(Position(element, row).toList(), atom.position.toList())) {
-//              showAtom = true;
-////              showAtom = false; //Why would I want it to show the secret setup??
-////              print('Show atom is true');
-//            }
-//          }
-//          if (showAtom) print('Getting element $element,$row with showAtom as $showAtom');
-//          allElements[row][element] = getMiddleElements(x: element, y: row, showAtom: showAtom);
-//        }
-//      }
-////      print('Adding Row of allElements to boardRows');
-//      boardRows.add(
-//        Expanded(
-//          child: Row(
-//            crossAxisAlignment: CrossAxisAlignment.stretch,
-//            children: allElements[row],
-//          ),
-//        ),
-//      );
-////      print('boardRows: $boardRows');
-//    }
-//    return boardRows;
-//  }
-//
-//  @override
-//  Widget build(BuildContext context) {
-//    return Scaffold(
-//      appBar: AppBar(title: Text('blackbox')),
-//      body: Center(
-////          child: Container(
-////            child: Text('Oh, just shoot all the beams until you know!...'),
-////          ),
-//        child: Column(
-//          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//          children: <Widget>[
-//            SizedBox(),
-//            Text('Your score: ${thisGame.score}'),
-//            Column(
-//              children: <Widget>[
-//                Text('The correct answer:'),
-//                Padding(
-//                  padding: const EdgeInsets.only(left: 8.0, top: 8.0, right: 8.0, bottom: 20),
-//                  child: AspectRatio(
-//                    aspectRatio: 1,
-//                    child: Container(
-//                      child: Column(
-//                        verticalDirection: VerticalDirection.up,
-//                        children: boardRows(playWidth: thisGame.widthOfPlayArea, playHeight: thisGame.heightOfPlayArea),
-//                      ),
-//                    ),
-//                  ),
-//                ),
-//              ],
-//            ),
-//          ],
-//        ),
-//      ),
-//    );
-//  }
-//}
-//***********************************************************************************************
+class TestSetupsScrollWidget extends StatelessWidget {
+  const TestSetupsScrollWidget({
+    Key key,
+    @required this.testing,
+  }) : super(key: key);
+
+  final List<int> testing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text("Setup ${testing[0]} (${testing[1]})"),
+        testing[1] > 100 ? Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextButton(
+                onPressed: () {
+                  Navigator.pop(context, -100);
+                },
+                child: Row(
+                  children: [
+                    Icon(Icons.arrow_back_ios),
+                    Text('-100'),
+                  ],
+                )),
+            ElevatedButton(
+                child: Text('Pop'),
+                onPressed: () {
+                  // Navigator.popUntil(context, (route) => route.isFirst);
+                  Navigator.pop(context, null);
+                }),
+            TextButton(
+                onPressed: () {
+                  Navigator.pop(context, 100);
+                },
+                child: Row(
+                  children: [
+                    Text('+100 '),
+                    Icon(Icons.arrow_forward_ios),
+                  ],
+                )),
+          ],
+        ) : SizedBox(),
+        testing[1] > 10 ? Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextButton(
+                onPressed: () {
+                  Navigator.pop(context, -10);
+                },
+                child: Row(
+                  children: [
+                    Icon(Icons.arrow_back_ios),
+                    Text('-10'),
+                  ],
+                )),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, 10);
+              },
+              child: Row(
+                children: [
+                  Text('+10 '),
+                  Icon(Icons.arrow_forward_ios),
+                ],
+              ),
+            ),
+          ],
+        ) : SizedBox(),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextButton(
+                onPressed: () {
+                  Navigator.pop(context, -1);
+                },
+                child: Icon(Icons.arrow_back_ios)),
+            TextButton(
+                onPressed: () {
+                  Navigator.pop(context, 1);
+                },
+                child: Icon(Icons.arrow_forward_ios))
+          ],
+        ),
+      ],
+    );
+  }
+}
+

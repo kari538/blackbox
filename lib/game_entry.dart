@@ -1,3 +1,5 @@
+import 'play.dart';
+import 'screens/results_screen.dart';
 import 'my_firebase_labels.dart';
 // import 'package:blackbox/firestore_lables.dart';
 import 'package:blackbox/my_firebase.dart';
@@ -7,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'constants.dart';
 import 'package:blackbox/online_screens/sent_results_screen.dart';
-import 'package:blackbox/blackbox_popup.dart';
+import 'file:///C:/Users/karol/AndroidStudioProjects/blackbox/lib/units/blackbox_popup.dart';
 import 'package:provider/provider.dart';
 import 'package:blackbox/game_hub_updates.dart';
 
@@ -96,7 +98,8 @@ class GameEntry extends StatelessWidget {
 //          resultsChildren.add(
         bool active = false;  // People who play with the old version will be grey
         DateTime now = DateTime.now();
-        if (setup.data()[kFieldPlaying][player].containsKey(kSubFieldLatestMove)) {
+        // if (setup.data()[kFieldPlaying][player].containsKey(kSubFieldLatestMove)) {
+        if (setup.data()[kFieldPlaying][player][kSubFieldLatestMove] != null) {
           DateTime lastMove = setup.data()[kFieldPlaying][player][kSubFieldLatestMove].toDate();
           active = lastMove.isAfter(now.subtract(Duration(minutes: 1)));
         } else if (setup.data()[kFieldPlaying][player][kSubFieldStartedPlaying] != null) {
@@ -196,14 +199,7 @@ class GameEntry extends StatelessWidget {
                 setup.data()['results'].containsKey(me) || setup.data()['results'].containsKey(myId) || setup.data()[kFieldSender] == myEmail ||
                     setup.data()[kFieldSender] == myId
                 //If I either played or made this setup
-                    ? Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return SentResultsScreen(
-//                  setupId: setupData.id,
-                    setupData: setup.data(),
-                    resultPlayerId: '$resultPlayerId',
-                  );
-                }),
-                )
+                    ? showResult(context: context, setupData: setup.data(), resultPlayerId: resultPlayerId)
                     : BlackboxPopup(
                   title: "Not yet!",
                   desc: "You have to play this setup before you can see the results of others.",
@@ -249,4 +245,29 @@ class GameEntry extends StatelessWidget {
       ),
     );
   }
+}
+
+
+void showResult({BuildContext context, Map<String, dynamic> setupData, String resultPlayerId}) {
+  // Play thisGame = Play(numberOfAtoms: numberOfAtoms, widthOfPlayArea: widthOfPlayArea, heightOfPlayArea: heightOfPlayArea);
+  //
+  // Navigator.push(
+  //   context,
+  //   MaterialPageRoute(builder: (context) {
+  //     return ResultsScreen(
+  //       thisGame: thisGame,
+  //       setupData: setupData,
+  //       resultPlayerId: '$resultPlayerId',
+  //     );
+  //   }),
+  // );
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) {
+      return SentResultsScreen(
+        setupData: setupData,
+        resultPlayerId: '$resultPlayerId',
+      );
+    }),
+  );
 }

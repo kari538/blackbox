@@ -13,7 +13,7 @@ if (flutterRoot == null) {
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
 if (flutterVersionCode == null) {
-    flutterVersionCode = '10'
+    flutterVersionCode = '13'
 }
 
 def flutterVersionName = localProperties.getProperty('flutter.versionName')
@@ -122,7 +122,7 @@ flutter {
 //    }
 //
 //    defaultConfig {
-//        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+//        // TODONE: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
 //        applicationId "com.example.blackbox"
 //        minSdkVersion 21
 //        targetSdkVersion 30
@@ -132,7 +132,7 @@ flutter {
 //
 //    buildTypes {
 //        release {
-//            // TODO: Add your own signing config for the release build.
+//            // TODONE: Add your own signing config for the release build.
 //            // Signing with the debug keys for now, so `flutter run --release` works.
 //            signingConfig signingConfigs.debug
 //        }

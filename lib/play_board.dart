@@ -39,6 +39,7 @@ class _PlayBoardState extends State<PlayBoard> {
 //  Widget getMiddleElements({int x, int y, bool showAtom = false}) {
   Widget getMiddleElements({int x, int y}) {
     bool showAtom = false;
+    bool showClear = false;
 //    bool receivedAtom = false;
     if (thisGame.showAtomSetting) {
       for (Atom atom in thisGame.atoms) {
@@ -47,14 +48,20 @@ class _PlayBoardState extends State<PlayBoard> {
         }
       }
     }
-    for(List<int> playerAtom in thisGame.playerAtoms){
+    for(Atom playerAtom in thisGame.playerAtoms){
+    // for(List<int> playerAtom in thisGame.playerAtoms){
 //    for(List<int> playerAtom in thisGame.receivedPlayingAtoms){
-      if(ListEquality().equals([x,y], playerAtom)){
+      if(ListEquality().equals([x,y], playerAtom.position.toList())){
         showAtom = true;
 //        receivedAtom = true;
       }
     }
-    return PlayBoardTile(position: Position(x, y), showAtom: showAtom, /*receivedAtom: receivedAtom,*/ thisGame: thisGame, setup: setup, refreshParent: refreshParent);
+
+    for (List<int> clear in thisGame.clearList){
+      if (ListEquality().equals([x, y], clear)) showClear = true;
+    }
+
+    return PlayBoardTile(position: Position(x, y), showAtom: showAtom, showClear: showClear, /*receivedAtom: receivedAtom,*/ thisGame: thisGame, setup: setup, refreshParent: refreshParent);
 //    return PlayBoardTile(x, y);
   }
 
@@ -102,21 +109,22 @@ class _PlayBoardState extends State<PlayBoard> {
 //TODO: Make Stateless:
 //PlayBoardTile Stateful Widget:
 class PlayBoardTile extends StatefulWidget {
-  PlayBoardTile({this.position, this.showAtom, /*this.receivedAtom,*/ @required this.thisGame, this.setup, this.refreshParent});
+  PlayBoardTile({this.position, this.showAtom, @required this.showClear, /*this.receivedAtom,*/ @required this.thisGame, this.setup, this.refreshParent});
 
   final Position position;
   final bool showAtom;
+  final bool showClear;
 //  final bool receivedAtom;
   final Play thisGame;
   final DocumentSnapshot setup;
   final Function refreshParent;
 
   @override
-  _PlayBoardTileState createState() => _PlayBoardTileState(position, showAtom, thisGame, setup);
+  _PlayBoardTileState createState() => _PlayBoardTileState(position, showAtom, showClear, thisGame, setup);
 }
 
 class _PlayBoardTileState extends State<PlayBoardTile> {
-  _PlayBoardTileState(this.position, this.showAtom, this.thisGame, this.setup){
+  _PlayBoardTileState(this.position, this.showAtom, this.showClear, this.thisGame, this.setup){
     thisAtomCoordinates=position.toList();
 //    if(receivedAtom){
 //      thisGame.playerAtoms.add(thisAtomCoordinates);
@@ -124,6 +132,7 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
   }
 
   bool showAtom;
+  bool showClear;
 //  bool receivedAtom;
   final Position position;
   final Play thisGame;
@@ -135,12 +144,20 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
 //    print('Building tile ${position.toList()} with showAtom as $showAtom');
     return Expanded(
       child: GestureDetector(
-          child: Container(
-            child: Center(
-              child: showAtom ? Image(image: AssetImage('images/atom_yellow.png')) : FittedBox(
-                  fit: BoxFit.contain, child: Text('${position.x},${position.y}', style: TextStyle(color: kBoardTextColor, fontSize: 15))),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+              child: Center(
+                child: showAtom ? Image(image: AssetImage('images/atom_yellow.png')) : FittedBox(
+                    fit: BoxFit.contain, child: Text('${position.x},${position.y}', style: TextStyle(color: kBoardTextColor, fontSize: 15))),
+              ),
+              decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridlineColor, width: 0.5)),
             ),
-            decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridlineColor, width: 0.5)),
+              showClear
+                  ? Image(image: AssetImage('images/clear.png'))
+                  : SizedBox()
+            ],
           ),
           onTap: () async {
 //            print('Button ${position.toList()} was pressed');
@@ -150,7 +167,7 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
                 showAtom = true;
               });
               print('Adding ${position.toList()}');
-              thisGame.playerAtoms.add(thisAtomCoordinates);
+              thisGame.playerAtoms.add(Atom(thisAtomCoordinates[0], thisAtomCoordinates[1]));
               print('Player atoms list in PlayBoard is ${thisGame.playerAtoms}');
             } else {
               //This box had an atom before
@@ -162,8 +179,9 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
 //              thisGame.playerAtoms.remove(thisAtomCoordinates);
               int removeIndex;
               int i = 0;
-              for(List<int> playerAtomCoordinates in thisGame.playerAtoms){
-                if(ListEquality().equals(thisAtomCoordinates, playerAtomCoordinates)){
+              // for(List<int> playerAtom in thisGame.playerAtoms){
+              for(Atom playerAtom in thisGame.playerAtoms){
+                if(ListEquality().equals(thisAtomCoordinates, playerAtom.position.toList())){
                   removeIndex = i;
                 }
                 i++;
@@ -176,9 +194,12 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
               //Put player atoms in array to send:
               List<int> playingAtomsArray = [];
               print("thisGame.playerAtoms are ${thisGame.playerAtoms}");
-              for (List<int> pAtom in thisGame.playerAtoms) {
-                playingAtomsArray.add(pAtom[0]);
-                playingAtomsArray.add(pAtom[1]);
+              // for (List<int> pAtom in thisGame.playerAtoms) {
+              for (Atom pAtom in thisGame.playerAtoms) {
+                playingAtomsArray.add(pAtom.position.x);
+                playingAtomsArray.add(pAtom.position.y);
+                // playingAtomsArray.add(pAtom[0]);
+                // playingAtomsArray.add(pAtom[1]);
               }
               print("playingAtomsArray is $playingAtomsArray\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
               MyFirebase.storeObject.collection('setups').doc(setup.id).update({
@@ -195,7 +216,37 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
 //              showAtom = showAtom ? false : true;
 //            });
             widget.refreshParent();
-          }),
+          },
+        onLongPress: () async {
+          print('long press');
+
+          if (thisGame.online){
+            if (!showClear) thisGame.clearList.add(thisAtomCoordinates);
+            else {
+              int removeIndex;
+              for (int i=0; i < thisGame.clearList.length; i++){
+                if (ListEquality().equals(thisAtomCoordinates, thisGame.clearList[i])) {
+                  removeIndex = i;
+                  break;
+                }
+              }
+              if (removeIndex != null) thisGame.clearList.removeAt(removeIndex);
+            }
+            List<int> clearArray = [];
+            for (List<int> clear in thisGame.clearList){
+              clearArray.add(clear[0]);
+              clearArray.add(clear[1]);
+            }
+            await MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).update({
+              'playing.${thisGame.playerId}.$kSubFieldClearList': clearArray,
+            });
+          }
+
+          setState(() {
+            showClear = !showClear;
+          });
+        },
+      ),
     );
   }
 }

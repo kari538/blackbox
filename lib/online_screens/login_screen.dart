@@ -1,14 +1,19 @@
 // import 'package:blackbox/fcm.dart';
+import 'package:blackbox/constants.dart';
 import 'package:blackbox/online_screens/game_hub_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:blackbox/online_button.dart';
-import 'package:blackbox/blackbox_popup.dart';
+
+// import 'file:///C:/Users/karol/AndroidStudioProjects/blackbox/lib/units/blackbox_popup.dart';
+import 'package:blackbox/units/blackbox_popup.dart';
 import 'package:blackbox/my_firebase.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({this.fromSetup=false});
+  const LoginScreen({this.fromSetup = false});
+
   final bool fromSetup;
+
   @override
   _LoginScreenState createState() => _LoginScreenState(fromSetup);
 }
@@ -102,6 +107,43 @@ class _LoginScreenState extends State<LoginScreen> {
                   setState(() {
                     showSpinner = false;
                   });
+                },
+              ),
+              SizedBox(height: 20),
+              InkWell(
+                child: Text('Forgotten password?', textAlign: TextAlign.center, style: TextStyle(decoration: TextDecoration.underline, fontSize: 14, fontWeight: FontWeight.bold, color: kHubSetupColor),),
+                onTap: () async {
+                  bool clickedReset=false;
+                  await BlackboxPopup(
+                    context: context,
+                    title: 'Reset password?',
+                    desc: 'Click "Reset" to send an email with a'
+                        ' reset link to the email address you just typed on this screen',
+                    buttons: [
+                      BlackboxPopupButton(
+                          text: 'Cancel',
+                          onPressed: (){
+                            Navigator.pop(context);
+                          }),
+                      BlackboxPopupButton(
+                        text: 'Reset',
+                        onPressed: () async {
+                          clickedReset = true;
+                          print('Before change password');
+                          try {
+                            await MyFirebase.authObject.sendPasswordResetEmail(email: email);
+                          } catch (e) {
+                            print(e);
+                          }
+                          print('After change password');
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  ).show();
+                  if (clickedReset) BlackboxPopup(context: context, title: 'Email sent', desc: 'If the email address was correct'
+                      ' and registered with us, and your phone is online,'
+                      ' you should receive a Reset Password email shortly.').show();
                 },
               ),
             ],

@@ -1,3 +1,4 @@
+// import 'package:wakelock/wakelock.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'local_notifications.dart';
 import 'fcm.dart';
@@ -18,12 +19,30 @@ import 'my_firebase.dart';
 void main() {
   print('Running main()');
   WidgetsFlutterBinding.ensureInitialized();
-  // FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);  //This seems to be working!
   MyFirebase.myFutureFirebaseApp = Firebase.initializeApp();
-  initializeFcm();
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  initializeFcm('');
+  userChangesListener();
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);  //This seems to be working!
+  // Wakelock.enable();  // Prevents screen from sleeping for as long as main() is running.
+
+  // Map<String, dynamic> map = {
+  //   'one': 1,
+  //   'two': 2,
+  // };
+  // print('map before is $map');
+  // changeMap(map);
+  // print('map after is $map');
+
   runApp(Blackbox());
 }
+
+// void changeMap(Map<String, dynamic> _map){
+//   _map = {
+//     'one': 1,
+//     'two': 2,
+//     'three': 3,
+//   };
+// }
 
 class Blackbox extends StatelessWidget {
   @override
