@@ -1,3 +1,8 @@
+import 'dart:convert';
+
+import 'package:pretty_json/pretty_json.dart';
+import 'package:blackbox/units/ping_widget.dart';
+import 'package:blackbox/my_firebase_labels.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:blackbox/units/final_answer_press.dart';
 import 'package:wakelock/wakelock.dart';
@@ -7,7 +12,6 @@ import 'package:blackbox/units/small_widgets.dart';
 import 'package:blackbox/constants.dart';
 import 'dart:async';
 import 'package:blackbox/board_grid.dart';
-import 'package:blackbox/firestore_lables.dart';
 import 'package:blackbox/game_hub_updates.dart';
 import 'package:blackbox/my_firebase.dart';
 import 'package:blackbox/online_screens/sent_results_screen.dart';
@@ -48,17 +52,21 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
 
   final DocumentSnapshot setup;
   final String playingId;
+  String myUid = MyFirebase.authObject.currentUser.uid;
   Play thisGame;
   Map<String, dynamic> setupData = {};
   Stream<DocumentSnapshot> thisSetupStream;
   Timestamp started;
-  Timestamp latestMove;
+  Timestamp lastMove;
   String startedString = 'N/A';
-  String latestMoveString = 'N/A';
-  bool showSpinner = false;
-
+  String lastMoveString = 'N/A';
+  bool showSpinner = true;
+  Future refreshed;
+  GameHubUpdates gameHubProvider;
+  Stream otherWatchersStream;
 //  StreamSubscription<auth.User> userListener;
   StreamSubscription playingListener;
+  bool playingOnlineStatus;
 
 //  StreamSubscription followingListener;
 
@@ -71,54 +79,28 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
 
   @override
   void initState() {
-    Wakelock.enable();  // Prevents phone from sleeping for as long as this screen is open
+    Wakelock.enable(); // Prevents phone from sleeping for as long as this screen is open
 //    getCurrentUser();
-    setupData = setup.data();
-    print('setupData in FollowPlayingScreen is $setupData');
-    print('setupData.keys in FollowPlayingScreen are ${setupData.keys}');
-    started = setupData[kFieldPlaying][playingId][kSubFieldStartedPlaying];
-    latestMove = setupData[kFieldPlaying][playingId][kSubFieldLatestMove];
-    if (started != null) {
-      startedString = DateFormat('d MMM, HH:mm:ss').format(started.toDate());
-      if (latestMove != null) latestMoveString = DateFormat('d MMM, HH:mm:ss').format(latestMove.toDate());
-    }
+    invisiblePingWidget = PingWidget(
+      pingStream: MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).collection(kSubCollectionPlayingPings).doc(kSubCollectionPlayingPings).snapshots(),
+      createChild: createOnlineChild,
+    );
+    setupData = setup.data(); // This may not be up to date, but some things can
+    // still be done since they never change
+    print('setupData in FollowPlayingScreen initState() is $setupData');
+    print('setupData.keys in FollowPlayingScreen initState() are ${setupData.keys}');
     thisGame = Play(numberOfAtoms: 0, widthOfPlayArea: setupData['widthAndHeight'][0], heightOfPlayArea: setupData['widthAndHeight'][1]);
     thisGame.online = true;
-    uploadFollowing();
 
-    if (setupData.containsKey(kFieldShuffleA) && setupData.containsKey(kFieldShuffleB)) {
-      thisGame.beamImageIndexA = [];
-      for (int i = 0; i < setupData[kFieldShuffleA].length; i++){
-        thisGame.beamImageIndexA.add(setupData[kFieldShuffleA][i]);
-      }
+    refreshed = refreshSetupData();
+    getMoveTimeStamps(refreshed);
+    uploadFollowing(refreshed);
 
-      thisGame.beamImageIndexB = [];
-      for (int i = 0; i < setupData[kFieldShuffleB].length; i++){
-        thisGame.beamImageIndexB.add(setupData[kFieldShuffleB][i]);
-      }
-    }
-    print('In initState: beamImageIndexA is ${thisGame.beamImageIndexA} and beamImageIndexB is ${thisGame.beamImageIndexB}');
-
-    if (setupData[kFieldPlaying][playingId].containsKey(kSubFieldClearList)) {
-      List<dynamic> sentClearList = setupData[kFieldPlaying][playingId][kSubFieldClearList];
-      for (int i = 0; i < sentClearList.length; i += 2){
-        thisGame.clearList.add([sentClearList[i], sentClearList[i+1]]);
-      }
-    }
-    getAtoms();
-    getAndPlacePlayerAtoms(setupData);
-    List<dynamic> receivedBeams = setupData[kFieldPlaying][playingId][kPlayingBeams] ?? [];
-    for (int receivedBeamNo in receivedBeams) {
-      sendBeam(receivedBeamNo);
-    }
-    thisSetupStream = MyFirebase.storeObject.collection('setups').doc(setup.id).snapshots();
+    thisSetupStream = MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).snapshots();
+    otherWatchersStream = MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).collection(kSubCollectionWatchingPings).doc(playingId).snapshots();
     getPlayingStream();
-    print('In initState: thisGame.atoms: ${thisGame.atoms}, thisGame.sentBeams: ${thisGame.sentBeams}');
-//    print('Atoms are in positions:');
-//    for (Atom atom in thisGame.atoms) {
-//      print(atom.position.toList());
-//    }
-//    print('**************************');
+
+    ping();
     super.initState();
   }
 
@@ -127,36 +109,122 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
 //    userListener.cancel();
     playingListener.cancel();
     super.dispose();
-    await removeFollowing();
+    await removeFollowing(refreshed);
   }
 
-  void uploadFollowing() async {
-    List<dynamic> followers = [];
+  Future refreshSetupData() async {
+    DocumentSnapshot newSetup = await MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).get();
+    setupData = newSetup.data();
+
+    if (setupData.containsKey(kFieldShuffleA) && setupData.containsKey(kFieldShuffleB)) {
+      thisGame.beamImageIndexA = [];
+      for (int i = 0; i < setupData[kFieldShuffleA].length; i++) {
+        thisGame.beamImageIndexA.add(setupData[kFieldShuffleA][i]);
+      }
+
+      thisGame.beamImageIndexB = [];
+      for (int i = 0; i < setupData[kFieldShuffleB].length; i++) {
+        thisGame.beamImageIndexB.add(setupData[kFieldShuffleB][i]);
+      }
+    }
+    print('In refreshSetupData(): beamImageIndexA is ${thisGame.beamImageIndexA} and beamImageIndexB is ${thisGame.beamImageIndexB}');
+
+    if (setupData[kFieldPlaying][playingId].containsKey(kSubFieldClearList)) {
+      List<dynamic> sentClearList = setupData[kFieldPlaying][playingId][kSubFieldClearList];
+      for (int i = 0; i < sentClearList.length; i += 2) {
+        thisGame.clearList.add([sentClearList[i], sentClearList[i + 1]]);
+      }
+    }
+    getAtoms();
+    getAndPlacePlayerAtoms(setupData);
+    List<dynamic> receivedBeams = setupData[kFieldPlaying][playingId][kSubFieldPlayingBeams] ?? [];
+    for (int receivedBeamNo in receivedBeams) {
+      sendBeam(receivedBeamNo);
+    }
+
+    print('In refreshSetupData(): thisGame.atoms: ${thisGame.atoms}, thisGame.sentBeams: ${thisGame.sentBeams}');
+//    print('Atoms are in positions:');
+//    for (Atom atom in thisGame.atoms) {
+//      print(atom.position.toList());
+//    }
+//    print('**************************');
+    setState(() {
+      showSpinner = false;
+    });
+    return;
+  }
+
+  void delayedSetState() async {
+    await Future.delayed(Duration(milliseconds: 200));
+    setState(() {});
+  }
+
+  void getMoveTimeStamps(Future refreshed) async {
+    await refreshed;
+    // if (setupData[kFieldPlaying][playingId] == null)
+    started = setupData[kFieldPlaying][playingId][kSubFieldStartedPlaying];
+    lastMove = setupData[kFieldPlaying][playingId][kSubFieldLastMove];
+    if (started != null) startedString = DateFormat('d MMM, HH:mm:ss').format(started.toDate());
+    if (lastMove != null) lastMoveString = DateFormat('d MMM, HH:mm:ss').format(lastMove.toDate());
+  }
+
+  void ping(/*{Future<void> uploadDoc}*/) async {
+    // if (uploadDoc != null) await uploadDoc; // If I wasn't already playing this game, we need to wait until Playing tag has uploaded.
+    // int i = 0;
+    // TODO: Turn ping back on (if commented out):
+    do {
+      // print('Ping no $i');
+      try {
+        await MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).collection(kSubCollectionWatchingPings).doc(playingId).set({
+          // await MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).collection('PlayingPings').doc(myUid).set({
+          '$myUid': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } on Exception catch (e) {
+        print('Watching Ping upload error: $e');
+      }
+      // await MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).update({
+      //    '$kFieldPlaying.${thisGame.playerId}.$kSubFieldPing': FieldValue.serverTimestamp(),
+      //  });
+      await Future.delayed(Duration(seconds: 4));
+      // i++;
+    } while (this.mounted);
+  }
+
+  void uploadFollowing(Future refreshed) async {
     print('setupData in uploadFollowing() is $setupData');
     print('thisGame.playerId in uploadFollowing() is ${thisGame.playerId}');
-    if(setupData[kFieldPlaying][widget.playingId].containsKey(kSubFieldFollowing)){
+
+    await refreshed;
+    List<dynamic> followers = []; // Must be dynamic because Firebase...
+    if (setupData[kFieldPlaying][widget.playingId].containsKey(kSubFieldFollowing)) {
       followers = setupData[kFieldPlaying][widget.playingId][kSubFieldFollowing];
       print('followers List is $followers');
     }
-    String myName = widget.me;
-    if(myName== 'Me') myName = 'Anonymous';
-    followers.add(myName);
-    MyFirebase.storeObject.collection(kSetupCollection).doc(widget.setup.id).update({
+    followers.add(myUid);
+    // String myName = widget.me;
+    // if(myName== 'Me') myName = 'Anonymous';
+    // followers.add(myName);
+    Future<void> uploadDoc = MyFirebase.storeObject.collection(kCollectionSetups).doc(widget.setup.id).update({
+      // Future<void> uploadDoc = MyFirebase.storeObject.collection(kCollectionSetups).doc(widget.setup.id).update({
       '$kFieldPlaying.$playingId.$kSubFieldFollowing': followers
     });
+    // ping(uploadDoc: uploadDoc);
   }
 
-  Future removeFollowing() async {
-    String myName = widget.me;
-    if(myName== 'Me') myName = 'Anonymous';
+  Future removeFollowing(Future refreshed) async {
+    await refreshed;
+    // String myName = widget.me;
+    // if(myName== 'Me') myName = 'Anonymous';
     List<dynamic> followers = [];
     print('setupData in removeFollowing() is $setupData');
-    if(setupData[kFieldPlaying][playingId].containsKey(kSubFieldFollowing)){
+    if (setupData[kFieldPlaying][playingId].containsKey(kSubFieldFollowing)) {
       followers = setupData[kFieldPlaying][playingId][kSubFieldFollowing];
       print('followers List is $followers');
     }
-    followers.remove(myName);
-    print('followers after remove(myName) is $followers');
+    followers.remove(myUid);
+    // followers.remove(myName);
+    print('followers after remove(myUid) is $followers');
+    // print('followers after remove(myName) is $followers');
     await MyFirebase.storeObject.collection(kCollectionSetups).doc(widget.setup.id).update({
       '$kFieldPlaying.$playingId.$kSubFieldFollowing': followers,
     });
@@ -173,10 +241,10 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
   void getAndPlacePlayerAtoms(Map<String, dynamic> setupData) {
     // List<List<int>> receivedPlayerAtoms = [];
     List<Atom> receivedPlayerAtoms = [];
-    if (setupData[kFieldPlaying].containsKey(playingId) && setupData[kFieldPlaying][playingId][kPlayingAtoms] != null) {
-      for (int i = 0; i < setupData[kFieldPlaying][playingId][kPlayingAtoms].length; i += 2) {
-        receivedPlayerAtoms
-            .add(Atom(setupData[kFieldPlaying][playingId][kPlayingAtoms][i], setupData[kFieldPlaying][playingId][kPlayingAtoms][i + 1]));
+    if (setupData[kFieldPlaying].containsKey(playingId) && setupData[kFieldPlaying][playingId][kSubFieldPlayingAtoms] != null) {
+      for (int i = 0; i < setupData[kFieldPlaying][playingId][kSubFieldPlayingAtoms].length; i += 2) {
+        receivedPlayerAtoms.add(
+            Atom(setupData[kFieldPlaying][playingId][kSubFieldPlayingAtoms][i], setupData[kFieldPlaying][playingId][kSubFieldPlayingAtoms][i + 1]));
         // receivedPlayerAtoms
         //     .add([setupData[kFieldPlaying][playingId][kPlayingAtoms][i], setupData[kFieldPlaying][playingId][kPlayingAtoms][i + 1]]);
       }
@@ -198,10 +266,17 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
     playingListener = thisSetupStream.listen((event) async {
       Map<String, dynamic> eventData;
       if (event != null) eventData = event.data();
-      print('FollowingPlayingScreen listener event data: $eventData');
+      print('FollowingPlayingScreen listener event data:');
+      print(eventData);
+      print('FollowingPlayingScreen listener event printPrettyJson data:');
+      try {
+        printPrettyJson(jsonDecode(jsonEncode(eventData, toEncodable: (object) => object.toString())));
+      } catch (e) {
+        print('printPrettyJson error: $e');
+      }
 
       //Beams:
-      List<dynamic> receivedBeams = eventData[kFieldPlaying][playingId][kPlayingBeams];
+      List<dynamic> receivedBeams = eventData[kFieldPlaying][playingId][kSubFieldPlayingBeams];
       //I'm only interested in the last beam:
       int receivedBeamNo;
       if (receivedBeams != null && receivedBeams.length > 0) receivedBeamNo = receivedBeams[receivedBeams.length - 1];
@@ -210,16 +285,16 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
         //A beam has been received and this tile does not already have a child so it's a new one
         setState(() {
           sendBeam(receivedBeamNo);
-          latestMove = eventData[kFieldPlaying][playingId][kSubFieldLatestMove];
-          if (latestMove != null) latestMoveString = DateFormat('d MMM, HH:mm:ss').format(latestMove.toDate());
+          lastMove = eventData[kFieldPlaying][playingId][kSubFieldLastMove];
+          if (lastMove != null) lastMoveString = DateFormat('d MMM, HH:mm:ss').format(lastMove.toDate());
         });
       }
 
       //Atoms:
       setState(() {
         getAndPlacePlayerAtoms(eventData);
-        latestMove = eventData[kFieldPlaying][playingId][kSubFieldLatestMove];
-        if (latestMove != null) latestMoveString = DateFormat('d MMM, HH:mm:ss').format(latestMove.toDate());
+        lastMove = eventData[kFieldPlaying][playingId][kSubFieldLastMove];
+        if (lastMove != null) lastMoveString = DateFormat('d MMM, HH:mm:ss').format(lastMove.toDate());
       });
 
       // Clear:
@@ -234,15 +309,16 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
       }
 
       //Done:
-      if (eventData[kFieldPlaying][playingId][kPlayingDone] == true) {
+      if (eventData[kFieldPlaying][playingId][kSubFieldPlayingDone] == true) {
         //If this 'done' field doesn't yet exist, surely you'll manage...?
-        if (showedResults == 0) { // This is a safety since the stream might fire several times after "Done"...
+        if (showedResults == 0) {
+          // This is a safety since the stream might fire several times after "Done"...
           eventData.remove(kFieldResults);
           eventData.addAll({
             kFieldResults: {
               playingId: {
                 kSubFieldStartedPlaying: eventData[kFieldPlaying][playingId][kSubFieldStartedPlaying],
-                kSubFieldFinishedPlaying: eventData[kFieldPlaying][playingId][kSubFieldLatestMove],
+                kSubFieldFinishedPlaying: eventData[kFieldPlaying][playingId][kSubFieldLastMove],
                 kSubFieldPlayerAtoms: eventData[kFieldPlaying][playingId][kSubFieldPlayingAtoms],
                 kSubFieldSentBeams: eventData[kFieldPlaying][playingId][kSubFieldPlayingBeams],
               }
@@ -324,17 +400,17 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
               child: sentCorrect
                   ? Image(image: AssetImage('images/atom_yellow.png'))
                   : sentWrong
-                    ? Opacity(child: Image(image: AssetImage('images/atom_yellow.png')), opacity: 0.5)
-                    : hidden
-                      // ? Image(image: AssetImage('images/atom_yellow_transp.png'))
-                      ? Opacity(child: Image(image: AssetImage('images/atom_blue.png')), opacity: 0.8)
-                      : FittedBox(
-                          fit: BoxFit.contain,
-                          child: Text(
-                            '$x,$y',
-                            style: TextStyle(color: kBoardTextColor, fontSize: 15),
-                          ),
-                        ),
+                  ? Opacity(child: Image(image: AssetImage('images/atom_yellow.png')), opacity: 0.5)
+                  : hidden
+              // ? Image(image: AssetImage('images/atom_yellow_transp.png'))
+                  ? Opacity(child: Image(image: AssetImage('images/atom_blue.png')), opacity: 0.8)
+                  : FittedBox(
+                fit: BoxFit.contain,
+                child: Text(
+                  '$x,$y',
+                  style: TextStyle(color: kBoardTextColor, fontSize: 15),
+                ),
+              ),
             ),
             decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridlineColor, width: 0.5)),
           ),
@@ -364,9 +440,98 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
 //    }));
 //  }
 
+  PingWidget invisiblePingWidget;
+
+  Widget createOnlineChild(Map<String, bool> activeMap) {
+    Widget widget = SizedBox();
+    // Widget widget = OnlineStatusWidget(online: activeMap[playingId] == true);
+    // List<Widget> list = [];
+    playingOnlineStatus = activeMap[playingId];
+    delayedSetState();
+    return widget;
+
+  }
+
+  void getOnlineStatus() {
+  // String getOnlineStatus() {
+    print('Running getOnlineStatus()');
+
+    // bool online = invisiblePingWidget.online;
+    // playingOnlineStatus = '...';
+    // String _status = '...';
+    // Map<String, bool> activeMap = invisiblePingWidget.getActiveMap();
+    // Map<String, bool> activeMap = PingWidget(
+    //   pingStream: MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).collection(kSubCollectionPlayingPings).doc(kSubCollectionPlayingPings).snapshots(),
+    //   createChildren: (activeMap) {
+    //     setState(() {
+    //       playingOnlineStatus = activeMap[playingId];
+    //       // _status = activeMap[playingId];
+    //       print('Online status is $playingOnlineStatus');
+    //       // print('Online status is $_status');
+    //     });
+    //     return [];
+    //   },
+    // ).getActiveMap();
+    // playingOnlineStatus = activeMap[playingId];
+    // print('activeMap is $activeMap');
+    // print('Online status is $playingOnlineStatus');
+
+        // get(
+    //   pingStream: MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).collection(kSubCollectionPlayingPings).doc(kSubCollectionPlayingPings).snapshots(),
+    //   createChildren: (activeMap) {
+    //     setState(() {
+    //       playingOnlineStatus = activeMap[playingId];
+    //       // _status = activeMap[playingId];
+    //       print('Online status is $playingOnlineStatus');
+    //       // print('Online status is $_status');
+    //     });
+    //     return [];
+    //   },
+    // );
+    // print(x);
+    // print('Length of $x is ${x.}')
+    // return playingOnlineStatus.toString();
+  }
+
+  // Widget invisiblePingWidget() {
+  //   return PingWidget(
+  //     pingStream: MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).collection(kSubCollectionPlayingPings).doc(kSubCollectionPlayingPings).snapshots(),
+  //     createChildren: (activeMap) {
+  //       setState(() {
+  //         playingOnlineStatus = activeMap[playingId];
+  //         // _status = activeMap[playingId];
+  //         print('Online status is $playingOnlineStatus');
+  //       });
+  //       return [];
+  //     },
+  //   );
+  // }
+
+  Widget otherWatchersChild(Map<String, bool> activeMap) {
+  // List<Widget> otherWatchersChildren(Map<String, bool> activeMap) {
+    List<Widget> _watchChildren = [InfoText('Also watching:')];
+
+    for (String follower in activeMap.keys) {
+      if (activeMap[follower] && follower != myUid) _watchChildren.add(Text(
+      // child: Text(
+        '${gameHubProvider.getScreenName(follower)}', style: TextStyle(
+          fontSize: 14,
+          color: Colors.tealAccent,
+      ),
+      ));
+    }
+
+    if (_watchChildren.length == 1) _watchChildren = [];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: _watchChildren,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    gameHubProvider = Provider.of<GameHubUpdates>(context);
+    // getOnlineStatus();
     return Scaffold(
       appBar: AppBar(title: Text('blackbox')),
       body: ModalProgressHUD(
@@ -376,6 +541,8 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
             // mainAxisAlignment: MainAxisAlignment.spaceBetween,
             // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
+              invisiblePingWidget,
+              // invisiblePingWidget(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -389,6 +556,7 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
                         // Text('online')
                         InfoText('Setup no ${setupData['i']}'),
                         InfoText('By ${Provider.of<GameHubUpdates>(context).getScreenName(setupData[kFieldSender])}'),
+                        PingWidget(pingStream: otherWatchersStream, createChild: otherWatchersChild),
                       ],
                     ),
                   ),
@@ -398,7 +566,7 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       InfoText('Started: $startedString'),
-                      InfoText('Last move: $latestMoveString'),
+                      InfoText('Last move: $lastMoveString'),
                     ],
                   ),
                 ],
@@ -432,8 +600,25 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    Text('You\'re watching ${Provider.of<GameHubUpdates>(context).getScreenName(playingId)} play',
-                        textAlign: TextAlign.center, style: kConversationResultsResultsStyle),
+                    RichText(text: TextSpan(
+                      text: 'You\'re watching ${gameHubProvider.getScreenName(playingId)} play',
+                      style: kConversationResultsResultsStyle.copyWith(fontSize: 18),
+                      children: [
+                        playingOnlineStatus == true
+                            ? TextSpan(text: '\nstatus: ',
+                              children: [TextSpan(text: 'online', style: kConversationResultsResultsStyle.copyWith(color: Colors.tealAccent))])
+                            : playingOnlineStatus == false
+                            ? TextSpan(text: '\nstatus: ',
+                            children: [TextSpan(text: 'offline', style: kConversationResultsResultsStyle.copyWith(color: Colors.red))])
+                            : TextSpan(text: '')
+                      ]
+                    ),textAlign: TextAlign.center,),
+                    // Text(
+                    //     'You\'re watching ${gameHubProvider.getScreenName(playingId)} play'
+                    //     '${playingOnlineStatus == null ? '' : playingOnlineStatus ? '\nstatus: online' : '\nstatus: offline'}',
+                    //     // '${gameHubProvider.getScreenName(playingId)} is ${getOnlineStatus()}',
+                    //     textAlign: TextAlign.center,
+                    //     style: kConversationResultsResultsStyle),
 //                  SizedBox(height: 10),
                     GestureDetector(
                       //Score count:
@@ -478,11 +663,11 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
                     child: Container(
                       child:
 //                    PlayBoard(playWidth: thisGame.widthOfPlayArea, playHeight: thisGame.heightOfPlayArea, thisGame: thisGame, refreshParent: refresh),
-                          BoardGrid(
-                              playWidth: thisGame.widthOfPlayArea,
-                              playHeight: thisGame.heightOfPlayArea,
-                              getEdgeTiles: getEdges,
-                              getMiddleTiles: getMiddleElements),
+                      BoardGrid(
+                          playWidth: thisGame.widthOfPlayArea,
+                          playHeight: thisGame.heightOfPlayArea,
+                          getEdgeTiles: getEdges,
+                          getMiddleTiles: getMiddleElements),
                     ),
                   ),
                 ),
@@ -496,3 +681,15 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
   }
 }
 
+
+// class OnlineStatusWidget extends StatelessWidget {
+//   const OnlineStatusWidget({@required this.online});
+//
+//   final bool online;
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     print('Building OnlineStatusWidget with online as $online');
+//     return SizedBox();
+//   }
+// }

@@ -1,4 +1,3 @@
-import 'package:blackbox/firestore_lables.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -19,21 +18,41 @@ void tempFirebaseOperations() async {
   int j =0;
 
   ///Add i ---------------------------------------------
-  QuerySnapshot query = await MyFirebase.storeObject.collection('setups').orderBy('timestamp', descending: false).get();
-  List<DocumentSnapshot> docs = query.docs;
-
-  for(DocumentSnapshot doc in docs){
-    j++;
-    Map<String, dynamic> docData = doc.data();
-    // print(docData);
-    if(true) {
-      MyFirebase.storeObject.collection(kSetupCollection).doc(doc.id).update({
-        'i': j
-      });
-    }
-  }
+  // QuerySnapshot query = await MyFirebase.storeObject.collection('setups').orderBy('timestamp', descending: false).get();
+  // List<DocumentSnapshot> docs = query.docs;
+  // // print('After awaiting query');
+  // for(DocumentSnapshot doc in docs){
+  //   j++;
+  //   print('adding i $j');
+  //   Map<String, dynamic> docData = doc.data();
+  //   // print(docData);
+  //   if(true) {
+  //     MyFirebase.storeObject.collection(kCollectionSetups).doc(doc.id).update({
+  //       'i': j
+  //     });
+  //   }
+  // }
+///Temporary code for adding 'timestamp' field where missing, (from game hub StreamBuilder):
+//                    print('timestamp is ${setup.data()['timestamp'].toDate()}');
+//                    print(i);
+//                    //January 1, 2001 at 12:00:00 AM UTC+3
+//                    if (setup.data()['timestamp'] == null) {
+//                      print(i);
+//                      print(DateTime(2001));
 //
-///Add Started Playing ---------------------------------------------
+//                      //Adds a new field to the document, but overwrites any old field with the same name (key), i.e. 'results':
+//                      firestoreObject.collection('setups').doc(setup.id).set({
+//                        'timestamp': DateTime(2001),
+//
+//                      }, merge: true);
+//                    }
+//                  if(setup.data()['sender'] == 'marshallmusyimi@gmail.com') {
+//                    print('Sender: ${setup.data()['sender']}, timestamp: ${setup.data()['timestamp'].toDate()}');
+//                  }
+//                  print('Sender: ${setup.data()['sender']}, timestamp: ${setup.data()['timestamp'].toDate()}');
+//                    if(setup.data()['timestamp'])
+
+  ///Add Started Playing ---------------------------------------------
 //   QuerySnapshot query = await MyFirebase.storeObject.collection('setups').orderBy('timestamp', descending: false).get();
 //   List<DocumentSnapshot> docs = query.docs;
 

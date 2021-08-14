@@ -38,7 +38,7 @@ class _MakeSetupScreenState extends State<MakeSetupScreen> {
     return Expanded(
       child: Container(
         child: Center(child: widget.thisGame.edgeTileChildren[slotNo - 1] ?? FittedBox(
-        fit: BoxFit.contain, child: Text('$slotNo', style: TextStyle(color: kBoardEdgeTextColor, fontSize: 15)))),
+            fit: BoxFit.contain, child: Text('$slotNo', style: TextStyle(color: kBoardEdgeTextColor, fontSize: 15)))),
         decoration: BoxDecoration(color: kBoardEdgeColor),
       ),
     );

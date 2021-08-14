@@ -1,3 +1,4 @@
+import 'global.dart';
 import 'package:blackbox/fcm.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
@@ -20,6 +21,6 @@ void userChangesListener() async {
   await MyFirebase.myFutureFirebaseApp;
   MyFirebase.authObject.idTokenChanges().listen((event) {
     print('Event in userChangesListener() is $event');
-    if (event != null) initializeFcm('');
+    if (event != null) initializeFcm('', GlobalVariable.navState);
   });
 }

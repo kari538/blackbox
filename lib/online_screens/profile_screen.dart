@@ -1,3 +1,5 @@
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:blackbox/game_hub_menu.dart';
 import 'package:blackbox/my_types_and_functions.dart';
 import 'package:blackbox/constants.dart';
@@ -135,11 +137,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ? Column(
             children: [
               Center(
-                child: Text('Click "Change ${capitalizeFirst(key)}" and an email will be sent to your registered email address with '
+                child: SelectableLinkify(text: 'Click "Change ${capitalizeFirst(key)}" and an email will be sent to your registered email address with '
                     'instructions on how to change your ${key.toLowerCase()}.\n\n'
                     'If you don\'t have access to your blackbox email address or if you have forgotten it, '
                     'contact support at karolinahagegard@gmail.com and we shall sort you out! 😉\n'
+                ,
+                  onOpen: (link) async {
+                    if (await canLaunch(link.url)) {
+                      await launch(link.url);
+                    } else {
+                      throw 'Could not launch $link';
+                    }
+                  },
                 ),
+                // child: Text('Click "Change ${capitalizeFirst(key)}" and an email will be sent to your registered email address with '
+                //     'instructions on how to change your ${key.toLowerCase()}.\n\n'
+                //     'If you don\'t have access to your blackbox email address or if you have forgotten it, '
+                //     'contact support at karolinahagegard@gmail.com and we shall sort you out! 😉\n'
+                // ),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,

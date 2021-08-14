@@ -1,3 +1,6 @@
+import 'package:blackbox/route_names.dart';
+import 'package:navigation_history_observer/navigation_history_observer.dart';
+import 'online_screens/settings_screen.dart';
 import 'online_screens/profile_screen.dart';
 import 'package:blackbox/constants.dart';
 //import 'package:blackbox/screens/welcome_screen.dart';
@@ -17,8 +20,25 @@ class GameHubMenu extends StatelessWidget {
       Item(
         text: 'My profile',
         value: () {
+          Route topRoute = NavigationHistoryObserver().top;
+          if (topRoute.settings.name != routeGameHub) {
+            Navigator.pop(context);
+          }
           Navigator.push(context, MaterialPageRoute(builder: (context){
             return ProfileScreen();
+          }));
+        },
+      ),
+      Item(
+        text: 'Settings',
+        value: () {
+          print('${NavigationHistoryObserver().history}');
+          Route topRoute = NavigationHistoryObserver().top;
+          if (topRoute.settings.name != routeGameHub) {
+            Navigator.pop(context);
+          }
+          Navigator.push(context, MaterialPageRoute(builder: (context){
+            return SettingsScreen();
           }));
         },
       ),

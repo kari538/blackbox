@@ -1,3 +1,14 @@
+import 'units/small_functions.dart';
+import 'global.dart';
+import 'my_firebase.dart';
+import 'my_firebase_labels.dart';
+import 'package:collection/collection.dart';
+import 'dart:convert';
+
+import 'package:pretty_json/pretty_json.dart';
+import 'route_names.dart';
+import 'package:blackbox/online_screens/game_hub_screen.dart';
+import 'package:navigation_history_observer/navigation_history_observer.dart';
 import 'dart:async';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 // import 'my_firebase_labels.dart';
@@ -19,15 +30,27 @@ class LocalNotifications {
     var initSettings = InitializationSettings(android: android, iOS: iOS);
 
     Future onSelectNotification(String payload) async {
-      print('onSelectNotification(), payload : $payload');
-      // TODO: Put navigation from notifications here
-      // showDialog(
-      //   context: context,
-      //   builder: (_) => AlertDialog(
-      //     title: Text('Alert'),
-      //     content: Text('$payload'),
-      //   ),
-      // );
+      print('onSelectNotification() (Local notification opened app).');
+      printPrettyJson(jsonDecode(payload));
+      // TODO: Put navigation from local notifications here
+      //xxx
+      Map<String, dynamic> msgData = jsonDecode(payload);
+      // Map<String, dynamic> msgData = remoteMsg.data.cast();
+      bool containsData = !(MapEquality().equals(msgData, {}) || msgData == null);
+      bool playingEvent = containsData && (msgData[kMsgEvent] == kMsgEventStartedPlaying || msgData[kMsgEvent] == kMsgEventResumedPlaying);
+      bool newSetupEvent = containsData && msgData[kMsgEvent] == kMsgEventNewGameHubSetup;
+
+      if (MyFirebase.authObject.currentUser.uid != null) {
+        if (playingEvent) {
+          navigateFromNotificationToFollowing(msgData: msgData);
+        } else if (newSetupEvent) {
+          // Todo: Only push if GameHubScreen() not already on top:
+          Navigator.push(GlobalVariable.navState.currentContext, MaterialPageRoute(builder: (context) {
+            return GameHubScreen();
+          }, settings: RouteSettings(name: routeGameHub)));
+        }
+      }
+
     }
 
     flutterLocalNotificationsPlugin.initialize(initSettings, onSelectNotification: onSelectNotification);
@@ -40,6 +63,8 @@ class LocalNotifications {
       '$channelId', '$channelName', '$channelDescription',
       priority: Priority.high,
       importance: Importance.max,
+      autoCancel: false,
+      visibility: NotificationVisibility.public,
       // icon: '@drawable/ic_stat_name',
       styleInformation: BigTextStyleInformation(''),  // Gives multi-line notifications
       // ongoing: true, // BAD IDEA!! (Can't be dismissed.)
@@ -49,6 +74,6 @@ class LocalNotifications {
     );
     var iOS = IOSNotificationDetails();
     var bothPlatforms = NotificationDetails(android: android, iOS: iOS);
-    await flutterLocalNotificationsPlugin.show(5, 'Local: $title', '$notification', bothPlatforms, payload: data);
+    await flutterLocalNotificationsPlugin.show(5, 'Notice! $title', '$notification', bothPlatforms, payload: data);
   }
 }

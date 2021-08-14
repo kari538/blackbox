@@ -1,13 +1,11 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 // import 'package:blackbox/fcm.dart';
 import 'package:blackbox/my_firebase.dart';
+import 'package:blackbox/my_firebase_labels.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:modal_progress_hud/modal_progress_hud.dart';
-
-//import 'package:blackbox/online_screens/choose_board_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blackbox/online_button.dart';
-import 'file:///C:/Users/karol/AndroidStudioProjects/blackbox/lib/units/blackbox_popup.dart';
+import 'package:blackbox/units/blackbox_popup.dart';
 import 'game_hub_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -28,8 +26,58 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   String screenName;
   String password1;
   String password2 = '';
-  auth.FirebaseAuth authenticator = auth.FirebaseAuth.instance;
-  FirebaseFirestore database = FirebaseFirestore.instance;
+  FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+
+  Future registerPress() async {
+//  print(email);
+//                print(password);
+    setState(() {
+      showSpinner = true;
+    });
+    try {
+      var user = await MyFirebase.authObject.createUserWithEmailAndPassword(email: email, password: password1);
+      // var user = await authenticator.createUserWithEmailAndPassword(email: email, password: password1);
+      if (user != null) {
+        String myUid = MyFirebase.authObject.currentUser.uid;
+        if (screenName == null || screenName == '') screenName = 'Anonymous';
+//                            database.collection('userinfo').add({
+//                             database.collection('userinfo').doc(myUid).set({
+        MyFirebase.storeObject.collection('userinfo').doc(myUid).set({
+          'email': email,
+          'screenName': screenName,
+          kFieldNotifications: [
+            kTopicGameHubSetup,
+            kTopicPlayingSetup,
+            kTopicPlayingYourSetup,
+            kTopicAllAppUpdates,
+          ],
+        });
+        _firebaseMessaging.subscribeToTopic(kTopicGameHubSetup);
+        _firebaseMessaging.subscribeToTopic(kTopicPlayingSetup);
+        _firebaseMessaging.subscribeToTopic(kTopicAllAppUpdates);
+        // initializeFirebaseCloudMessaging();
+        if (fromSetup) {
+          Navigator.pop(context);
+        } else {
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (context) {
+              return GameHubScreen();
+            },
+          ));
+        }
+      }
+    } catch (e) {
+      print('Error caught authenticating! e is: $e');
+      BlackboxPopup(
+        context: context,
+        title: "Registration Error",
+        desc: '$e',
+      ).show();
+    }
+    setState(() {
+      showSpinner = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,133 +86,100 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       appBar: AppBar(title: Text('register')),
       body: ModalProgressHUD(
         inAsyncCall: showSpinner,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              TextField(
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  TextField(
 //                decoration: kTextFieldDecoration.copyWith(
-                decoration: InputDecoration(
-                  hintText: 'Enter your email',
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    email = value;
-                  });
-                },
+                    decoration: InputDecoration(
+                      hintText: 'Enter your email',
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        email = value;
+                      });
+                    },
+                    autofocus: true,
 //                style: TextStyle(color: Colors.black),
-                textAlign: TextAlign.center,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              SizedBox(
-                height: 8.0,
-              ),
-              TextField(
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  SizedBox(
+                    height: 8.0,
+                  ),
+                  TextField(
 //                decoration: kTextFieldDecoration.copyWith(
-                decoration: InputDecoration(
-                  hintText: 'Enter your desired screen name',
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    screenName = value;
-                  });
-                },
+                    decoration: InputDecoration(
+                      hintText: 'Enter your desired screen name',
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        screenName = value;
+                      });
+                    },
 //                style: TextStyle(color: Colors.black),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(
-                height: 8.0,
-              ),
-              TextField(
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(
+                    height: 8.0,
+                  ),
+                  TextField(
 //                decoration: kTextFieldDecoration.copyWith(
-                decoration: InputDecoration(
-                  hintText: 'Enter your password',
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    password1 = value;
-                  });
-                },
+                    decoration: InputDecoration(
+                      hintText: 'Enter your password',
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        password1 = value;
+                      });
+                    },
 //                style: TextStyle(color: Colors.black),
-                textAlign: TextAlign.center,
-                obscureText: true,
-              ),
-              SizedBox(
-                height: 8.0,
-              ),
-              TextField(
+                    textAlign: TextAlign.center,
+                    obscureText: true,
+                  ),
+                  SizedBox(
+                    height: 8.0,
+                  ),
+                  TextField(
 //                decoration: kTextFieldDecoration.copyWith(
-                decoration: InputDecoration(
-                  hintText: 'Repeat your password',
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    password2 = value;
-                  });
-                },
+                    decoration: InputDecoration(
+                      hintText: 'Repeat your password',
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        password2 = value;
+                      });
+                    },
+                    onSubmitted: (string){
+                      registerPress();
+                    },
 //                style: TextStyle(color: Colors.black),
-                textAlign: TextAlign.center,
-                obscureText: true,
-              ),
-              password2 != ''
-                  ? password1 == password2
-              //If passwords match:
-                  ? Text('Passwords match', style: TextStyle(fontSize: 12, color: Colors.tealAccent))
-              //If passwords don't match:
-                  : Text('Passwords don\'t match', style: TextStyle(fontSize: 12, color: Colors.red))
-                  : SizedBox(),
-              SizedBox(
-                height: 24.0,
-              ),
-              OnlineButton(
-                text: 'Register',
+                    textAlign: TextAlign.center,
+                    obscureText: true,
+                  ),
+                  password2 != ''
+                      ? password1 == password2
+                          //If passwords match:
+                          ? Text('Passwords match', style: TextStyle(fontSize: 12, color: Colors.tealAccent))
+                          //If passwords don't match:
+                          : Text('Passwords don\'t match', style: TextStyle(fontSize: 12, color: Colors.red))
+                      : SizedBox(),
+                  SizedBox(
+                    height: 24.0,
+                  ),
+                  OnlineButton(
+                    text: 'Register',
 //              onPressed: null,
-                onPressed: email == null || password2 == '' || password1 != password2
-                    ? null
-                    : () async {
-//                print(email);
-//                print(password);
-                  setState(() {
-                          showSpinner = true;
-                        });
-                        try {
-                          var user = await authenticator.createUserWithEmailAndPassword(email: email, password: password1);
-                          if (user != null) {
-                            String myUid = MyFirebase.authObject.currentUser.uid;
-                            if (screenName == null || screenName == '') screenName = 'Anonymous';
-//                            database.collection('userinfo').add({
-//                             database.collection('userinfo').doc(myUid).set({
-                            MyFirebase.storeObject.collection('userinfo').doc(myUid).set({
-                              'email': email,
-                              'screenName': screenName,
-                            });
-                            // initializeFirebaseCloudMessaging();
-                            if (fromSetup) {
-                              Navigator.pop(context);
-                            } else {
-                              Navigator.of(context).pushReplacement(MaterialPageRoute(
-                                builder: (context) {
-                                  return GameHubScreen();
-                                },
-                              ));
-                            }
-                          }
-                        } catch (e) {
-                          print('Error caught authenticating! e is: $e');
-                          BlackboxPopup(
-                            context: context,
-                            title: "Registration Error",
-                            desc: '$e',
-                          ).show();
-                        }
-                        setState(() {
-                          showSpinner = false;
-                        });
-                      },
+                    onPressed: email == null || password2 == '' || password1 != password2 ? null : registerPress,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

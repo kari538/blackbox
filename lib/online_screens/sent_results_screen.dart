@@ -2,7 +2,6 @@ import 'package:blackbox/screens/results_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:blackbox/my_firebase_labels.dart';
 import 'package:blackbox/units/small_widgets.dart';
-import 'package:blackbox/firestore_lables.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:blackbox/board_grid.dart';
@@ -17,7 +16,6 @@ import 'package:provider/provider.dart';
 
 class SentResultsScreen extends StatefulWidget {
   SentResultsScreen({@required this.setupData, @required this.resultPlayerId});
-  //TODO: Change to "setupData" in all places, unless of strong reasons against!
   final Map<String, dynamic> setupData;
   final String resultPlayerId;  //The ID associated with this result in the setup (whether name or code)
 
@@ -48,6 +46,7 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
   List<dynamic> alternativeSolutions;
   List<dynamic> multiDisplay;
   bool showSpinner = true;
+  int delayForSpinner = 500;  // milliseconds
 
   @override
   void initState() {
@@ -78,7 +77,7 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
   }
 
   void getGameData() async {
-    await Future.delayed(Duration(milliseconds: 500));  // TODO check... Does this make the spinner show?
+    await Future.delayed(Duration(milliseconds: delayForSpinner));  // To give spinner time to show...
     Map<String, dynamic> setupData = widget.setupData;
     print('setupData in SentResultsScreen is $setupData');
     print('setupData.keys in SentResultsScreen is ${setupData.keys}');
@@ -116,8 +115,8 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
        });
       } else {
        setState(() { //Do I really have to set State? It's called from initState and is no longer async...
-          atomScore = setupData[kFieldResults][widget.resultPlayerId][kAaResultsField];
-          beamScore = setupData[kFieldResults][widget.resultPlayerId][kBbResultsField];
+          atomScore = setupData[kFieldResults][widget.resultPlayerId][kSubFieldA];
+          beamScore = setupData[kFieldResults][widget.resultPlayerId][kSubFieldB];
           if (atomScore != null && beamScore != null) {
             totalScore = atomScore + beamScore;
           }
@@ -147,7 +146,6 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
             beamScore = thisGame.beamScore;
             totalScore = atomScore + beamScore;
           });
-          // TODO Navigate to Playing data and not Results data, if following somebody who already has an uploaded result.
         }
 
         print('Edge tile children: ${thisGame.edgeTileChildren}');
@@ -161,7 +159,6 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
     }
   }
 
-  // TODO: Move the get() functions below to some common place
   Widget getEdges({int x, int y}) {
     int slotNo = Beam.convert(coordinates: Position(x, y), heightOfPlayArea: thisGame.heightOfPlayArea, widthOfPlayArea: thisGame.widthOfPlayArea);
     return Expanded(
@@ -391,7 +388,7 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
                                     padding: EdgeInsets.only(right: 26.0),
                                     child: Text(
                                       // '${thisGame.beamScore + thisGame.atomScore}',
-                                      '$totalScore',
+                                      '${totalScore ?? '...'}',
                                       textAlign: TextAlign.right,
                                       style: TextStyle(fontWeight: FontWeight.bold),
                                     ),

@@ -1,3 +1,4 @@
+import 'package:blackbox/units/ping_widget.dart';
 import 'package:blackbox/units/final_answer_press.dart';
 import 'package:blackbox/units/fcm_send_msg.dart';
 import 'package:wakelock/wakelock.dart';
@@ -8,15 +9,16 @@ import 'package:blackbox/game_hub_updates.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:provider/provider.dart';
 import 'package:blackbox/units/small_widgets.dart';
-import 'package:blackbox/token.dart';
+
+// import 'package:blackbox/token.dart';
 import 'package:blackbox/my_firebase_labels.dart';
 
 // import 'package:blackbox/local_notifications.dart';
-import 'file:///C:/Users/karol/AndroidStudioProjects/blackbox/lib/units/blackbox_popup.dart';
+// import 'package:blackbox/units/blackbox_popup.dart';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+
+// import 'package:http/http.dart' as http;
 import 'package:blackbox/constants.dart';
-import 'package:blackbox/firestore_lables.dart';
 import 'package:collection/collection.dart';
 import 'dart:async';
 import 'package:blackbox/my_firebase.dart';
@@ -54,12 +56,16 @@ class _PlayScreenState extends State<PlayScreen> {
   DocumentSnapshot setup;
   String setupID;
   final List<int> testBeams;
+  GameHubUpdates gameHubProvider;
+
+  // Provider gameHubProvider;
 
 //  auth.User loggedInUser;
   Map<String, dynamic> setupData = {};
+  String myUid = MyFirebase.authObject.currentUser.uid;
   Future<Timestamp> startedPlaying;
   Stream<DocumentSnapshot> thisSetupStream;
-  StreamSubscription followingListener;
+  StreamSubscription setupListener;
 
   // Timestamp started;
   String startedString = 'N/A';
@@ -71,21 +77,23 @@ class _PlayScreenState extends State<PlayScreen> {
   void initState() {
 //    getCurrentUser();
     print('PlayScreen() initState playerId is ${thisGame.playerId}');
-    Wakelock.enable();  // Prevents phone from sleeping for as long as this screen is open
+    Wakelock.enable(); // Prevents phone from sleeping for as long as this screen is open
+    // gameHubProvider = Provider.of<GameHubUpdates>(context, listen: false);
+
     if (thisGame.online) {
       setupData = setup.data();
       setupID = setup.id;
       thisSetupStream = MyFirebase.storeObject.collection('setups').doc(setup.id).snapshots();
-      getFollowingStream();
+      getSetupStream();
 
       if (setupData.containsKey(kFieldShuffleA) && setupData.containsKey(kFieldShuffleB)) {
         thisGame.beamImageIndexA = [];
-        for (int i = 0; i < setupData[kFieldShuffleA].length; i++){
+        for (int i = 0; i < setupData[kFieldShuffleA].length; i++) {
           thisGame.beamImageIndexA.add(setupData[kFieldShuffleA][i]);
         }
 
         thisGame.beamImageIndexB = [];
-        for (int i = 0; i < setupData[kFieldShuffleB].length; i++){
+        for (int i = 0; i < setupData[kFieldShuffleB].length; i++) {
           thisGame.beamImageIndexB.add(setupData[kFieldShuffleB][i]);
         }
       }
@@ -103,6 +111,7 @@ class _PlayScreenState extends State<PlayScreen> {
 
       //If I'm already playing this game:
       if (setupData.containsKey(kFieldPlaying) && setupData[kFieldPlaying].containsKey(thisGame.playerId)) {
+        ping();
         startedPlaying = Future(() => setupData[kFieldPlaying][thisGame.playerId][kSubFieldStartedPlaying]); // If it's null it's null.
         if (setupData[kFieldPlaying][thisGame.playerId][kSubFieldStartedPlaying] != null) {
           startedString = DateFormat('d MMM, HH:mm:ss').format(setupData[kFieldPlaying][thisGame.playerId][kSubFieldStartedPlaying].toDate());
@@ -110,14 +119,14 @@ class _PlayScreenState extends State<PlayScreen> {
 
         if (setupData[kFieldPlaying][thisGame.playerId].containsKey(kSubFieldClearList)) {
           List<dynamic> sentClearList = setupData[kFieldPlaying][thisGame.playerId][kSubFieldClearList];
-          for (int i = 0; i < sentClearList.length; i += 2){
-            thisGame.clearList.add([sentClearList[i], sentClearList[i+1]]);
+          for (int i = 0; i < sentClearList.length; i += 2) {
+            thisGame.clearList.add([sentClearList[i], sentClearList[i + 1]]);
           }
         }
 
         // List<List<int>> receivedPlayingAtoms = [];
         List<Atom> receivedPlayingAtoms = [];
-        List<dynamic> playingAtoms = setupData[kFieldPlaying][thisGame.playerId][kPlayingAtoms] ?? [];
+        List<dynamic> playingAtoms = setupData[kFieldPlaying][thisGame.playerId][kSubFieldPlayingAtoms] ?? [];
         for (int i = 0; i < playingAtoms.length; i += 2) {
           receivedPlayingAtoms.add(Atom(playingAtoms[i], playingAtoms[i + 1]));
         }
@@ -125,7 +134,7 @@ class _PlayScreenState extends State<PlayScreen> {
         thisGame.playerAtoms = receivedPlayingAtoms;
         // print('receivedPlayingAtoms are $receivedPlayingAtoms');
 
-        List<dynamic> playingBeams = setupData[kFieldPlaying][thisGame.playerId][kPlayingBeams] ?? [];
+        List<dynamic> playingBeams = setupData[kFieldPlaying][thisGame.playerId][kSubFieldPlayingBeams] ?? [];
         // for (int receivedBeamNo in setupData[kPlayingField][thisGame.playerId][kPlayingBeams]) {
         for (int receivedBeamNo in playingBeams) {
           // print("receivedBeamNo is $receivedBeamNo");
@@ -143,17 +152,19 @@ class _PlayScreenState extends State<PlayScreen> {
         // startedPlaying = startedPlaying.toDate();
         setupData.putIfAbsent('playing', () => {});
         setupData['playing'].putIfAbsent(
+            // '$myUid',
             '${thisGame.playerId}',
-                () => {
-              'playingAtoms': [],
-              'playingBeams': [],
-              '$kSubFieldStartedPlaying': FieldValue.serverTimestamp(),
-            });
+            () => {
+                  'playingAtoms': [],
+                  'playingBeams': [],
+                  '$kSubFieldStartedPlaying': FieldValue.serverTimestamp(),
+                });
         // print('setupData in PlayScreen initState() is $setupData');
         sendPushNotifications(kTopicPlayingSetup);
         Future<void> uploadDoc =
-        MyFirebase.storeObject.collection('setups').doc(widget.setup.id).set({'playing': setupData['playing']}, SetOptions(merge: true));
+            MyFirebase.storeObject.collection('setups').doc(widget.setup.id).set({'playing': setupData['playing']}, SetOptions(merge: true));
         startedPlaying = getStartedPlaying(uploadDoc);
+        ping(uploadDoc: uploadDoc);
       }
 
       // print('Atoms are in positions:');
@@ -165,13 +176,130 @@ class _PlayScreenState extends State<PlayScreen> {
     super.initState();
   }
 
+  @override
+  void dispose() async {
+    super.dispose();
+//    userListener.cancel();
+    Wakelock.disable();
+    if (thisGame.online) {
+      setupListener.cancel();
+      DocumentSnapshot snapshot = await MyFirebase.storeObject.collection('setups').doc(widget.setup.id).get();
+      Map<String, dynamic> endSetupData = snapshot.data();
+
+      //If the player leaves without having played, remove their 'playing' key, if it still exists:
+      if (endSetupData.containsKey('playing') &&
+          endSetupData['playing'].containsKey(thisGame.playerId) &&
+          endSetupData['playing'][thisGame.playerId].containsKey('playingAtoms') &&
+          endSetupData['playing'][thisGame.playerId].containsKey(kSubFieldPlayingBeams) &&
+          ListEquality().equals(endSetupData['playing'][thisGame.playerId]['playingAtoms'], []) &&
+          ListEquality().equals(endSetupData['playing'][thisGame.playerId]['playingBeams'], [])) {
+        // print("endSetupData in dispose() is $endSetupData\n***************************");
+        String myUid = MyFirebase.authObject.currentUser.uid;
+
+        MyFirebase.storeObject.collection(kCollectionSetups).doc(widget.setup.id).update({
+          '$kFieldPlaying.${thisGame.playerId}': FieldValue.delete(),
+        });
+        //If I want to check the effect of the above:
+//      DocumentSnapshot x =  await MyFirebase.storeObject.collection('setups').doc(widget.setup.id).get();
+//      Map<String, dynamic> afterUploadSetupData = x.data();
+//      print("afterUploadSetupData is $afterUploadSetupData");
+
+        // Delete ping document in subCollection
+        MyFirebase.storeObject
+            .collection(kCollectionSetups)
+            .doc(widget.setup.id)
+            .collection(kSubCollectionPlayingPings)
+            .doc(kSubCollectionPlayingPings)
+            .update({
+          '$myUid': FieldValue.delete(),
+        });
+        // MyFirebase.storeObject.collection(kCollectionSetups).doc(widget.setup.id).collection(kSubCollectionPlayingPings).doc(thisGame.playerId).delete();
+
+        // This could be used to "unsend" a Playing-notification, if it is collapsible:
+        String jsonString = jsonEncode({
+          "data": {
+            "event": "$kMsgEventStoppedPlaying",
+            kMsgPlaying: "$myUid",
+            "$kMsgSetupSender": "${setup[kFieldSender]}",
+            "i": "${setupData['i']}",
+            kMsgSetupID: "$setupID",
+            // "collapse_key": myUid + "_playing_" + setupData['i'].toString(),
+          },
+          // "token": "${await myGlobalToken}",
+          // "topic": topic,
+          "topic": kTopicDeveloper, // For testing
+        });
+        // print("jsonString is $jsonString");
+
+        fcmSendMsg(jsonString);
+        // Future<http.Response> sendMsgRes = fcmSendMsg(jsonString);
+        // handleMsgResponse(sendMsgRes: sendMsgRes, token: token, uid: uid)
+      }
+      // Remove any corrupted, half-deleted "playing" fields:
+      if (endSetupData.containsKey(kFieldPlaying)) {
+        for (String playingId in endSetupData['playing'].keys) {
+          if (endSetupData[kFieldPlaying][playingId][kSubFieldPlayingDone] == true ||
+              !(endSetupData[kFieldPlaying][playingId].containsKey(kSubFieldPlayingAtoms) &&
+                  endSetupData[kFieldPlaying][playingId].containsKey(kSubFieldPlayingBeams))) {
+            // print("endSetupData in dispose() is $endSetupData\n***************************");
+            MyFirebase.storeObject.collection(kCollectionSetups).doc(widget.setup.id).update({
+              '$kFieldPlaying.$playingId': FieldValue.delete(),
+            });
+            // Delete ping document in subCollection
+            MyFirebase.storeObject.collection(kCollectionSetups).doc(widget.setup.id).collection(kSubCollectionPlayingPings).doc(playingId).delete();
+            //If I want to check the effect of the above:
+            //      DocumentSnapshot x =  await MyFirebase.storeObject.collection('setups').doc(widget.setup.id).get();
+            //      Map<String, dynamic> afterUploadSetupData = x.data();
+            //      print("afterUploadSetupData is $afterUploadSetupData");
+          }
+        }
+        if (endSetupData[kFieldPlaying].isEmpty) {
+          //TODO: This doesn't seem to be working
+          // print('Deleting "playing" field.');
+          MyFirebase.storeObject.collection(kCollectionSetups).doc(widget.setup.id).update({
+            '$kFieldPlaying': FieldValue.delete(),
+          });
+          // Delete ping document in subCollection
+          MyFirebase.storeObject
+              .collection(kCollectionSetups)
+              .doc(widget.setup.id)
+              .collection(kSubCollectionPlayingPings)
+              .doc(thisGame.playerId)
+              .delete();
+        }
+      }
+    }
+  }
+
+  void ping({Future<void> uploadDoc}) async {
+    if (uploadDoc != null) await uploadDoc; // If I wasn't already playing this game, we need to wait until Playing tag has uploaded.
+    // int i = 0;
+    // TODO: Turn ping back on (if commented out):
+    do {
+      // print('Ping no $i');
+      try {
+        await MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).collection('PlayingPings').doc('PlayingPings').set({
+          // await MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).collection('PlayingPings').doc(myUid).set({
+          '$myUid': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } on Exception catch (e) {
+        print('Ping upload error: $e');
+      }
+      // await MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).update({
+      //    '$kFieldPlaying.${thisGame.playerId}.$kSubFieldPing': FieldValue.serverTimestamp(),
+      //  });
+      await Future.delayed(Duration(seconds: 4));
+      // i++;
+    } while (this.mounted);
+  }
+
   Future<Timestamp> getStartedPlaying(Future<void> uploadDoc) async {
     // Wait for the playing tag to upload. Then download it again to get the "StartedPlaying" timestamp.
     setState(() {
       showSpinner = true;
     });
     await uploadDoc;
-    DocumentSnapshot doc = await MyFirebase.storeObject.collection(kCollectionSetups).doc(widget.setup.id).get();
+    DocumentSnapshot doc = await MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).get();
     Map<String, dynamic> docData = doc.data();
     Timestamp _startedPlaying = docData[kFieldPlaying][thisGame.playerId][kSubFieldStartedPlaying];
     // print('_startedPlaying is $_startedPlaying in getStartedPlaying()');
@@ -184,72 +312,6 @@ class _PlayScreenState extends State<PlayScreen> {
       showSpinner = false;
     });
     return _startedPlaying;
-  }
-
-  @override
-  void dispose() async {
-    super.dispose();
-//    userListener.cancel();
-    Wakelock.disable();
-    if (thisGame.online) {
-      followingListener.cancel();
-      DocumentSnapshot snapshot = await MyFirebase.storeObject.collection('setups').doc(widget.setup.id).get();
-      Map<String, dynamic> endSetupData = snapshot.data();
-
-      //If the player leaves without having played, remove their 'playing' key:
-      if (endSetupData['playing'][thisGame.playerId].containsKey('playingAtoms') && endSetupData['playing'][thisGame.playerId].containsKey(kSubFieldPlayingBeams) && ListEquality().equals(endSetupData['playing'][thisGame.playerId]['playingAtoms'], []) &&
-          ListEquality().equals(endSetupData['playing'][thisGame.playerId]['playingBeams'], [])) {
-        // print("endSetupData in dispose() is $endSetupData\n***************************");
-        String myUid = MyFirebase.authObject.currentUser.uid;
-
-        // This could be used to "unsend" a Playing-notification, if it is collapsible:
-        String jsonString = jsonEncode({
-          "data": {
-            "playing": "$myUid",
-            "setupSender": "${setup[kFieldSender]}",
-            "i": "${setupData['i']}",
-            // "collapse_key": myUid + "_playing_" + setupData['i'].toString(),
-          },
-          // "token": "${await myGlobalToken}",
-          // "topic": topic,
-          "topic": kTopicDeveloper,  // For testing
-        });
-        // print("jsonString is $jsonString");
-
-        fcmSendMsg(jsonString);
-
-    MyFirebase.storeObject.collection(kSetupCollection).doc(widget.setup.id).update({
-          '$kFieldPlaying.${thisGame.playerId}': FieldValue.delete(),
-        });
-        //If I want to check the effect of the above:
-//      DocumentSnapshot x =  await MyFirebase.storeObject.collection('setups').doc(widget.setup.id).get();
-//      Map<String, dynamic> afterUploadSetupData = x.data();
-//      print("afterUploadSetupData is $afterUploadSetupData");
-      }
-      // Remove any corrupted, half-deleted "playing" fields:
-      if (endSetupData.containsKey(kFieldPlaying)) {
-        for (String playingId in endSetupData['playing'].keys) {
-          if (endSetupData[kFieldPlaying][playingId][kPlayingDone] == true ||
-              !(endSetupData[kFieldPlaying][playingId].containsKey(kSubFieldPlayingAtoms) && endSetupData[kFieldPlaying][playingId].containsKey(kSubFieldPlayingBeams))) {
-            // print("endSetupData in dispose() is $endSetupData\n***************************");
-            MyFirebase.storeObject.collection(kSetupCollection).doc(widget.setup.id).update({
-              '$kFieldPlaying.$playingId': FieldValue.delete(),
-            });
-            //If I want to check the effect of the above:
-            //      DocumentSnapshot x =  await MyFirebase.storeObject.collection('setups').doc(widget.setup.id).get();
-            //      Map<String, dynamic> afterUploadSetupData = x.data();
-            //      print("afterUploadSetupData is $afterUploadSetupData");
-          }
-        }
-        if (endSetupData[kFieldPlaying].isEmpty) {
-          //TODO: This doesn't seem to be working
-          // print('Deleting "playing" field.');
-          MyFirebase.storeObject.collection(kSetupCollection).doc(widget.setup.id).update({
-            '$kFieldPlaying': FieldValue.delete(),
-          });
-        }
-      }
-    }
   }
 
 //  void getCurrentUser(){
@@ -265,22 +327,44 @@ class _PlayScreenState extends State<PlayScreen> {
   void sendPushNotifications(String topic) async {
     String myUid = MyFirebase.authObject.currentUser.uid;
 
+    List<String> resultKeys = [];
+    if (setupData.containsKey(kFieldResults)) {
+      for (String key in setupData[kFieldResults].keys) {
+        resultKeys.add(key);
+      }
+    }
+    print('resultKeys is $resultKeys');
     String jsonString = jsonEncode({
-      "notification": {
-        "title": "Someone is playing!",
-        "body": "Someone ${topic == kTopicPlayingSetup ? 'is playing': topic == kTopicResumedPlayingSetup ? 'just resumed playing': ''} setup no ${setupData['i']}nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn.",
-      },
       "data": {
-        "click_action": "FLUTTER_NOTIFICATION_CLICK",
+        "event": "${topic == kTopicPlayingSetup ? 'started_playing' : topic == kTopicResumedPlayingSetup ? 'resumed_playing' : ''}",
         "playing": "$myUid",
-        "setupSender": "${setup[kFieldSender]}",
-        "i": setupData['i'].toString(),
+        "last_move": "${topic == kTopicResumedPlayingSetup ? '${setupData[kFieldPlaying][myUid][kSubFieldLastMove]}' : null}",
+        "earlier_results": "$resultKeys",
+        // "earlier_results": setupData[kFieldResults], // I was thinking I could send the score... to send notifications for very high or low score setups, but...
+        kMsgSetupSender: "${setupData[kFieldSender]}",
+        kMsgI: setupData['i'].toString(),
+        kMsgSetupID: "$setupID"
         // "collapse_key": myUid + "_playing_" + setupData['i'].toString(),
       },
       // "token": "${await myGlobalToken}",
-      // "topic": topic,
-      "topic": kTopicDeveloper,  // For testing
+      "topic": topic,
     });
+    // String jsonString = jsonEncode({
+    //   "notification": {
+    //     "title": "Someone is playing!",
+    //     "body": "Someone ${topic == kTopicPlayingSetup ? 'is playing': topic == kTopicResumedPlayingSetup ? 'just resumed playing': ''} setup no ${setupData['i']}nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn.",
+    //   },
+    //   "data": {
+    //     "click_action": "FLUTTER_NOTIFICATION_CLICK",
+    //     "playing": "$myUid",
+    //     "setupSender": "${setup[kFieldSender]}",
+    //     "i": setupData['i'].toString(),
+    //     // "collapse_key": myUid + "_playing_" + setupData['i'].toString(),
+    //   },
+    //   // "token": "${await myGlobalToken}",
+    //   // "topic": topic,
+    //   "topic": kTopicDeveloper,  // For testing
+    // });
     // print("jsonString is $jsonString");
 
     fcmSendMsg(jsonString, context);
@@ -368,76 +452,146 @@ class _PlayScreenState extends State<PlayScreen> {
 //     });
 //   }
 
-  List<Widget> followers = [];
+  List<Widget> followers = [Text('(none)', style: kConversationResultsResultsStyle)];
 
-  void getFollowingStream() async {
-//  StreamSubscription<auth.User> userListener;
-    followingListener = thisSetupStream.listen((event) {
-      Map<String, dynamic> eventData = event.data();
-      print('In getFollowingStream, eventData is $eventData');
-      // print('kPlayingField is $kFieldPlaying');
-      // print('widget.playingId is ${thisGame.playerId}');
-//      List<Widget> newFollowers = followers;
-      if(eventData.containsKey(kFieldPlaying) && eventData[kFieldPlaying].containsKey(thisGame.playerId) && eventData[kFieldPlaying][thisGame.playerId].containsKey(kSubFieldFollowing)){
-        // print('follower exists');
-        followers = [];
-//        bool add = false;
-//        for(String follower in eventData[kPlayingField][thisGame.playerId][kFollowingField]){
-//          if(follower == )
-//        }
-//        List<Widget> newFollowers = eventData[kPlayingField][thisGame.playerId][kFollowingField];
-//        followers = eventData[kPlayingField][thisGame.playerId][kFollowingField];
-//        if(ListEquality().equals(followers, newFollowers)==false){
+  Map<String, dynamic> setupEventData;
+
+  void getSetupStream() async {
+    setupListener = thisSetupStream.listen((event) {
+      print('getSetupStream() event in PlayScreen()');
+      Map<String, dynamic> newSetupEventData = event.data();
+
+      bool newFollowerExists = newSetupEventData != null &&
+          newSetupEventData.containsKey(kFieldPlaying) &&
+          newSetupEventData[kFieldPlaying].containsKey(thisGame.playerId) &&
+          newSetupEventData[kFieldPlaying][thisGame.playerId].containsKey(kSubFieldFollowing);
+      bool oldFollowerExists = setupEventData != null &&
+          setupEventData.containsKey(kFieldPlaying) &&
+          setupEventData[kFieldPlaying].containsKey(thisGame.playerId) &&
+          setupEventData[kFieldPlaying][thisGame.playerId].containsKey(kSubFieldFollowing);
+
+      List<dynamic> newFollowers = newFollowerExists ? newSetupEventData[kFieldPlaying][thisGame.playerId][kSubFieldFollowing] : [];
+      List<dynamic> oldFollowers = oldFollowerExists ? setupEventData[kFieldPlaying][thisGame.playerId][kSubFieldFollowing] : [];
+      // Map<String, dynamic> newFollowers = newFollowerExists ? newSetupEventData[kFieldPlaying][thisGame.playerId][kSubFieldFollowing] : {};
+      // Map<String, dynamic> oldFollowers = oldFollowerExists ? setupEventData[kFieldPlaying][thisGame.playerId][kSubFieldFollowing] : {};
+
+      // If either the new setupData or the old setupData contained a 'Following' tag,
+      // and something is different between them, set State:
+      if (((newFollowerExists) || (oldFollowerExists)) && (!ListEquality().equals(newFollowers, oldFollowers))) {
+        // if (((newFollowerExists) || (oldFollowerExists)) && (!MapEquality().equals(newFollowers, oldFollowers))) {
+        print('A change in followers detected in ${this.widget}');
         setState(() {
-          for (String follower in eventData[kFieldPlaying][thisGame.playerId][kSubFieldFollowing]) {
-            followers.add(Text('$follower', style: kConversationResultsResultsStyle));
-          }
-          // print('New followers is $followers');
+          setupEventData = newSetupEventData;
         });
-//        }
+      } else {
+        // Otherwise, just update setupEventData:
+        print('No change in followers in ${this.widget}');
+        setupEventData = newSetupEventData;
       }
     });
   }
 
+  Widget getFollowers() {
+  // List<Widget> getFollowers() {
+    Widget _followers;
+    // List<Widget> _followers = [];
+    _followers =
+      PingWidget(
+        pingStream: MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).collection(kSubCollectionWatchingPings).doc(myUid).snapshots(),
+        // pingStream: MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).collection(kSubCollectionPlayingPings).doc(kSubCollectionPlayingPings).snapshots(),
+        createChild: createChild,
+      );
+    // _followers = [
+    //   PingWidget(
+    //     pingStream: MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).collection(kSubCollectionWatchingPings).doc(myUid).snapshots(),
+    //     // pingStream: MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).collection(kSubCollectionPlayingPings).doc(kSubCollectionPlayingPings).snapshots(),
+    //     createChildren: createChildren,
+    //   ),
+    // ];
+
+    return _followers;
+  }
+
+  Widget  createChild(activeMap) {
+  // List<Widget>  createChildren(activeMap) {
+    print('Running createChildren() in ${this.widget}');
+    List<Widget> _children = [];
+
+    for (String follower in activeMap.keys) {
+      if (activeMap[follower]) _children.add(Text('${gameHubProvider.getScreenName(follower)}', style: kConversationResultsResultsStyle));
+    }
+    if (_children.length == 0) _children = [Text('(none)', style: kConversationResultsResultsStyle)];
+
+    return Column(
+      children: _children,
+    );
+  }
+
+  // List<Widget> getFollowers() {
+  //   List<Widget> _followers = [];
+  //   // followers = [];
+  //
+  //   if (setupEventData != null &&
+  //       setupEventData.containsKey(kFieldPlaying) &&
+  //       setupEventData[kFieldPlaying].containsKey(thisGame.playerId) &&
+  //       setupEventData[kFieldPlaying][thisGame.playerId].containsKey(kSubFieldFollowing)) {
+  //     // print('follower exists');
+  //
+  //     for (String follower in setupEventData[kFieldPlaying][thisGame.playerId][kSubFieldFollowing]) {
+  //       _followers.add(Text('${gameHubProvider.getScreenName(follower)}', style: kConversationResultsResultsStyle));
+  //       // No longer gives listen error, as it did when it was inside the setupStream:
+  //       // _followers.add(Text('${Provider.of<GameHubUpdates>(context).getScreenName(follower)}', style: kConversationResultsResultsStyle));
+  //     }
+  //     // print('New _followers is $_followers');
+  //   }
+  //   if (_followers.length == 0) _followers = [Text('(none)', style: kConversationResultsResultsStyle)];
+  //   return _followers;
+  // }
+
   bool showSpinner = false;
+
   @override
   Widget build(BuildContext context) {
+    print('Building xxx ${this.widget}');
+    gameHubProvider = Provider.of<GameHubUpdates>(context, listen: true);
+    // getSetupStream();  // This doesn't give an error.... but it really should,
+    // coz getSetupStream() sets state!...
     return Scaffold(
       appBar: AppBar(title: Text('blackbox')),
       body: ModalProgressHUD(
         inAsyncCall: showSpinner,
-        // inAsyncCall: false, // TODO use above
         child: Center(
           child: Column(
             // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
               thisGame.online
                   ? Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  //Left info texts:
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Text('online')
-                        InfoText('Setup no ${setupData['i']}'),
-                        InfoText('By ${Provider.of<GameHubUpdates>(context).getScreenName(setupData[kFieldSender])}'),
+                        //Left info texts:
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Text('online')
+                              InfoText('Setup no ${setupData['i']}'),
+                              InfoText('By ${gameHubProvider.getScreenName(setupData[kFieldSender])}'),
+                              // InfoText('By ${Provider.of<GameHubUpdates>(context).getScreenName(setupData[kFieldSender])}'),
+                            ],
+                          ),
+                        ),
+                        //Right info texts:
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            InfoText('Started: $startedString'),
+                          ],
+                        ),
                       ],
-                    ),
-                  ),
-                  //Right info texts:
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      InfoText('Started: $startedString'),
-                    ],
-                  ),
-                ],
-              )
+                    )
                   : SizedBox(),
 
               // thisGame.online ? Align(
@@ -464,10 +618,17 @@ class _PlayScreenState extends State<PlayScreen> {
                           // constraints: BoxConstraints(maxHeight: 150),
                           constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height / 6),
                           child: SingleChildScrollView(
-                            child: Column(
-                              children: followers,
-                            ),
-                          ),
+                            child:
+                            // Column(
+                            //         children:
+                                    getFollowers(),
+                                    // For some STUPID reason, the below does not update when
+                                    // Provider.of<GameHubUpdates>(context, listen: true) updates...
+                                    // Even though it contained the same:
+                                    // children: followers,
+                                    // Hence getFollowers(), because then it updates... *facepalm*
+                                  // ),
+                                ),
                         ),
                       ],
                     )
@@ -484,15 +645,25 @@ class _PlayScreenState extends State<PlayScreen> {
                   ],
                 ),
               ),
-              //Answer button:
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  Padding(
-                    padding: EdgeInsets.all(10),
-                    child: Text(
-                        'Number of atoms:   ${thisGame.playerAtoms.length == 0 ? thisGame.atoms.length : '${thisGame.atoms.length - thisGame.playerAtoms.length} (${thisGame.atoms.length})'}'),
+                  Expanded(
+                    child: Container(
+                      alignment: Alignment.centerLeft,
+                      // color: Colors.purple,
+                      child: Padding(
+                        padding: EdgeInsets.all(10),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Number of atoms:   ${thisGame.playerAtoms.length == 0 ? thisGame.atoms.length : '${thisGame.atoms.length - thisGame.playerAtoms.length} (${thisGame.atoms.length})'}',
+                            textAlign: TextAlign.left,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
+                  //Answer button:
                   Padding(
                     padding: const EdgeInsets.only(right: 10),
                     child: RaisedButton(
@@ -500,39 +671,44 @@ class _PlayScreenState extends State<PlayScreen> {
                       onPressed: thisGame.playerAtoms.length != thisGame.atoms.length
                           ? null
                           : () async {
-                        setState(() {
-                          showSpinner = true;
-                        });
-                        List<dynamic> alternativeSolutions = await finalAnswerPress(thisGame: thisGame, setupID: setupID, setupData: setupData, answered: answered, startedPlaying: startedPlaying);
-                        answered = true;
-                        if (thisGame.online) {
-                          // await onlineButtonPress(thisGame, setupID, setupData, answered, startedPlaying); //The "await" here should guarantee that results are uploaded before the correct answer is given...
-                          DocumentSnapshot newSetup = await MyFirebase.storeObject.collection(kCollectionSetups).doc(setupID).get();
-                          setupData = newSetup.data();
-                          print('setupData after newSetup.data() is $setupData');
-                        }
+                              setState(() {
+                                showSpinner = true;
+                              });
+                              List<dynamic> alternativeSolutions = await finalAnswerPress(
+                                  thisGame: thisGame, setupID: setupID, setupData: setupData, answered: answered, startedPlaying: startedPlaying);
+                              answered = true;
+                              if (thisGame.online) {
+                                // await onlineButtonPress(thisGame, setupID, setupData, answered, startedPlaying); //The "await" here should guarantee that results are uploaded before the correct answer is given...
+                                DocumentSnapshot newSetup = await MyFirebase.storeObject.collection(kCollectionSetups).doc(setupID).get();
+                                setupData = newSetup.data();
+                                print('setupData after newSetup.data() is $setupData');
+                              }
 
-                        print('+++++++++++++++++++++++++++++++++++++++++++++++++++++\n'
-                            'Coming back from finalAnswerPress():\n'
-                            'thisGame.correctAtoms is ${thisGame.correctAtoms}\n'
-                            'setupData is $setupData\n'
-                            'setupID is $setupID');
-                        bool altSol = alternativeSolutions != null ? true : false;
-                        setState(() {
-                          showSpinner = false;
-                        });
-                        await Navigator.push(context, MaterialPageRoute(builder: (context) {
-                          // return ResultsScreen(thisGame: thisGame, setupData: setupData, altSol: altSol, alternativeSolutions: altGame != null ? [altGame.atoms, playerGame.atoms] : null,); // setupData might be {} (if not online)
-                          return ResultsScreen(thisGame: thisGame, setupData: setupData, altSol: altSol, alternativeSolutions: alternativeSolutions); // setupData might be {} (if not online)
-                        }));
+                              print('+++++++++++++++++++++++++++++++++++++++++++++++++++++\n'
+                                  'Coming back from finalAnswerPress():\n'
+                                  'thisGame.correctAtoms is ${thisGame.correctAtoms}\n'
+                                  'setupData is $setupData\n'
+                                  'setupID is $setupID');
+                              bool altSol = alternativeSolutions != null ? true : false;
+                              setState(() {
+                                showSpinner = false;
+                              });
+                              await Navigator.push(context, MaterialPageRoute(builder: (context) {
+                                // return ResultsScreen(thisGame: thisGame, setupData: setupData, altSol: altSol, alternativeSolutions: altGame != null ? [altGame.atoms, playerGame.atoms] : null,); // setupData might be {} (if not online)
+                                return ResultsScreen(
+                                    thisGame: thisGame,
+                                    setupData: setupData,
+                                    altSol: altSol,
+                                    alternativeSolutions: alternativeSolutions); // setupData might be {} (if not online)
+                              }));
 
-                        print('Called after ResultsScreen has been popped');
-                        // This is now done in rawAtomScore():
-                        thisGame.correctAtoms = [];
-                        thisGame.misplacedAtoms = [];
-                        thisGame.missedAtoms = [];
-                        thisGame.atomScore = 0;
-                      },
+                              print('Called after ResultsScreen has been popped');
+                              // This is now done in rawAtomScore():
+                              thisGame.correctAtoms = [];
+                              thisGame.misplacedAtoms = [];
+                              thisGame.missedAtoms = [];
+                              thisGame.atomScore = 0;
+                            },
                     ),
                   )
                 ],

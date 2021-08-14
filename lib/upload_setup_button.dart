@@ -1,7 +1,7 @@
-// import 'units/fcm_send_msg.dart';
-// import 'my_firebase_labels.dart';
-// import 'dart:convert';
-// import 'package:http/http.dart' as http;
+import 'units/fcm_send_msg.dart';
+import 'my_firebase_labels.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:blackbox/my_firebase_labels.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -94,13 +94,67 @@ class UploadSetupButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     token = getToken();
+    String myUid = MyFirebase.authObject.currentUser.uid;
+
     return OnlineButton(
       text: 'Upload',
       onPressed: () async {
         print("Token in onPressed is ${await token}");
 
-        ///TODO: Turn the below back from Cloud Function:
-        // fcmSendMsg(context);
+
+        String myPlayerId = await getMyPlayerId();
+        print('OnlineButton printing player ID: $myPlayerId');
+        bool needLogin = false;
+        if (myPlayerId == null) {
+          //If no user is logged in
+          await BlackboxPopup(
+            context: context,
+            title: 'Not Logged In!',
+            desc: 'You are no longer logged in. Click OK to log in again.',
+          ).show();
+          needLogin = true;
+        } else {
+          String me = Provider.of<GameHubUpdates>(context, listen: false).providerUserIdMap[myPlayerId];
+          print('Me in OnlineButton is $me.');
+        }
+
+        if (needLogin) {
+          await Navigator.push(context, MaterialPageRoute(builder: (context) {
+            return RegistrationAndLoginScreen(fromSetup: true);
+          }));
+          print("On return from new login, User is ${MyFirebase.authObject.currentUser.email}");
+          myPlayerId = await getMyPlayerId();
+        }
+
+        List<int> atomArray = [];
+        for (Atom atom in widget.thisGame.atoms) {
+          atomArray.add(atom.position.x);
+          atomArray.add(atom.position.y);
+        }
+
+        DocumentReference setupRef = await MyFirebase.storeObject.collection('setups').add({
+          'sender': myPlayerId,
+          'atoms': atomArray,
+          'widthAndHeight': [widget.thisGame.widthOfPlayArea, widget.thisGame.heightOfPlayArea],
+          'timestamp': FieldValue.serverTimestamp(),
+          kFieldShuffleA: widget.thisGame.beamImageIndexA,
+          kFieldShuffleB: widget.thisGame.beamImageIndexB,
+          // 'playing': {}, //Why should I add this?? It just takes up unnecessary space and it's not logical!...
+          //I wanted to make it easier to avoid "called on null" but I'll just have to manage that some other way...
+        });
+
+        String setupID = setupRef.id;
+
+        fcmSendMsg(jsonEncode({
+          "data": {
+            "event": kMsgEventNewGameHubSetup,
+            "setupSender": "$myUid",
+            "$kMsgSetupID": setupID,
+            // "collapse_key": myUid + "...",
+          },
+          // "token": "${await myGlobalToken}",
+          "topic": kTopicGameHubSetup,
+        }));
 
         // http.Response res;
         // String desc = '';
@@ -145,46 +199,6 @@ class UploadSetupButton extends StatelessWidget {
         // // BlackboxPopup(context: context, title: 'Response $code', desc: '$desc').show();
         // print('code is $code and desc is $desc in Upload Setup Button');
 
-        String myPlayerId = await getMyPlayerId();
-        print('OnlineButton printing player ID: $myPlayerId');
-        bool needLogin = false;
-        if (myPlayerId == null) {
-          //If no user is logged in
-          await BlackboxPopup(
-            context: context,
-            title: 'Not Logged In!',
-            desc: 'You are no longer logged in. Click OK to log in again.',
-          ).show();
-          needLogin = true;
-        } else {
-          String me = Provider.of<GameHubUpdates>(context, listen: false).providerUserIdMap[myPlayerId];
-          print('Me in OnlineButton is $me.');
-        }
-
-        if (needLogin) {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) {
-            return RegistrationAndLoginScreen(fromSetup: true);
-          }));
-          print("On return from new login, User is ${MyFirebase.authObject.currentUser.email}");
-          myPlayerId = await getMyPlayerId();
-        }
-
-        List<int> atomArray = [];
-        for (Atom atom in widget.thisGame.atoms) {
-          atomArray.add(atom.position.x);
-          atomArray.add(atom.position.y);
-        }
-
-        MyFirebase.storeObject.collection('setups').add({
-          'sender': myPlayerId,
-          'atoms': atomArray,
-          'widthAndHeight': [widget.thisGame.widthOfPlayArea, widget.thisGame.heightOfPlayArea],
-          'timestamp': FieldValue.serverTimestamp(),
-          kFieldShuffleA: widget.thisGame.beamImageIndexA,
-          kFieldShuffleB: widget.thisGame.beamImageIndexB,
-          // 'playing': {}, //Why should I add this?? It just takes up unnecessary space and it's not logical!...
-                            //I wanted to make it easier to avoid "called on null" but I'll just have to manage that some other way...
-        });
         ModalRoute endRoute;
         Navigator.popUntil(context, (route) {
           if (route.isFirst) {

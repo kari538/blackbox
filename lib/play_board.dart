@@ -1,5 +1,4 @@
 //import 'package:blackbox/play_screen.dart';
-import 'package:blackbox/firestore_lables.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'atom_n_beam.dart';
@@ -85,9 +84,9 @@ class _PlayBoardState extends State<PlayBoard> {
                 setState(() {});
                 refreshParent();
                 if(thisGame.online){
-                  MyFirebase.storeObject.collection(kSetupCollection).doc(setup.id).update({
+                  MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).update({
                     'playing.${thisGame.playerId}.playingBeams': thisGame.sentBeams,
-                    'playing.${thisGame.playerId}.$kSubFieldLatestMove': FieldValue.serverTimestamp(),
+                    'playing.${thisGame.playerId}.$kSubFieldLastMove': FieldValue.serverTimestamp(),
                     } //The dots take me down in the nested map.
                   );
 //                DocumentSnapshot x = await  MyFirebase.storeObject.collection('setups').doc(setup.id).get();
@@ -204,7 +203,7 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
               print("playingAtomsArray is $playingAtomsArray\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
               MyFirebase.storeObject.collection('setups').doc(setup.id).update({
                 'playing.${thisGame.playerId}.playingAtoms': playingAtomsArray,
-                'playing.${thisGame.playerId}.$kSubFieldLatestMove': FieldValue.serverTimestamp(),
+                'playing.${thisGame.playerId}.$kSubFieldLastMove': FieldValue.serverTimestamp(),
               } //The dots should take me down in the nested map...
               );
               DocumentSnapshot y = await  MyFirebase.storeObject.collection('setups').doc(setup.id).get();

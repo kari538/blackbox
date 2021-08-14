@@ -1,5 +1,4 @@
 import 'package:blackbox/atom_n_beam.dart';
-import 'package:blackbox/firestore_lables.dart';
 import 'package:blackbox/my_firebase_labels.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blackbox/my_firebase.dart';
@@ -12,8 +11,6 @@ Future<List<dynamic>> finalAnswerPress({@required Play thisGame, @required Strin
   print('Answered in finalAnswerPress() is $answered');
   print('thisGame.online in finalAnswerPress() is ${thisGame.online}');
 
-
-  // Map<String, dynamic> setupData = setup.data();
   thisGame.correctAtoms = [];
   thisGame.misplacedAtoms = [];
   thisGame.missedAtoms = [];
@@ -71,7 +68,7 @@ Future<void> onlineButtonPress(Play thisGame, String setupID, Map<String, dynami
   // print('About to update done to true');
   //This will navigate any listener to this game to the ResultsScreen(), and must await to avoid deleting and writing at the same time:
   await MyFirebase.storeObject.collection(kCollectionSetups).doc(setupID).update({
-    '$kFieldPlaying.${thisGame.playerId}.$kPlayingDone': true,
+    '$kFieldPlaying.${thisGame.playerId}.$kSubFieldPlayingDone': true,
   });
   // print('Done updating done to true');
   await Future.delayed(Duration(seconds: 6)); // To give the above plenty of time to complete before the below happens

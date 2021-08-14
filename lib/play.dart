@@ -455,7 +455,7 @@ class Play {
           print('altGame.atoms.length is ${altGame.atoms.length} and altGame.correctAtoms.length is ${altGame.correctAtoms.length}');
           print('altGame.misplacedAtoms.length is ${altGame.misplacedAtoms.length}');
           // if (altGame.atomScore <= 5) break;  // Otherwise run the whole swap-loops thing again, but only one more time.
-          // break;  // TODO use above
+          // break;  // TODO use above (to make algorithm more secure...?)
         }
       // }  // End of twice loop
 
