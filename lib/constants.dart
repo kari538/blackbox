@@ -7,7 +7,7 @@ Color kBoardEdgeColor = Color(0xff242861);
 Color kBoardEdgeTextColor = Colors.white;
 Color kBoardColor = Color(0xff141A3B); //ScaffoldBackground of BMI calculator
 Color kBoardTextColor = Colors.blueGrey;
-Color kBoardGridlineColor = Colors.grey;
+Color kBoardGridLineColor = Colors.grey;
 Color kSlightPurple = Color(0xffe4d6ff); //kActiveCardContentColor of BMI calculator
 Color kHubSetupColor = Colors.blueGrey;
 

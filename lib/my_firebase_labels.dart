@@ -28,12 +28,17 @@ const String kSubFieldA = 'A';
 const String kSubFieldB = 'B';
 const String kSubFieldStartedPlaying = 'StartedPlaying';
 const String kSubFieldFinishedPlaying = 'FinishedPlaying';
+const String kSubFieldAlternativeSolutions = 'AlternativeSolutions';
+// const String kSubField = '';
+// const String kSubField = '';
+// const String kSubField = '';
+// const String kSubField = '';
 
 // Playing:
 const String kFieldPlaying = 'playing';
 const String kSubFieldPlayingAtoms = 'playingAtoms';
 const String kSubFieldPlayingBeams = 'playingBeams';
-const String kSubFieldClearList = 'ClearList';
+const String kSubFieldMarkUpList = 'MarkUpList';
 const String kSubFieldFollowing = 'following';
 const String kSubFieldLastMove = 'LatestMove';
 const String kSubFieldPing = 'Ping';
@@ -60,6 +65,7 @@ const String kMsgEventStoppedPlaying = 'stopped_playing';
 const String kMsgEventStartedPlaying = 'started_playing';
 const String kMsgEventResumedPlaying = 'resumed_playing';
 const String kMsgEventNewGameHubSetup = 'new_game_hub_setup';
+const String kMsgEventAddedToken = 'added_token';
 const String kMsgShowLocalNotification = 'show_local_notification';
 const String kMsgOverride = 'override';
 const String kMsgOverrideYes = 'yes';
@@ -88,11 +94,12 @@ const String kTopicMajorAppUpdates = 'MajorAppUpdates';
 const String kApiCloudFunctionsLink = 'us-central1-blackbox-6b836.cloudfunctions.net';
 const String kApiSendMsg = 'sendMsg';
 
-// For functions emulator, to use with phone emulator:
-// TODO: Change from localhost!!.... if on.
-// Change this to false:
-// const bool emulator = true;
-const bool emulator = false;
+// TODO: ---Change "testing" to false in Cloud Function
+
+// For functions emulator, to use with phone emulator (AVD):
+// TODO: ---Change from localhost!!.... if on. That is, change emulating to false:
+// const bool emulating = true;
+const bool emulating = false;
 // const String kApiEmulatorLink = 'http://localhost:5001/blackbox-6b836/us-central1/'; // Didn't work before Uri update
 // const String kApiEmulatorLink = 'http://10.0.2.2:5001/blackbox-6b836/us-central1/';  // Worked before Uri update
 const String kApiEmulatorLink = '10.0.2.2:5001'; // Works after Uri update
@@ -111,7 +118,7 @@ const String kFcmResponseSuccess = "Success";
 const String kFcmResponseError = 'Error';
 // const String kFcmResponseTokenNotRegistered = ''
 //     'messaging/registration-token-not-registered'; // Old version...?
-const String kFcmResponseTokenNotRegistered = 'messaging/invalid-argument';
+const String kFcmResponseTokenNotRegistered = 'messaging/registration-token-not-registered';
 // const String kFcmResponse = '';
 // const String kFcmResponse = '';
 // const String kFcmResponse = '';

@@ -6,7 +6,7 @@ import 'package:blackbox/play.dart';
 import 'package:flutter/material.dart';
 
 Future<List<dynamic>> finalAnswerPress({@required Play thisGame, @required String setupID, @required Map<String, dynamic> setupData, @required bool answered, @required Future<Timestamp> startedPlaying}) async {
-  // TODO: Put heavy calculation in isolate so the below is not needed
+  // TODO: ***Put heavy calculation in isolate so the below is not needed
   await Future.delayed(Duration(milliseconds: 200));
   print('Answered in finalAnswerPress() is $answered');
   print('thisGame.online in finalAnswerPress() is ${thisGame.online}');
@@ -16,13 +16,11 @@ Future<List<dynamic>> finalAnswerPress({@required Play thisGame, @required Strin
   thisGame.missedAtoms = [];
   thisGame.atomScore = 0;
   // First returned element will be the List 'edgeTileChildren' from fireAllBeams, the rest will be alternative games:
+  // Like this: return [senderGame.edgeTileChildren, senderGame, /*playerGame,*/ altGame];
   List<dynamic> alternativeSolutions = await thisGame.getScore();
 
   if (thisGame.online) {
     await onlineButtonPress(thisGame, setupID, setupData, answered, startedPlaying); //The "await" here should guarantee that results are uploaded before the correct answer is given...
-  //   DocumentSnapshot newSetup = await MyFirebase.storeObject.collection(kCollectionSetups).doc(setupID).get();
-  //   setupData = newSetup.data();
-  //   print('setupData after newSetup.data() is $setupData');
   }
   return alternativeSolutions;
 }

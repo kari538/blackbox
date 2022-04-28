@@ -129,10 +129,10 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
     }
     print('In refreshSetupData(): beamImageIndexA is ${thisGame.beamImageIndexA} and beamImageIndexB is ${thisGame.beamImageIndexB}');
 
-    if (setupData[kFieldPlaying][playingId].containsKey(kSubFieldClearList)) {
-      List<dynamic> sentClearList = setupData[kFieldPlaying][playingId][kSubFieldClearList];
+    if (setupData[kFieldPlaying][playingId].containsKey(kSubFieldMarkUpList)) {
+      List<dynamic> sentClearList = setupData[kFieldPlaying][playingId][kSubFieldMarkUpList];
       for (int i = 0; i < sentClearList.length; i += 2) {
-        thisGame.clearList.add([sentClearList[i], sentClearList[i + 1]]);
+        thisGame.markUpList.add([sentClearList[i], sentClearList[i + 1]]);
       }
     }
     getAtoms();
@@ -168,10 +168,10 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
     if (lastMove != null) lastMoveString = DateFormat('d MMM, HH:mm:ss').format(lastMove.toDate());
   }
 
+// TODO: ---Turn ping back on (if commented out):
   void ping(/*{Future<void> uploadDoc}*/) async {
     // if (uploadDoc != null) await uploadDoc; // If I wasn't already playing this game, we need to wait until Playing tag has uploaded.
     // int i = 0;
-    // TODO: Turn ping back on (if commented out):
     do {
       // print('Ping no $i');
       try {
@@ -182,9 +182,6 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
       } on Exception catch (e) {
         print('Watching Ping upload error: $e');
       }
-      // await MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).update({
-      //    '$kFieldPlaying.${thisGame.playerId}.$kSubFieldPing': FieldValue.serverTimestamp(),
-      //  });
       await Future.delayed(Duration(seconds: 4));
       // i++;
     } while (this.mounted);
@@ -298,12 +295,12 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
       });
 
       // Clear:
-      if (eventData[kFieldPlaying][playingId].containsKey(kSubFieldClearList) && eventData[kFieldPlaying][playingId][kSubFieldClearList].length != thisGame.clearList.length/2){
-        thisGame.clearList = [];
-        List<dynamic> sentClearArray = eventData[kFieldPlaying][playingId][kSubFieldClearList];
+      if (eventData[kFieldPlaying][playingId].containsKey(kSubFieldMarkUpList) && eventData[kFieldPlaying][playingId][kSubFieldMarkUpList].length != thisGame.markUpList.length/2){
+        thisGame.markUpList = [];
+        List<dynamic> sentClearArray = eventData[kFieldPlaying][playingId][kSubFieldMarkUpList];
         setState(() {
           for (int i = 0; i < sentClearArray.length; i += 2){
-            thisGame.clearList.add([sentClearArray[i], sentClearArray[i+1]]);
+            thisGame.markUpList.add([sentClearArray[i], sentClearArray[i+1]]);
           }
         });
       }
@@ -387,7 +384,7 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
       }
     }
 
-    for (List<int> clear in thisGame.clearList){
+    for (List<int> clear in thisGame.markUpList){
       if (ListEquality().equals([x, y], clear)) showClear = true;
     }
 
@@ -412,7 +409,7 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
                 ),
               ),
             ),
-            decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridlineColor, width: 0.5)),
+            decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridLineColor, width: 0.5)),
           ),
           showClear
               ? Image(image: AssetImage('images/clear.png'))

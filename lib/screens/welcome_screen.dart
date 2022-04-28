@@ -134,7 +134,7 @@ class WelcomeScreen extends StatelessWidget {
               child: Text('How to Play'),
               onPressed: () async {
                 ///Test send msg:
-                // TODO: Remove test message:
+                // TODO: ---Remove test message:
                 // String localNotification = jsonEncode({
                 //   kApiNotification: {
                 //     "title": "hi",

@@ -1,3 +1,5 @@
+import 'package:blackbox/route_names.dart';
+import 'package:blackbox/play_screen_menu.dart';
 import 'package:blackbox/board_grid.dart';
 //import 'package:blackbox/my_firebase.dart';
 //import 'package:blackbox/online_screens/login_screen.dart';
@@ -50,7 +52,7 @@ class _MakeSetupScreenState extends State<MakeSetupScreen> {
 //    return PlayBoardTile(x, y);
   }
 
-  Widget popupMenu(BuildContext context) {
+  Widget onlineSetupMenu(BuildContext context) {
     return PopupMenuButton(
       itemBuilder: (context){
         return [
@@ -58,8 +60,8 @@ class _MakeSetupScreenState extends State<MakeSetupScreen> {
             child: Text('Change user'),
             value: () async {
 //              print('Inside value of Change User. About to push RegistrationAndLoginScreen()');
-              await Navigator.push(context, MaterialPageRoute(builder: (context) {
-                return RegistrationAndLoginScreen(fromSetup: true);
+              await Navigator.push(context, MaterialPageRoute(settings: RouteSettings(name: routeRegLogin), builder: (context) {
+                return RegistrationAndLoginScreen(withPop: true);
               }));
             },
           ),
@@ -75,7 +77,10 @@ class _MakeSetupScreenState extends State<MakeSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('blackbox'), actions: [popupMenu(context)]),
+      appBar: AppBar(
+          title: Text('blackbox'),
+          actions: widget.thisGame.online ? [onlineSetupMenu(context)] : [PlayScreenMenu(widget.thisGame, entries: [4],)]),
+      // appBar: AppBar(title: Text('blackbox'), actions: [popupMenu(context)]),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -172,7 +177,7 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
               child: showAtom ? Image(image: AssetImage('images/atom_yellow.png')) : FittedBox(
                   fit: BoxFit.contain, child: Text('${position.x},${position.y}', style: TextStyle(color: kBoardTextColor, fontSize: 15))),
             ),
-            decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridlineColor, width: 0.5)),
+            decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridLineColor, width: 0.5)),
           ),
           onTap: () {
             if(showAtom){

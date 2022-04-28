@@ -59,7 +59,7 @@ class Play {
   List<Atom> correctAtoms = [];
   List<Atom> misplacedAtoms = [];
   List<Atom> missedAtoms = [];
-  List<List<int>> clearList = [];
+  List<List<int>> markUpList = [];
   // List<List<int>> playerAtoms = [];
   // List<List<int>> correctAtoms = [];
   // List<List<int>> misplacedAtoms = [];
@@ -242,7 +242,6 @@ class Play {
     correctAtoms = [];
     misplacedAtoms = [];
     missedAtoms = [];
-    beamsAndResults = [];
 
     //Correct and misplaced atoms:
     for (Atom pAtom in playerAtoms) {
@@ -254,7 +253,7 @@ class Play {
           break;
         }
       }
-      // If NONE of the sender atoms match the player atom:
+      // If none of the sender atoms match the specific player atom:
       if (correct == false) {
         misplacedAtoms.add(pAtom);
       }
@@ -283,6 +282,7 @@ class Play {
 
   // List<List<Atom>> getScore() {
   Future<List<dynamic>> getScore() async {
+    beamsAndResults = [];
     rawAtomScore();
     // bool equalSol = false;
     if (atomScore > 0) {
@@ -309,8 +309,8 @@ class Play {
         // print('Before returning, beamsAndResults is ${senderGame.beamsAndResults}');
         print('Before running senderGame.setEdgeTiles(), senderGame.sentBeams is ${senderGame.sentBeams}');
 
-        for (List<dynamic> bna in senderGame.beamsAndResults) {
-          senderGame.setEdgeTiles(inSlot: bna[0], beamResult: bna[1]);
+        for (List<dynamic> bnr in senderGame.beamsAndResults) {
+          senderGame.setEdgeTiles(inSlot: bnr[0], beamResult: bnr[1]);
         }
         print('After running senderGame.setEdgeTiles(), senderGame.sentBeams is ${senderGame.sentBeams}');
         // print('Before returning, edgeTileChildren is ${senderGame.edgeTileChildren}');
@@ -451,11 +451,12 @@ class Play {
         }
         if (alternativeFound) {
           altGame.playerAtoms = playerAtoms;
+          altGame.beamsAndResults = [];
           altGame.rawAtomScore();
           print('altGame.atoms.length is ${altGame.atoms.length} and altGame.correctAtoms.length is ${altGame.correctAtoms.length}');
           print('altGame.misplacedAtoms.length is ${altGame.misplacedAtoms.length}');
           // if (altGame.atomScore <= 5) break;  // Otherwise run the whole swap-loops thing again, but only one more time.
-          // break;  // TODO use above (to make algorithm more secure...?)
+          // break;  // Use above (to make algorithm more secure...?)
         }
       // }  // End of twice loop
 

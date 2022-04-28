@@ -14,7 +14,8 @@ Future<http.Response>  fcmSendMsg(String jsonString, [BuildContext context]) asy
   http.Response res;
   String desc = '';
   String code = '';
-  String apiAddress = kApiEmulatorLink + kApiEmulatorSendMsg;
+  String apiAddress = emulating ? kApiEmulatorLink + kApiEmulatorSendMsg : kApiCloudFunctionsLink + kApiSendMsg;
+  print('API address in fcmSendMsg() is $apiAddress');
   // String jsonString = jsonEncode({
   //   "notification": {
   //     "title": "New Game Hub Setup",
@@ -28,14 +29,13 @@ Future<http.Response>  fcmSendMsg(String jsonString, [BuildContext context]) asy
   // });
   print("jsonString in fcmSendMsg() is:");
   printPrettyJson(jsonDecode(jsonString));
-  print('API address in fcmSendMsg() is $apiAddress');
 
   Map<String, String> headers = {
     kApiContentType: kApiApplicationJson
   };
 
   try {
-    if (emulator) {
+    if (emulating) {
       res = await http.post(
         Uri.http(kApiEmulatorLink, kApiEmulatorSendMsg),
         headers: headers,

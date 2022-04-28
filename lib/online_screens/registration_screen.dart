@@ -1,3 +1,4 @@
+import 'package:blackbox/route_names.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 // import 'package:blackbox/fcm.dart';
 import 'package:blackbox/my_firebase.dart';
@@ -9,18 +10,18 @@ import 'package:blackbox/units/blackbox_popup.dart';
 import 'game_hub_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
-  const RegistrationScreen({this.fromSetup = false});
+  const RegistrationScreen({this.withPop = false});
 
-  final bool fromSetup;
+  final bool withPop;
 
   @override
-  _RegistrationScreenState createState() => _RegistrationScreenState(fromSetup);
+  _RegistrationScreenState createState() => _RegistrationScreenState(withPop);
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
-  _RegistrationScreenState(this.fromSetup);
+  _RegistrationScreenState(this.withPop);
 
-  final bool fromSetup;
+  final bool withPop;
   bool showSpinner = false;
   String email;
   String screenName;
@@ -36,8 +37,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     });
     try {
       var user = await MyFirebase.authObject.createUserWithEmailAndPassword(email: email, password: password1);
-      // var user = await authenticator.createUserWithEmailAndPassword(email: email, password: password1);
       if (user != null) {
+        MyFirebase.authObject.currentUser.updateDisplayName(screenName);
         String myUid = MyFirebase.authObject.currentUser.uid;
         if (screenName == null || screenName == '') screenName = 'Anonymous';
 //                            database.collection('userinfo').add({
@@ -56,12 +57,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         _firebaseMessaging.subscribeToTopic(kTopicPlayingSetup);
         _firebaseMessaging.subscribeToTopic(kTopicAllAppUpdates);
         // initializeFirebaseCloudMessaging();
-        if (fromSetup) {
+        if (withPop) {
           Navigator.pop(context);
         } else {
-          Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (context) {
-              return GameHubScreen();
+          Navigator.of(context).pushReplacement(MaterialPageRoute(settings: RouteSettings(name: routeGameHub), builder: (context){
+                    return GameHubScreen();
             },
           ));
         }
@@ -81,7 +81,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print("Building RegistrationScreen with fromSetup as $fromSetup");
+    print("Building RegistrationScreen with withPop as $withPop");
     return Scaffold(
       appBar: AppBar(title: Text('register')),
       body: ModalProgressHUD(
@@ -101,7 +101,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
                     onChanged: (value) {
                       setState(() {
-                        email = value;
+                        email = value.toLowerCase();
                       });
                     },
                     autofocus: true,
@@ -131,7 +131,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   TextField(
 //                decoration: kTextFieldDecoration.copyWith(
                     decoration: InputDecoration(
-                      hintText: 'Enter your password',
+                      hintText: 'Choose a password',
                     ),
                     onChanged: (value) {
                       setState(() {

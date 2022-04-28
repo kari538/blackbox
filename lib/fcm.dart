@@ -23,251 +23,268 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 // Future<String> token;
-// TODO: change testingNotifications to false:
+// TODO: ---change testingNotifications to false:
 // bool testingNotifications = true;
 bool testingNotifications = false;
 
-// TODO Notification sound!
+// TODO: ***Notification sound!
 void initializeFcm(String token, GlobalKey myGlobalKey) async {
   print('Initializing Firebase Cloud Messaging...');
   await MyFirebase.myFutureFirebaseApp;
   FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
   if (MyFirebase.authObject.currentUser != null) {
+    // Even if I'm not logged in yet, initializeFcm() will be triggered
+    // if I log in later, from userChangesListener() in my_firebase.dart
     String myUid = MyFirebase.authObject.currentUser.uid;
-    _firebaseMessaging.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-    _firebaseMessaging.requestPermission(
-      sound: true,
-      //The rest as default
-    );
-    _firebaseMessaging.setAutoInitEnabled(true);
+    DocumentSnapshot myUserInfo;
 
-    ///If a message comes with the construction (see Welcome Screen):
-    ///                String localNotification = jsonEncode({
-    ///                    kApiNotification: {
-    ///                      "title": "hi",
-    ///                      "body": "hi hi",
-    ///                    },
-    ///                    "data": {
-    ///                      "click_action": "FLUTTER_NOTIFICATION_CLICK",
-    ///                      "collapse_key": "some_string", //This does nothing
-    ///                    },
-    ///                  });
-    ///                  Future<http.Response> sendMsgRes = fcmSendMsg(
-    ///                      jsonEncode({
-    ///                        "notification": {
-    ///                          "title": "Message from Welcome Screeeeeeeeeeeeeeeeeen",
-    ///                          "body": "from ${MyFirebase.authObject.currentUser.displayName}",
-    ///                        },
-    ///                       "data": {
-    ///                          "collapse_key": "welcome_screen",
-    ///                          "click_action": "FLUTTER_NOTIFICATION_CLICK",
-    ///                          kApiShowLocalNotification: localNotification,
-    ///                          // kApiOverride: kApiOverrideYes,
-    ///                        },
-    ///                        // Nokia:
-    ///                        "token": 'f2F3dytfT9iW8LYUq796aa:APA91bG0OnzHIkQtv9Iq_z-sy93lanzHSbe53lBiwXFp1z6uY6ghn6IxgqxePZYCKr8MQ29z-rMiPWgXiB59JAD-2IO5VR7ixS0GVj1GKU-a0rvEUepRKnPHWRcB7xoph5u_bShgnNUF',
-    ///                        // Small Nexus:
-    ///                        // "token": 'doxTxf2VR0eGAf6RlmCDZ7:APA91bFfo8eGiOzEC_d4oyrzpYz4z6L2laIm3vJc_fWjWolvqgKh2HirX8cQgH-cv6i0IfAktSXxIjWGLvTA4fESwDnonSrf9khh3z1g0j8CgkpRT2obA_9bMOcHeiPvdiryKWXzgCFR',
-    ///                        // "token": '${await myGlobalToken}',
-    ///                      }),
-    ///                      context);
-    /// The content in localNotification will override the notification specified in onMessage
-    FirebaseMessaging.onMessage.listen((remoteMsg) async {
-      print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n'
-          'onMessage');
-      if (remoteMsg.notification != null) {
-        print(remoteMsg.notification.title);
-        print(remoteMsg.notification.body);
-      }
-
-      print('remoteMsg.data is ${remoteMsg.data}');
-      // print(remoteMsg.data.isNotEmpty);
-
-      bool localNotificationField = false;
-      bool notificationOverride = false;
-      bool containsEvent = false;
-      bool playerIsMe = false;
-      bool playingSetup = false;
-      bool playingMySetup = false;
-      bool resumedPlaying = false;
-
-      if (remoteMsg.data.isNotEmpty) {
-        print('remoteMsg.data.containsKey(kMsgPlaying): ${remoteMsg.data.containsKey(kMsgPlaying)}');
-        // print(remoteMsg.data[kMsgPlaying] == myUid);
-        print('remoteMsg.data.keys ${remoteMsg.data.keys}');
-
-        // To override local notification:
-        Map<String, dynamic> data = remoteMsg.data.cast(); //!!!!!!! :D
-        Map<String, dynamic> notificationData = {};
-        print('data is $data');
-        localNotificationField = data.containsKey(kMsgShowLocalNotification);
-        notificationOverride = data[kMsgOverride] == kMsgOverrideYes;
-        print("localNotificationField is $localNotificationField");
-        print("notificationOverride is $notificationOverride");
-
-        if (localNotificationField) {
-          notificationData = jsonDecode(data[kMsgShowLocalNotification]);
-          print('notificationData is $notificationData');
-
-          // Can't make it non-collapsible...
-          // TODO: make non-collapsible!! :(
-          await Future.delayed(Duration(seconds: 1)); // This makes it over-write the other one...
-          LocalNotifications.showNotification(
-            title: notificationData[kMsgNotification][kMsgTitle],
-            notification: notificationData[kMsgNotification][kMsgBody],
-            data: jsonEncode(notificationData[kMsgData]),
-          );
-        }
-
-        containsEvent = remoteMsg.data.containsKey(kMsgEvent);
-        playerIsMe = remoteMsg.data.containsKey(kMsgPlaying) && remoteMsg.data[kMsgPlaying] == myUid;
-        playingSetup =
-            // remoteMsg.data.containsKey(kMsgSetupSender
-            // )
-            //     ||
-            (containsEvent && (remoteMsg.data[kMsgEvent] == kMsgEventStartedPlaying || remoteMsg.data[kMsgEvent] == kMsgEventResumedPlaying));
-
-        // if (playingSetup
-        //     && remoteMsg.data[kMsgEvent] == kMsgEventStoppedPlaying)
-        //   playingSetup = false;
-
-        playingMySetup = playingSetup && remoteMsg.data[kMsgSetupSender] == myUid;
-        // Unless the event was stopped_playing:
-
-        // if (playingMySetup
-        //     && containsEvent
-        //     && remoteMsg.data[kMsgEvent] == kMsgEventStoppedPlaying)
-        //   playingMySetup = false;
-
-        resumedPlaying = containsEvent && remoteMsg.data[kMsgEvent] == kMsgEventResumedPlaying;
-      }
-
-      if (!notificationOverride) {
-        // If I am the one playing:
-        if (playerIsMe) {
-          print('remoteMsg: No notification because player is me.');
-          var x = castRemoteMessageToMap(remoteMsg);
-          printPrettyJson(x);
-          if (testingNotifications && playingSetup) {
-            LocalNotifications.showNotification(
-                title: "Testing Notifications! Playing setup.",
-                notification: "No notification because player is me.",
-                data: jsonEncode(remoteMsg.data));
-          }
-        } else if (playingMySetup) {
-          // If someone is playing my setup:
-          print('remoteMsg: Playing my setup');
-          LocalNotifications.showNotification(
-              title: "Someone is playing your setup"
-                  "${resumedPlaying ? " again" : ""}!",
-              notification: "Someone ${resumedPlaying ? "just resumed playing" : "is playing"}"
-                  " your setup no ${remoteMsg.data['i']} ${resumedPlaying ? '' : 'now, '}"
-                  "in the game hub.",
-              data: jsonEncode(remoteMsg.data));
-          // This is taken care of from the Cloud Function:
-          // } else if (playingSetup) {
-          //   // If someone is playing any setup:
-          //   LocalNotifications.showNotification(title: "Someone is playing your setup"
-          //       "${resumedPlaying ? " again" : ""}!",
-          //       notification: "Someone ${resumedPlaying ? "just resumed playing" : "is playing"}"
-          //           " your setup no ${remoteMsg.data['i']} ${resumedPlaying ? '' : 'now, '}"
-          //           "in the game hub.",
-          //       data: jsonEncode(remoteMsg.data));
-        } else {
-          // If someone is playing someone else's setup, or any other message:
-          if (remoteMsg.notification != null) {
-            print('remoteMsg.notification is not null. Should show notification');
-            LocalNotifications.showNotification(
-                title: '${remoteMsg.notification.title}', notification: "${remoteMsg.notification.body ?? ''}", data: jsonEncode(remoteMsg.data));
-          }
-        }
-      }
-    }, onError: (error) {
-      print('Error in onMessage: $error');
-    });
-
-    // TODO: Put navigation from remote notifications here
-    FirebaseMessaging.onMessageOpenedApp.listen((remoteMsg) {
-      print('Remote message opened app. Event is: $remoteMsg');
-      var x = castRemoteMessageToMap(remoteMsg);
-      print("remoteMsg:");
-      printPrettyJson(x);
-
-      Map<String, dynamic> msgData = remoteMsg.data.cast();
-      bool containsData = !(MapEquality().equals(msgData, {}) || msgData == null);
-      bool playingEvent = containsData && (msgData[kMsgEvent] == kMsgEventStartedPlaying || msgData[kMsgEvent] == kMsgEventResumedPlaying);
-      bool newSetupEvent = containsData && msgData[kMsgEvent] == kMsgEventNewGameHubSetup;
-
-      if (MyFirebase.authObject.currentUser.uid != null) {
-        if (playingEvent) {
-          navigateFromNotificationToFollowing(msgData: msgData);
-        } else if (newSetupEvent) {
-          // Todo: Only push if GameHubScreen() not already on top:
-          Navigator.push(GlobalVariable.navState.currentContext, MaterialPageRoute(builder: (context) {
-            return GameHubScreen();
-            }, settings: RouteSettings(name: routeGameHub)));
-        }
-      }
-    });
-
-    // Get the token each time the application loads:
-    // token =  _firebaseMessaging.getToken();
-    if (token == '' || token == null) {
-      // If called from main()
-      myGlobalToken = _firebaseMessaging.getToken();
-    } else {
-      // If called from token change
-      myGlobalToken = Future(() => token);
+    try {
+      myUserInfo = await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).get();
+    } catch (e) {
+      print('Error finding userInfo document in initializeFcm(): $e');
     }
-    print('My device token is ${await myGlobalToken}');
 
-    // Save the initial token to the database:
-    await saveTokenToDatabase(await myGlobalToken);
+    print('myUserInfo.data() in initializeFcm() is:');
+    printPrettyJson(myUserInfo.data());
 
-    print('After saveTokenToDatabase()');
+    if (myUserInfo.data() != null) {
+      // I have an entry in the userinfo collection.
+      // All users should have an entry there, but if they don't, one will be made
+      // from LoginScreen() and initializeFcm() will be fired again.
+      _firebaseMessaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      _firebaseMessaging.requestPermission(
+        sound: true,
+        //The rest as default
+      );
+      _firebaseMessaging.setAutoInitEnabled(true);
 
-    // If you haven't yet subscribed to the topics, do so:
-    DocumentSnapshot userSnap = await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).get();
-    Map<String, dynamic> userData = userSnap.data();
-    if (!userData.containsKey(kFieldNotifications)) {
-      _firebaseMessaging.subscribeToTopic(kTopicGameHubSetup);
-      _firebaseMessaging.subscribeToTopic(kTopicPlayingSetup);
-      _firebaseMessaging.subscribeToTopic(kTopicAllAppUpdates);
+      ///If a message comes with the construction (see Welcome Screen):
+      ///                String localNotification = jsonEncode({
+      ///                    kApiNotification: {
+      ///                      "title": "hi",
+      ///                      "body": "hi hi",
+      ///                    },
+      ///                    "data": {
+      ///                      "click_action": "FLUTTER_NOTIFICATION_CLICK",
+      ///                      "collapse_key": "some_string", //This does nothing
+      ///                    },
+      ///                  });
+      ///                  Future<http.Response> sendMsgRes = fcmSendMsg(
+      ///                      jsonEncode({
+      ///                        "notification": {
+      ///                          "title": "Message from Welcome Screeeeeeeeeeeeeeeeeen",
+      ///                          "body": "from ${MyFirebase.authObject.currentUser.displayName}",
+      ///                        },
+      ///                       "data": {
+      ///                          "collapse_key": "welcome_screen",
+      ///                          "click_action": "FLUTTER_NOTIFICATION_CLICK",
+      ///                          kApiShowLocalNotification: localNotification,
+      ///                          // kMsgOverride: kMsgOverrideYes,
+      ///                        },
+      ///                        // Nokia:
+      ///                        "token": 'f2F3dytfT9iW8LYUq796aa:APA91bG0OnzHIkQtv9Iq_z-sy93lanzHSbe53lBiwXFp1z6uY6ghn6IxgqxePZYCKr8MQ29z-rMiPWgXiB59JAD-2IO5VR7ixS0GVj1GKU-a0rvEUepRKnPHWRcB7xoph5u_bShgnNUF',
+      ///                        // Small Nexus:
+      ///                        // "token": 'doxTxf2VR0eGAf6RlmCDZ7:APA91bFfo8eGiOzEC_d4oyrzpYz4z6L2laIm3vJc_fWjWolvqgKh2HirX8cQgH-cv6i0IfAktSXxIjWGLvTA4fESwDnonSrf9khh3z1g0j8CgkpRT2obA_9bMOcHeiPvdiryKWXzgCFR',
+      ///                        // "token": '${await myGlobalToken}',
+      ///                      }),
+      ///                      context);
+      /// The content in localNotification will override the notification specified in onMessage
+      FirebaseMessaging.onMessage.listen((remoteMsg) async {
+        print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n'
+            'onMessage');
+        if (remoteMsg.notification != null) {
+          print(remoteMsg.notification.title);
+          print(remoteMsg.notification.body);
+        }
 
-      MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).update({
-        kFieldNotifications: [
-          kTopicGameHubSetup,
-          kTopicPlayingSetup,
-          kTopicPlayingYourSetup,
-          kTopicAllAppUpdates,
-        ],
+        print('remoteMsg.data is:');
+        printPrettyJson(remoteMsg.data);
+        // print(remoteMsg.data.isNotEmpty);
+
+        bool localNotificationField = false;
+        bool notificationOverride = false;
+        bool containsEvent = false;
+        bool playerIsMe = false;
+        bool playingSetup = false;
+        bool playingMySetup = false;
+        bool resumedPlaying = false;
+
+        if (remoteMsg.data.isNotEmpty) {
+          print('remoteMsg.data.containsKey(kMsgPlaying): ${remoteMsg.data.containsKey(kMsgPlaying)}');
+          // print(remoteMsg.data[kMsgPlaying] == myUid);
+          print('remoteMsg.data.keys ${remoteMsg.data.keys}');
+
+          // To override local notification:
+          Map<String, dynamic> data = remoteMsg.data.cast(); //!!!!!!! :D
+          Map<String, dynamic> notificationData = {};
+          print('data is $data');
+          localNotificationField = data.containsKey(kMsgShowLocalNotification);
+          notificationOverride = data[kMsgOverride] == kMsgOverrideYes;
+          print("localNotificationField is $localNotificationField");
+          print("notificationOverride is $notificationOverride");
+
+          if (localNotificationField) {
+            notificationData = jsonDecode(data[kMsgShowLocalNotification]);
+            print('notificationData is $notificationData');
+
+            await Future.delayed(Duration(seconds: 1)); // This makes it over-write the other one...
+            LocalNotifications.showNotification(
+              title: notificationData[kMsgNotification][kMsgTitle],
+              notification: notificationData[kMsgNotification][kMsgBody],
+              data: jsonEncode(notificationData[kMsgData]),
+            );
+          }
+
+          containsEvent = remoteMsg.data.containsKey(kMsgEvent);
+          playerIsMe = remoteMsg.data.containsKey(kMsgPlaying) && remoteMsg.data[kMsgPlaying] == myUid;
+          playingSetup =
+              // remoteMsg.data.containsKey(kMsgSetupSender
+              // )
+              //     ||
+              (containsEvent && (remoteMsg.data[kMsgEvent] == kMsgEventStartedPlaying || remoteMsg.data[kMsgEvent] == kMsgEventResumedPlaying));
+
+          // if (playingSetup
+          //     && remoteMsg.data[kMsgEvent] == kMsgEventStoppedPlaying)
+          //   playingSetup = false;
+
+          playingMySetup = playingSetup && remoteMsg.data[kMsgSetupSender] == myUid;
+          // Unless the event was stopped_playing:
+
+          // if (playingMySetup
+          //     && containsEvent
+          //     && remoteMsg.data[kMsgEvent] == kMsgEventStoppedPlaying)
+          //   playingMySetup = false;
+
+          resumedPlaying = containsEvent && remoteMsg.data[kMsgEvent] == kMsgEventResumedPlaying;
+        }
+
+        if (!notificationOverride) {
+          // If I am the one playing:
+          if (playerIsMe) {
+            print('remoteMsg: No notification because player is me.');
+            var x = castRemoteMessageToMap(remoteMsg);
+            printPrettyJson(x);
+            if (testingNotifications && playingSetup) {
+              LocalNotifications.showNotification(
+                  title: "Testing Notifications! Playing setup.",
+                  notification: "No notification because player is me.",
+                  data: jsonEncode(remoteMsg.data));
+            }
+          } else if (playingMySetup) {
+            // If someone is playing my setup:
+            print('remoteMsg: Playing my setup');
+            LocalNotifications.showNotification(
+                title: "Someone is playing your setup"
+                    "${resumedPlaying ? " again" : ""}!",
+                notification: "Someone ${resumedPlaying ? "just resumed playing" : "is playing"}"
+                    " your setup no ${remoteMsg.data['i']} ${resumedPlaying ? '' : 'now, '}"
+                    "in the game hub.",
+                data: jsonEncode(remoteMsg.data));
+            // This is taken care of from the Cloud Function:
+            // } else if (playingSetup) {
+            //   // If someone is playing any setup:
+            //   LocalNotifications.showNotification(title: "Someone is playing your setup"
+            //       "${resumedPlaying ? " again" : ""}!",
+            //       notification: "Someone ${resumedPlaying ? "just resumed playing" : "is playing"}"
+            //           " your setup no ${remoteMsg.data['i']} ${resumedPlaying ? '' : 'now, '}"
+            //           "in the game hub.",
+            //       data: jsonEncode(remoteMsg.data));
+          } else {
+            // If someone is playing someone else's setup, or any other message:
+            if (remoteMsg.notification != null) {
+              print('remoteMsg.notification is not null. Should show notification');
+              LocalNotifications.showNotification(
+                  title: '${remoteMsg.notification.title}', notification: "${remoteMsg.notification.body ?? ''}", data: jsonEncode(remoteMsg.data));
+            }
+          }
+        }
+      }, onError: (error) {
+        print('Error in onMessage: $error');
+      });
+
+      FirebaseMessaging.onMessageOpenedApp.listen((remoteMsg) {
+        print('Remote message opened app. Event is: $remoteMsg');
+        var x = castRemoteMessageToMap(remoteMsg);
+        print("remoteMsg:");
+        printPrettyJson(x);
+
+        Map<String, dynamic> msgData = remoteMsg.data.cast();
+        bool containsData = !(MapEquality().equals(msgData, {}) || msgData == null);
+        bool playingEvent = containsData && (msgData[kMsgEvent] == kMsgEventStartedPlaying || msgData[kMsgEvent] == kMsgEventResumedPlaying);
+        bool newSetupEvent = containsData && msgData[kMsgEvent] == kMsgEventNewGameHubSetup;
+
+        if (MyFirebase.authObject.currentUser.uid != null) {
+          if (playingEvent) {
+            navigateFromNotificationToFollowing(msgData: msgData);
+          } else if (newSetupEvent) {
+            Route topRoute = NavigationHistoryObserver().top;
+            if (topRoute.settings.name != routeGameHub) {
+              Navigator.push(GlobalVariable.navState.currentContext, MaterialPageRoute(settings: RouteSettings(name: routeGameHub), builder: (context){
+                      return GameHubScreen();
+                }));
+            }
+          }
+        }
+      });
+
+      // Get the token each time the application loads:
+      // token =  _firebaseMessaging.getToken();
+      if (token == '' || token == null) {
+        // If called from main()
+        myGlobalToken = _firebaseMessaging.getToken();
+      } else {
+        // If called from token change
+        myGlobalToken = Future(() => token);
+      }
+      print('My device token is ${await myGlobalToken}');
+
+      // Save the initial token to the database:
+      await saveTokenToDatabase(await myGlobalToken);
+
+      print('After saveTokenToDatabase()');
+
+      // If you haven't yet subscribed to the topics, do so:
+      DocumentSnapshot userSnap = await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).get();
+      Map<String, dynamic> userData = userSnap.data() ?? {};
+      if (!userData.containsKey(kFieldNotifications)) {
+        _firebaseMessaging.subscribeToTopic(kTopicGameHubSetup);
+        _firebaseMessaging.subscribeToTopic(kTopicPlayingSetup);
+        _firebaseMessaging.subscribeToTopic(kTopicAllAppUpdates);
+
+        MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).update({
+          kFieldNotifications: [
+            kTopicGameHubSetup,
+            kTopicPlayingSetup,
+            kTopicPlayingYourSetup,
+            kTopicAllAppUpdates,
+          ],
+        });
+      }
+      if (myUid == '3lqh53p23sc93RgUBafdc4jtSYe2') {
+        print("myUid == '3lqh53p23sc93RgUBafdc4jtSYe2'. Subscribing to Developer");
+        _firebaseMessaging.subscribeToTopic(kTopicDeveloper);
+      }
+
+      // Any time the token refreshes, store this in the database too:
+      print('Starting onTokenRefresh.listen()');
+      // FirebaseMessaging.instance.onTokenRefresh.listen(saveTokenToDatabase);
+      // _firebaseMessaging.onTokenRefresh.listen(saveTokenToDatabase);
+      // _firebaseMessaging.onTokenRefresh.listen((initializeFcm) {
+      _firebaseMessaging.onTokenRefresh.listen((event) {
+        print('An event has come in in onTokenRefresh.listen().'
+            '\nThe event is $event');
+        saveTokenToDatabase(event);
+        // I'm not sure how this could happen without a userChangesListener() event,
+        // which would still have fired initializeFcm() and consequently
+        // saveTokenToDatabase(), but hey... what do I know.
       });
     }
-    if (myUid == '3lqh53p23sc93RgUBafdc4jtSYe2') {
-      print("myUid == '3lqh53p23sc93RgUBafdc4jtSYe2'. Subscribing to Developer");
-      _firebaseMessaging.subscribeToTopic(kTopicDeveloper);
-      // MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).update({
-      //   kFieldNotifications: [
-      //     kTopicGameHubSetup,
-      //     kTopicPlayingSetup,
-      //     kTopicPlayingYourSetup,
-      //     kTopicAllAppUpdates,
-      //   ],
-      // });
-    }
   }
-  // Any time the token refreshes, store this in the database too:
-  // FirebaseMessaging.instance.onTokenRefresh.listen(saveTokenToDatabase);
-  // _firebaseMessaging.onTokenRefresh.listen(saveTokenToDatabase);
-  print('Starting onTokenRefresh.listen()');
-  _firebaseMessaging.onTokenRefresh.listen((initializeFcm) {
-    print('An event has come in in onTokenRefresh.listen()');
-  });
 }
 
 Future<void> saveTokenToDatabase(String sentToken) async {
@@ -301,10 +318,19 @@ Future<void> saveTokenToDatabase(String sentToken) async {
     }
     Map<String, dynamic> myUserDataBefore = tokensSnapBefore.data();
     Map<String, dynamic> myUserDataAfter = tokensSnapAfter.data();
-    List<dynamic> tokensBefore = myUserDataBefore.containsKey(kFieldTokens) ? myUserDataBefore[kFieldTokens] : [];
-    List<dynamic> tokensAfter = myUserDataAfter.containsKey(kFieldTokens) ? myUserDataAfter[kFieldTokens] : [];
+    List<dynamic> tokensBefore = [];
+    List<dynamic> tokensAfter = [];
+
+    if (myUserDataBefore != null) {
+      tokensBefore = myUserDataBefore.containsKey(kFieldTokens) ? myUserDataBefore[kFieldTokens] : [];
+    }
+    if (myUserDataAfter != null) {
+      tokensAfter = myUserDataAfter.containsKey(kFieldTokens) ? myUserDataAfter[kFieldTokens] : [];
+    }
+    
     bool tokenWasAdded = tokensAfter.length > tokensBefore.length;
 
+    // Send a notification if a new device was added (or app reinstalled) to clear invalid tokens:
     if (tokenWasAdded) {
       // if (true) {
       int i = 0;
@@ -314,12 +340,13 @@ Future<void> saveTokenToDatabase(String sentToken) async {
         Future<http.Response> sendMsgRes = fcmSendMsg(
             // context: context,
             jsonEncode({
-          "notification": {
-            "title": "You have registered a new device with Blackbox",
-            // "body": "from ${myUserData[kFieldFirstName]}",
-          },
+          // "notification": {
+          //   "title": "You have registered a new device with Blackbox",
+          //   // "body": "from ${myUserData[kFieldFirstName]}",
+          // },
           "data": {
             "click_action": "FLUTTER_NOTIFICATION_CLICK",
+            "$kMsgEvent": "$kMsgEventAddedToken"
             // "show_local_notification": false,
           },
           "token": token,
@@ -343,12 +370,14 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage remoteMsg) async {
   await Firebase.initializeApp();
   FirebaseAuth authObject = FirebaseAuth.instance;
   String myUid = authObject.currentUser.uid;
-  if (remoteMsg.notification != null)
+  if (remoteMsg.notification != null) {
     print("Title: ${remoteMsg.notification.title}"
         "\nBody: ${remoteMsg.notification.body}"
-        "\nData: ${remoteMsg.data}");
+        "\nData:");
+    printPrettyJson(remoteMsg.data);
+  }
 
-  //TODO Add the same conditions as for onMessage:
+  //TODO: ***Add the same conditions as for onMessage:
   if (remoteMsg.data.isNotEmpty) {
     if (remoteMsg.data.containsKey(kMsgPlaying) && remoteMsg.data[kMsgPlaying] == myUid) {
       // If I am the one playing:
@@ -361,7 +390,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage remoteMsg) async {
       // If somebody is playing my setup:
       LocalNotifications.showNotification(
           title: "Someone is playing your setup!",
-          notification: "Someone is playing your setup no ${remoteMsg.data['i']}.",
+          notification: "Someone is playing your setup no ${remoteMsg.data['i']}."
+              "${ testingNotifications ? ' Your uid is $myUid' : ''}",
           data: jsonEncode(remoteMsg.data));
     } else {
       // If I am neither the player nor the sender of the setup:

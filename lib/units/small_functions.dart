@@ -88,7 +88,7 @@ void tappedFollowPlaying(
     Map<String, dynamic> setupData,
     Map<String, dynamic> myUserData,
     DocumentSnapshot setup,
-    String myEmail,
+    // String myEmail,
     String me,
     /*String myUid, */ String player,
     bool fromNotification = false,
@@ -105,7 +105,7 @@ void tappedFollowPlaying(
     try {
       userSnap = await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).get();
       myUserData = userSnap.data();
-      myEmail = myUserData[kFieldEmail];
+      // myEmail = myUserData[kFieldEmail];
     } catch(e) {
       print('Error in tappedFollowPlaying(). e:'
           '\n$e');
@@ -126,7 +126,7 @@ void tappedFollowPlaying(
 
   // print('Tapping "playing". myUid is $myUid');
   (setupData.containsKey('results') && (setupData['results'].containsKey(me) || setupData['results'].containsKey(myUid))) ||
-          (setupData[kFieldSender] == myEmail || setupData[kFieldSender] == myUid)
+          (setupData[kFieldSender] == MyFirebase.authObject.currentUser.email || setupData[kFieldSender] == myUid)
       // (setup.get('results') != null && (setup.get('results').containsKey(me) || setup.get('results').containsKey(myUid))) ||
       //         (setup.get(kFieldSender) == myEmail || setup.get(kFieldSender) == myUid)
       ? Navigator.push(context, MaterialPageRoute(builder: (context) {
@@ -141,7 +141,7 @@ void tappedFollowPlaying(
             ).show()
           : BlackboxPopup(
               title: "Not yet!",
-              desc: "You have to play this setup before you can watch others play it.",
+              desc: "You have to play setup ${setupData["i"]} before you can watch others play it.",
               context: context,
             ).show();
 }

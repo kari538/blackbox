@@ -38,12 +38,13 @@ class _PlayBoardState extends State<PlayBoard> {
 //  Widget getMiddleElements({int x, int y, bool showAtom = false}) {
   Widget getMiddleElements({int x, int y}) {
     bool showAtom = false;
-    bool showClear = false;
+    bool showMarkUp = false;
 //    bool receivedAtom = false;
     if (thisGame.showAtomSetting) {
       for (Atom atom in thisGame.atoms) {
         if (ListEquality().equals([x, y], atom.position.toList())) {
           showAtom = true;
+          break;
         }
       }
     }
@@ -52,15 +53,17 @@ class _PlayBoardState extends State<PlayBoard> {
 //    for(List<int> playerAtom in thisGame.receivedPlayingAtoms){
       if(ListEquality().equals([x,y], playerAtom.position.toList())){
         showAtom = true;
-//        receivedAtom = true;
+        break;
       }
     }
 
-    for (List<int> clear in thisGame.clearList){
-      if (ListEquality().equals([x, y], clear)) showClear = true;
+    for (List<int> marked in thisGame.markUpList){
+      // if (ListEquality().equals([x, y], marked)) print('[$x, $y] showMarkUp = true');
+      if (ListEquality().equals([x, y], marked)) showMarkUp = true;
     }
+    // if (!showMarkUp) print('[$x, $y] showMarkUp = false');
 
-    return PlayBoardTile(position: Position(x, y), showAtom: showAtom, showClear: showClear, /*receivedAtom: receivedAtom,*/ thisGame: thisGame, setup: setup, refreshParent: refreshParent);
+    return PlayBoardTile(position: Position(x, y), showAtom: showAtom, showMarkUp: showMarkUp, /*receivedAtom: receivedAtom,*/ thisGame: thisGame, setup: setup, refreshParent: refreshParent);
 //    return PlayBoardTile(x, y);
   }
 
@@ -105,25 +108,24 @@ class _PlayBoardState extends State<PlayBoard> {
 }
 
 //-----------------------------------------------------------------------------------------------------
-//TODO: Make Stateless:
 //PlayBoardTile Stateful Widget:
 class PlayBoardTile extends StatefulWidget {
-  PlayBoardTile({this.position, this.showAtom, @required this.showClear, /*this.receivedAtom,*/ @required this.thisGame, this.setup, this.refreshParent});
+  PlayBoardTile({this.position, this.showAtom, @required this.showMarkUp, /*this.receivedAtom,*/ @required this.thisGame, this.setup, this.refreshParent});
 
   final Position position;
   final bool showAtom;
-  final bool showClear;
+  final bool showMarkUp;
 //  final bool receivedAtom;
   final Play thisGame;
   final DocumentSnapshot setup;
   final Function refreshParent;
 
   @override
-  _PlayBoardTileState createState() => _PlayBoardTileState(position, showAtom, showClear, thisGame, setup);
+  _PlayBoardTileState createState() => _PlayBoardTileState(position, showAtom, showMarkUp, thisGame, setup);
 }
 
 class _PlayBoardTileState extends State<PlayBoardTile> {
-  _PlayBoardTileState(this.position, this.showAtom, this.showClear, this.thisGame, this.setup){
+  _PlayBoardTileState(this.position, this.showAtom, this.showMarkUp, this.thisGame, this.setup){
     thisAtomCoordinates=position.toList();
 //    if(receivedAtom){
 //      thisGame.playerAtoms.add(thisAtomCoordinates);
@@ -131,7 +133,7 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
   }
 
   bool showAtom;
-  bool showClear;
+  bool showMarkUp;
 //  bool receivedAtom;
   final Position position;
   final Play thisGame;
@@ -147,14 +149,14 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
             alignment: Alignment.center,
             children: [
               Container(
-              child: Center(
-                child: showAtom ? Image(image: AssetImage('images/atom_yellow.png')) : FittedBox(
+                child: Center(
+                  child: showAtom ? Image(image: AssetImage('images/atom_yellow.png')) : FittedBox(
                     fit: BoxFit.contain, child: Text('${position.x},${position.y}', style: TextStyle(color: kBoardTextColor, fontSize: 15))),
               ),
-              decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridlineColor, width: 0.5)),
+              decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridLineColor, width: 0.5)),
             ),
-              showClear
-                  ? Image(image: AssetImage('images/clear.png'))
+              showMarkUp
+                  ? Image(image: AssetImage('images/markup.png'))
                   : SizedBox()
             ],
           ),
@@ -178,7 +180,7 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
 //              thisGame.playerAtoms.remove(thisAtomCoordinates);
               int removeIndex;
               int i = 0;
-              // for(List<int> playerAtom in thisGame.playerAtoms){
+              // for(List<int> mark in thisGame.playerAtoms){
               for(Atom playerAtom in thisGame.playerAtoms){
                 if(ListEquality().equals(thisAtomCoordinates, playerAtom.position.toList())){
                   removeIndex = i;
@@ -188,6 +190,7 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
               if(removeIndex!=null) thisGame.playerAtoms.removeAt(removeIndex);
               print('Player atoms list is ${thisGame.playerAtoms}');
             }
+
             if(thisGame.online){
               //Because Firebase can't stomach a List<List<int>>:
               //Put player atoms in array to send:
@@ -206,9 +209,9 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
                 'playing.${thisGame.playerId}.$kSubFieldLastMove': FieldValue.serverTimestamp(),
               } //The dots should take me down in the nested map...
               );
-              DocumentSnapshot y = await  MyFirebase.storeObject.collection('setups').doc(setup.id).get();
-              Map<String, dynamic> updatedAtomSetup = y.data();
-              print('************************\nMiddle element pressed. updatedAtomSetup is $updatedAtomSetup\n************************');
+              // DocumentSnapshot y = await  MyFirebase.storeObject.collection('setups').doc(setup.id).get();
+              // Map<String, dynamic> updatedAtomSetup = y.data();
+              // print('************************\nMiddle element pressed. updatedAtomSetup is $updatedAtomSetup\n************************');
             }
             //Toggling showAtom below meant that atoms would be added several times if a person clicked quickly, especially if their network was slow.
 //            setState(() {
@@ -219,31 +222,44 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
         onLongPress: () async {
           print('long press');
 
-          if (thisGame.online){
-            if (!showClear) thisGame.clearList.add(thisAtomCoordinates);
-            else {
-              int removeIndex;
-              for (int i=0; i < thisGame.clearList.length; i++){
-                if (ListEquality().equals(thisAtomCoordinates, thisGame.clearList[i])) {
-                  removeIndex = i;
-                  break;
-                }
+          if(showMarkUp==false){
+            //This box didn't have a markup before
+            setState(() {
+              showMarkUp = true;
+            });
+            print('Adding markup ${position.toList()}');
+            thisGame.markUpList.add(thisAtomCoordinates);
+            // thisGame.markUpList.add([thisAtomCoordinates[0], thisAtomCoordinates[1]]);
+            // thisGame.markUpList.add(Atom(thisAtomCoordinates[0], thisAtomCoordinates[1]));
+            print('Markup list in PlayBoard is ${thisGame.markUpList}');
+          } else {
+            //This box had a markup before
+            setState(() {
+              showMarkUp = false;
+            });
+            print('Removing markup $thisAtomCoordinates');
+            int removeIndex;
+            int i = 0;
+            for(List<int> mark in thisGame.markUpList){
+              if(ListEquality().equals(thisAtomCoordinates, mark)){
+                removeIndex = i;
               }
-              if (removeIndex != null) thisGame.clearList.removeAt(removeIndex);
+              i++;
             }
-            List<int> clearArray = [];
-            for (List<int> clear in thisGame.clearList){
-              clearArray.add(clear[0]);
-              clearArray.add(clear[1]);
+            if(removeIndex!=null) thisGame.markUpList.removeAt(removeIndex);
+            print('Markup list is ${thisGame.markUpList}');
+          }
+          
+          if (thisGame.online){
+            List<int> markUpArray = [];
+            for (List<int> markUp in thisGame.markUpList){
+              markUpArray.add(markUp[0]);
+              markUpArray.add(markUp[1]);
             }
-            await MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).update({
-              'playing.${thisGame.playerId}.$kSubFieldClearList': clearArray,
+            MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).update({
+              'playing.${thisGame.playerId}.$kSubFieldMarkUpList': markUpArray,
             });
           }
-
-          setState(() {
-            showClear = !showClear;
-          });
         },
       ),
     );

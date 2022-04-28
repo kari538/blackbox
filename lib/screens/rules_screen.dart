@@ -56,7 +56,8 @@ class RulesScreen extends StatelessWidget {
                               child: Container(
                                 child: Text(
                                   "When a beam reaches a square diagonal from an atom, it is \"deflected\", changing direction 90 degrees "
-                                      "away from where it almost hit the atom.\n",
+                                      "away from where it almost hit the atom. (If there is an atom straight ahead AND one diagonally from "
+                                      "the beam position, the atom straight ahead \"wins\" and it's a hit.)\n",
                                   softWrap: true,
                                 ),
                               ),
@@ -107,7 +108,7 @@ class RulesScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
                           Text('Hit:  '),
-                          Image(image: AssetImage('images/beam_hit.png'), height: 25),
+                          Image(image: AssetImage('images/beams/beam_hit.png'), height: 25),
                         ],
                       ),
                       Row(
@@ -115,7 +116,7 @@ class RulesScreen extends StatelessWidget {
                         children: <Widget>[
                           Text('Reflection:  '),
                           Image(
-                            image: AssetImage('images/beam_reflection.png'),
+                            image: AssetImage('images/beams/beam_reflection.png'),
                             height: 25,
                           ),
                         ],
@@ -127,7 +128,7 @@ class RulesScreen extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.all(10),
                             child: Image(
-                              image: AssetImage('images/beam_blue.png'),
+                              image: AssetImage('images/beams/beam_blue.png'),
                               height: 25,
                             ),
                           ),
@@ -135,7 +136,7 @@ class RulesScreen extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.all(10),
                             child: Image(
-                              image: AssetImage('images/beam_violet.png'),
+                              image: AssetImage('images/beams/beam_violet.png'),
                               height: 25,
                             ),
                           ),
@@ -143,7 +144,7 @@ class RulesScreen extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.all(10),
                             child: Image(
-                              image: AssetImage('images/beam_green.png'),
+                              image: AssetImage('images/beams/beam_green.png'),
                               height: 25,
                             ),
                           ),

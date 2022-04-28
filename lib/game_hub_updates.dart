@@ -2,32 +2,22 @@ import 'package:flutter/foundation.dart';
 //import 'package:provider/provider.dart';
 
 class GameHubUpdates extends ChangeNotifier {
-  Map<String, String> providerUserIdMap = {};
+  Map<String, String> userIdMap = {};
+  /// Can sometimes be "Me" and "my":
   String myScreenName = '';
-  // String myId = '';
-  String myEmail = '';
 
   void updateMyScreenName(String newMyScreenName){
     myScreenName = newMyScreenName;
     notifyListeners();
   }
 
-  // void updateMyId(String newId){
-  //   myId = newId;
-  //   notifyListeners();
-  // }
-
-  void updateMyEmail(String newEmail){
-    myEmail = newEmail;
-    notifyListeners();
-  }
-
   void updateUserIdMap(Map<String, String> newUserIdMap){
-    providerUserIdMap = newUserIdMap;
+    userIdMap = newUserIdMap;
     notifyListeners();
   }
 
+  /// Returns 'Anonymous' if the uid is not found in providerUserIdMap
   String getScreenName(String key){
-    return providerUserIdMap.containsKey(key) ? providerUserIdMap[key] : "Anonymous";
+    return userIdMap.containsKey(key) ? userIdMap[key] : "Anonymous";
   }
 }

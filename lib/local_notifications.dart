@@ -1,3 +1,4 @@
+import 'package:navigation_history_observer/navigation_history_observer.dart';
 import 'units/small_functions.dart';
 import 'global.dart';
 import 'my_firebase.dart';
@@ -32,22 +33,24 @@ class LocalNotifications {
     Future onSelectNotification(String payload) async {
       print('onSelectNotification() (Local notification opened app).');
       printPrettyJson(jsonDecode(payload));
-      // TODO: Put navigation from local notifications here
-      //xxx
+
       Map<String, dynamic> msgData = jsonDecode(payload);
       // Map<String, dynamic> msgData = remoteMsg.data.cast();
       bool containsData = !(MapEquality().equals(msgData, {}) || msgData == null);
       bool playingEvent = containsData && (msgData[kMsgEvent] == kMsgEventStartedPlaying || msgData[kMsgEvent] == kMsgEventResumedPlaying);
       bool newSetupEvent = containsData && msgData[kMsgEvent] == kMsgEventNewGameHubSetup;
 
-      if (MyFirebase.authObject.currentUser.uid != null) {
+      if (MyFirebase.authObject.currentUser != null) {
         if (playingEvent) {
           navigateFromNotificationToFollowing(msgData: msgData);
         } else if (newSetupEvent) {
-          // Todo: Only push if GameHubScreen() not already on top:
-          Navigator.push(GlobalVariable.navState.currentContext, MaterialPageRoute(builder: (context) {
-            return GameHubScreen();
-          }, settings: RouteSettings(name: routeGameHub)));
+          // Push GameHubScreen() if it's not already on top:
+          Route topRoute = NavigationHistoryObserver().top;
+          if (topRoute.settings.name != routeGameHub) {
+            Navigator.push(GlobalVariable.navState.currentContext, MaterialPageRoute(settings: RouteSettings(name: routeGameHub), builder: (context){
+                      return GameHubScreen();
+            }));
+          }
         }
       }
 
@@ -74,6 +77,6 @@ class LocalNotifications {
     );
     var iOS = IOSNotificationDetails();
     var bothPlatforms = NotificationDetails(android: android, iOS: iOS);
-    await flutterLocalNotificationsPlugin.show(5, 'Notice! $title', '$notification', bothPlatforms, payload: data);
+    await flutterLocalNotificationsPlugin.show(5, '$title', '$notification', bothPlatforms, payload: data);
   }
 }

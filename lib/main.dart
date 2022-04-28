@@ -1,3 +1,4 @@
+import 'theme.dart';
 import 'global.dart';
 // import 'package:wakelock/wakelock.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -21,30 +22,19 @@ import 'my_firebase.dart';
 void main() {
   print('Running main()');
   WidgetsFlutterBinding.ensureInitialized();
-  MyFirebase.myFutureFirebaseApp = Firebase.initializeApp();
+  try {
+    MyFirebase.myFutureFirebaseApp = Firebase.initializeApp();
+  } catch (e) {
+    print('Error initializing App in main(): $e');
+  }
   initializeFcm('', GlobalVariable.navState);
   userChangesListener();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);  //This seems to be working!
   // Wakelock.enable();  // Prevents screen from sleeping for as long as main() is running.
 
-  // Map<String, dynamic> map = {
-  //   'one': 1,
-  //   'two': 2,
-  // };
-  // print('map before is $map');
-  // changeMap(map);
-  // print('map after is $map');
-
   runApp(Blackbox());
 }
 
-// void changeMap(Map<String, dynamic> _map){
-//   _map = {
-//     'one': 1,
-//     'two': 2,
-//     'three': 3,
-//   };
-// }
 
 class Blackbox extends StatelessWidget {
   @override
@@ -54,20 +44,12 @@ class Blackbox extends StatelessWidget {
       create: (_) {
         return GameHubUpdates();
       },
-      lazy: true,
+      lazy: true, // Don't remember why I put this to true!...
+      // Removing it doesn't seem to do anything...
+      // In InheritedProvider - an ancestor of ChangeNotifierProvider - it says that
+      // if lazy is false, it forces "the value to be computed"... Seems null will count as true...
       child: MaterialApp(
-        theme: ThemeData.dark().copyWith(
-          appBarTheme: AppBarTheme(color: Colors.black),
-          scaffoldBackgroundColor: kScaffoldBackgroundColor,
-//          scaffoldBackgroundColor: Colors.pink,
-          buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary),
-          textTheme: TextTheme(
-            bodyText2: TextStyle(
-              fontSize: 18,
-            ),
-            button: TextStyle(color: Colors.pink),
-          ),
-        ),
+        theme: blackboxTheme,
 //        home: BlackBoxScreen(),
 //        home: ResultsScreen(),
 //        home: WelcomeScreen(),

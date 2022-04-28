@@ -1,3 +1,4 @@
+import 'play.dart';
 import 'units/fcm_send_msg.dart';
 import 'my_firebase_labels.dart';
 import 'dart:convert';
@@ -69,25 +70,116 @@ class UploadSetupButton extends StatelessWidget {
     return _token;
   }
 
-  Future<String> getMyPlayerId() async {
-    String _myId;
-    if (MyFirebase.authObject.currentUser == null) {
-      return null;
-    } else {
-      String myEmail = MyFirebase.authObject.currentUser.email;
-      QuerySnapshot loggedInUserInfo = await MyFirebase.storeObject
-          .collection('userinfo')
-          .where('email', isEqualTo: myEmail)
-          .get(); //No stream needed, coz the document no is not supposed to change
-      if (ListEquality().equals(loggedInUserInfo.docs, [])) {
-        //I don't have an entry in 'userinfo', which shouldn't ever happen:
-        print("I don't have an entry in 'userinfo', which shouldn't ever happen!!");
-        _myId = 'no screen name';
-      } else {
-        _myId = loggedInUserInfo.docs[0].id;
+  // I believe this was rendered unnecessary when I made all 'userinfo' doc IDs into the Uid!...
+  // Future<String> getMyPlayerId() async {
+  //   String _myId;
+  //   if (MyFirebase.authObject.currentUser == null) {
+  //     return null;
+  //   } else {
+  //     String myEmail = MyFirebase.authObject.currentUser.email;
+  //     QuerySnapshot loggedInUserInfo = await MyFirebase.storeObject
+  //         .collection('userinfo')
+  //         .where('email', isEqualTo: myEmail)
+  //         .get(); //No stream needed, coz the document no is not supposed to change
+  //     if (ListEquality().equals(loggedInUserInfo.docs, [])) {
+  //       //I don't have an entry in 'userinfo', which shouldn't ever happen:
+  //       print("I don't have an entry in 'userinfo', which shouldn't ever happen!!");
+  //       _myId = 'no screen name';
+  //     } else {
+  //       _myId = loggedInUserInfo.docs[0].id;
+  //     }
+  //     print("My player ID is '$_myId'");
+  //     return _myId;
+  //   }
+  // }
+
+  static Future uploadButtonPress({@required BuildContext context, @required Play thisGame, bool popToEndRoute = true}) async {
+    // print("Token in onPressed is ${await token}");
+    String myUid = MyFirebase.authObject.currentUser.uid;
+    // String myUid = await getMyPlayerId();   // I believe this was rendered unnecessary when I made all 'userinfo' doc IDs into the Uid!...
+    print('OnlineButton printing player ID: $myUid');
+    bool needLogin = false;
+
+    if (myUid == null) {
+      //If no user is logged in
+      needLogin = await BlackboxPopup(
+        context: context,
+        title: 'Not Logged In!',
+        desc: 'You are no longer logged in. Click OK to log in again.',
+      ).show();
+      // needLogin = true;
+      if (needLogin == false) return; // If the user cancelled login, do nothing.
+    }
+
+    if (needLogin) {
+      await Navigator.push(context, MaterialPageRoute(settings: RouteSettings(name: routeRegLogin), builder: (context) {
+        return RegistrationAndLoginScreen(withPop: true);
+      }));
+      print("On return from new login, User is ${MyFirebase.authObject.currentUser}");
+    }
+
+    if (MyFirebase.authObject.currentUser != null) {
+      myUid = MyFirebase.authObject.currentUser.uid;
+
+      List<int> atomArray = [];
+      for (Atom atom in thisGame.atoms) {
+        atomArray.add(atom.position.x);
+        atomArray.add(atom.position.y);
       }
-      print("My player ID is '$_myId'");
-      return _myId;
+
+      DocumentReference setupRef;
+      String setupID;
+      try {
+        setupRef = await MyFirebase.storeObject.collection('setups').add({
+          'sender': myUid,
+          'atoms': atomArray,
+          'widthAndHeight': [thisGame.widthOfPlayArea, thisGame.heightOfPlayArea],
+          'timestamp': FieldValue.serverTimestamp(),
+          kFieldShuffleA: thisGame.beamImageIndexA,
+          kFieldShuffleB: thisGame.beamImageIndexB,
+          // 'playing': {}, //Why should I add this?? It just takes up unnecessary space and it's not logical!...
+          //I wanted to make it easier to avoid "called on null" but I'll just have to manage that some other way...
+        });
+
+        setupID = setupRef.id;
+      } catch (e) {
+        print("Error adding setup: $e");
+      }
+
+      fcmSendMsg(jsonEncode({
+        "data": {
+          "event": kMsgEventNewGameHubSetup,
+          "setupSender": "$myUid",
+          "$kMsgSetupID": setupID,
+          // "collapse_key": myUid + "...",
+        },
+        // "token": "${await myGlobalToken}",
+        "topic": kTopicGameHubSetup,
+      }));
+
+      // To pop back to game hub from Add button:
+      if (popToEndRoute == true) {
+        ModalRoute endRoute;
+        Navigator.popUntil(context, (route) {
+          if (route.isFirst) {
+            endRoute = route;
+            return true;
+          }
+
+          if (route.settings.name == routeGameHub) {
+            endRoute = route;
+            return true;
+          }
+          return false;
+        });
+
+        if (endRoute.isFirst) {
+          print('endRoute is first');
+          Navigator.push(context, MaterialPageRoute(settings: RouteSettings(name: routeGameHub), builder: (context){
+                      return GameHubScreen();
+          }));
+        }
+      }
     }
   }
 
@@ -98,126 +190,8 @@ class UploadSetupButton extends StatelessWidget {
 
     return OnlineButton(
       text: 'Upload',
-      onPressed: () async {
-        print("Token in onPressed is ${await token}");
-
-
-        String myPlayerId = await getMyPlayerId();
-        print('OnlineButton printing player ID: $myPlayerId');
-        bool needLogin = false;
-        if (myPlayerId == null) {
-          //If no user is logged in
-          await BlackboxPopup(
-            context: context,
-            title: 'Not Logged In!',
-            desc: 'You are no longer logged in. Click OK to log in again.',
-          ).show();
-          needLogin = true;
-        } else {
-          String me = Provider.of<GameHubUpdates>(context, listen: false).providerUserIdMap[myPlayerId];
-          print('Me in OnlineButton is $me.');
-        }
-
-        if (needLogin) {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) {
-            return RegistrationAndLoginScreen(fromSetup: true);
-          }));
-          print("On return from new login, User is ${MyFirebase.authObject.currentUser.email}");
-          myPlayerId = await getMyPlayerId();
-        }
-
-        List<int> atomArray = [];
-        for (Atom atom in widget.thisGame.atoms) {
-          atomArray.add(atom.position.x);
-          atomArray.add(atom.position.y);
-        }
-
-        DocumentReference setupRef = await MyFirebase.storeObject.collection('setups').add({
-          'sender': myPlayerId,
-          'atoms': atomArray,
-          'widthAndHeight': [widget.thisGame.widthOfPlayArea, widget.thisGame.heightOfPlayArea],
-          'timestamp': FieldValue.serverTimestamp(),
-          kFieldShuffleA: widget.thisGame.beamImageIndexA,
-          kFieldShuffleB: widget.thisGame.beamImageIndexB,
-          // 'playing': {}, //Why should I add this?? It just takes up unnecessary space and it's not logical!...
-          //I wanted to make it easier to avoid "called on null" but I'll just have to manage that some other way...
-        });
-
-        String setupID = setupRef.id;
-
-        fcmSendMsg(jsonEncode({
-          "data": {
-            "event": kMsgEventNewGameHubSetup,
-            "setupSender": "$myUid",
-            "$kMsgSetupID": setupID,
-            // "collapse_key": myUid + "...",
-          },
-          // "token": "${await myGlobalToken}",
-          "topic": kTopicGameHubSetup,
-        }));
-
-        // http.Response res;
-        // String desc = '';
-        // String code = '';
-        // String jsonBody = jsonEncode({
-        //   "notification": {
-        //     "title": "New Game Hub Setup",
-        //     "body": "Upload button: A new blackbox setup has come in to game hub",
-        //   },
-        //   "data": {
-        //     "click_action": "FLUTTER_NOTIFICATION_CLICK",
-        //   },
-        //   // "token": "${await token}",
-        //   "topic": kTopicNewSetup,
-        // });
-        // print("jsonString is $jsonBody");
-        // Map<String, String> headers = {
-        //   "content-type": "application/json"
-        // };
-        //
-        // try {
-        //   res = await http.post(
-        //     'https://us-central1-blackbox-6b836.cloudfunctions.net/sendMsg',
-        //     headers: headers,
-        //     body: jsonBody,
-        //   );
-        // } catch (e) {
-        //   print('Caught an error in sendMsg to topic $kTopicNewSetup API call!');
-        //   print('e is: ${e.toString()}');
-        //   // errorMsg = e.toString();
-        //   BlackboxPopup(context: context, title: 'Error', desc: '$e').show();
-        //   if (res != null) print('Status code in apiCall() catch is ${res.statusCode}');
-        // }
-        // if (res != null) {
-        //   print('sendMsg to topic $kTopicNewSetup API call response body: ${res.body}');
-        //   print('sendMsg to topic $kTopicNewSetup API call response code: ${res.statusCode}');
-        //   desc = res.body;
-        //   code = res.statusCode.toString();
-        // } else {
-        //   print('sendMsg to topic $kTopicNewSetup API call response is $res');
-        // }
-        // // BlackboxPopup(context: context, title: 'Response $code', desc: '$desc').show();
-        // print('code is $code and desc is $desc in Upload Setup Button');
-
-        ModalRoute endRoute;
-        Navigator.popUntil(context, (route) {
-          if (route.isFirst) {
-            endRoute = route;
-            return true;
-          }
-          if (route.settings.name == routeGameHub) {
-            endRoute = route;
-            return true;
-          }
-          return false;
-        });
-        if (endRoute.isFirst) {
-          print('endRoute is first');
-          Navigator.push(context, MaterialPageRoute(builder: (context) {
-            return GameHubScreen();
-//            return SettingsScreen(online: true);
-          }));
-        }
+      onPressed: () {
+        uploadButtonPress(thisGame: widget.thisGame, context: context);
       },
     );
   }

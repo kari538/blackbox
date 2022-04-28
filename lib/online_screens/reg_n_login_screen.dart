@@ -4,12 +4,12 @@ import 'package:blackbox/online_screens/registration_screen.dart';
 import 'package:blackbox/online_button.dart';
 
 class RegistrationAndLoginScreen extends StatelessWidget {
-  const RegistrationAndLoginScreen({this.fromSetup=false});
-  final bool fromSetup;
+  const RegistrationAndLoginScreen({this.withPop=false});
+  final bool withPop;
 
   @override
   Widget build(BuildContext context) {
-    print("Building RegistrationAndLoginScreen with fromSetup as $fromSetup");
+    print("Building RegistrationAndLoginScreen with withPop as $withPop");
     return Scaffold(
       appBar: AppBar(title: Text('log in or register')),
       body: Center(
@@ -21,22 +21,22 @@ class RegistrationAndLoginScreen extends StatelessWidget {
               onPressed: () async {
                 print('Pressed Log in');
                 await Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return LoginScreen(fromSetup: fromSetup);
+                  return LoginScreen(withPop: withPop);
                 }));
-                print('After pushing LoginScreen with fromSetup as $fromSetup');
-                if(fromSetup) {
-                  print('fromSetup is true. Will pop context');
+                print('After pushing LoginScreen with withPop as $withPop');
+                if(withPop) {
+                  print('withPop is true. Will pop RegistrationAndLoginScreen()');
                   Navigator.pop(context);
                 }
               },
             ),
             OnlineButton(
               text: 'Register',
-              onPressed: (){
-                Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return RegistrationScreen(fromSetup: fromSetup);
+              onPressed: () async {
+                await Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return RegistrationScreen(withPop: withPop);
                 }));
-                if(fromSetup) Navigator.pop(context);
+                if(withPop) Navigator.pop(context);
               },
             ),
           ],

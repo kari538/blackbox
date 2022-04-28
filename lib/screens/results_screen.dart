@@ -1,3 +1,4 @@
+import 'package:blackbox/play_screen_menu.dart';
 import 'package:intl/intl.dart';
 import 'package:blackbox/my_firebase_labels.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -122,7 +123,7 @@ class ResultsScreen extends StatelessWidget {
             ),
           ),
         ),
-        decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridlineColor, width: 0.5)),
+        decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridLineColor, width: 0.5)),
       ),
     );
   }
@@ -130,7 +131,10 @@ class ResultsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('blackbox')),
+      appBar: AppBar(
+          title: Text('blackbox'),
+        actions: thisGame.online ? [SizedBox()] : [PlayScreenMenu(thisGame, entries: [4])],
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

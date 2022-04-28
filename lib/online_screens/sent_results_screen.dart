@@ -31,8 +31,8 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
   Play thisGame;
   bool resultsReady = false;
   String errorMsg = '';
-  int beamScore;
-  int atomScore;
+  // int beamScore;
+  // int atomScore;
   int totalScore;
   bool playerAtoms = false;
   bool awaitingData = false;
@@ -115,11 +115,11 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
        });
       } else {
        setState(() { //Do I really have to set State? It's called from initState and is no longer async...
-          atomScore = setupData[kFieldResults][widget.resultPlayerId][kSubFieldA];
-          beamScore = setupData[kFieldResults][widget.resultPlayerId][kSubFieldB];
-          if (atomScore != null && beamScore != null) {
-            totalScore = atomScore + beamScore;
-          }
+          // atomScore = setupData[kFieldResults][widget.resultPlayerId][kSubFieldA];
+          // beamScore = setupData[kFieldResults][widget.resultPlayerId][kSubFieldB];
+          // if (atomScore != null && beamScore != null) {
+          //   totalScore = atomScore + beamScore;
+          // }
           showSpinner = false;
        });
         for (int i = 0; i < setupData['atoms'].length; i += 2) {
@@ -139,16 +139,32 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
             thisGame.playerAtoms.add(Atom(sentPlayerAtoms[i].toInt(), sentPlayerAtoms[i + 1].toInt()));
           }
           print('Player atoms ${thisGame.playerAtoms}');
+
+          //TODO: Upload the multiple solutions so they can just be downloaded again, rather than calculated anew each time:
+          // bool upLoadedAltSol = setupData[kFieldResults][widget.resultPlayerId].containsKey(kSubFieldAlternativeSolutions);
+          // if (upLoadedAltSol) {
+          //   bool hasAltSol = setupData[kFieldResults][widget.resultPlayerId][kSubFieldAlternativeSolutions];
+          //   if (hasAltSol) {
+          //     // This setup states alternative solutions
+          //     alternativeSolutions = alternativeSolutionsFromSetup();
+          //   } else {
+          //     // This setup explicitly states there are no alternative solutions
+          //   }
+          // }
+          // To get correct, missed and misplaced atoms:
+          // thisGame.rawAtomScore();  // This will overwrite atomScore. Hence the below:
+
+          //TODO: If multiple solutions are not uploaded, this still needs to happen:
           alternativeSolutions = await thisGame.getScore();
           altSol = alternativeSolutions != null ? true : false;
           setState(() {
-            atomScore = thisGame.atomScore;
-            beamScore = thisGame.beamScore;
-            totalScore = atomScore + beamScore;
+            thisGame.atomScore = setupData[kFieldResults][widget.resultPlayerId][kSubFieldA];
+            thisGame.beamScore = setupData[kFieldResults][widget.resultPlayerId][kSubFieldB];
+            totalScore = thisGame.atomScore + thisGame.beamScore;
           });
         }
 
-        print('Edge tile children: ${thisGame.edgeTileChildren}');
+       print('Edge tile children: ${thisGame.edgeTileChildren}');
        setState(() {
 //          totalScore = thisGame.atomScore + thisGame.beamScore; //no!!
 //          print('Total score $totalScore');
@@ -157,6 +173,11 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
        });
       }
     }
+  }
+
+  List<dynamic> alternativeSolutionsFromSetup() {
+
+    return [];
   }
 
   Widget getEdges({int x, int y}) {
@@ -230,15 +251,16 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
                           ),
                         ),
         ),
-        decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridlineColor, width: 0.5)),
+        decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridLineColor, width: 0.5)),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    String resultPlayerScreenName = Provider.of<GameHubUpdates>(context).providerUserIdMap.containsKey(widget.resultPlayerId)
-        ? Provider.of<GameHubUpdates>(context).providerUserIdMap[widget.resultPlayerId]
+    GameHubUpdates gameHubProviderListening = Provider.of<GameHubUpdates>(context);
+    String resultPlayerScreenName = gameHubProviderListening.userIdMap.containsKey(widget.resultPlayerId)
+        ? gameHubProviderListening.userIdMap[widget.resultPlayerId]
         : widget.resultPlayerId;
 
     return Scaffold(
@@ -261,7 +283,7 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
                     children: [
                       // Text('online')
                       InfoText('Setup no ${setupData['i']}'),
-                      InfoText('By ${Provider.of<GameHubUpdates>(context).getScreenName(setupData[kFieldSender])}'),
+                      InfoText('By ${gameHubProviderListening.getScreenName(setupData[kFieldSender])}'),
                     ],
                   ),
                 ),

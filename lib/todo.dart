@@ -1,12 +1,15 @@
 //TODO: Check time zones on Started and Finished Playing... (It should tell you in YOUR time zone)
-//TODO: Finish Play Screen Menu with ability to upload setups you just played
 //TODO: (Private games)
 //TODO: (Chat)
-//TODO: Perhaps wait with playing (online) until the starting time has finished uploading...? So that it uploads...
-//TODO: Remove Playing tag after 2 weeks
-//TODO: Search function for games
-
-//Todo: Learn AlertDialogs:
+//TODO: (Remove Playing tag after 2 weeks (Cloud Function thing, not urgent))
+//TODO: (Just upload the multiple solutions info so that future updates can access it.)
+//TODO: ***Search function for games
+//TODO: ***Better image in RulesScreen()...
+//TODO: ***Same beams when showing multiple solutions results EVEN IF setup maker has old app...
+//Todo: (Make step-by-step game review)
+//TODO: (Save offline games to disk)
+//TODO: (Get rid of deprecations)
+//Todo: (Learn AlertDialogs:)
 // showDialog(
 //   context: context,
 //   builder: (_) => AlertDialog(

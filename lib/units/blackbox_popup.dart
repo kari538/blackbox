@@ -7,6 +7,7 @@ class BlackboxPopup extends Alert {
     @required this.title,
     @required this.desc,
     this.buttons,
+    this.buttonsDirection,
   }){
 //  Function onPressed = (){Navigator.pop(context);};
     buttons = buttons ?? [
@@ -16,20 +17,25 @@ class BlackboxPopup extends Alert {
         color: Colors.white,
       )
     ];
+
+    style = AlertStyle(
+      isOverlayTapDismiss: false,
+      backgroundColor: Colors.deepPurple.shade200,
+      // backgroundColor: Color(0xff7488c1),
+      overlayColor: Colors.black45,
+      isCloseButton: true,
+      buttonsDirection: buttonsDirection ?? ButtonsDirection.row,
+    );
   }
 
   String title;
   String desc;
   BuildContext context;
   List<DialogButton> buttons;
+  ButtonsDirection buttonsDirection;
 
-  AlertStyle style = AlertStyle(
-    isOverlayTapDismiss: false,
-    backgroundColor: Colors.deepPurple.shade200,
-    // backgroundColor: Color(0xff7488c1),
-    overlayColor: Colors.black45,
-    isCloseButton: true,
-  );
+  AlertStyle style;
+
 }
 
 

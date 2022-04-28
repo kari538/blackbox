@@ -1,57 +1,119 @@
+import 'package:blackbox/route_names.dart';
+import 'package:blackbox/global.dart';
+import 'package:blackbox/fcm.dart';
+import 'package:blackbox/my_firebase_labels.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 // import 'package:blackbox/fcm.dart';
 import 'package:blackbox/constants.dart';
 import 'package:blackbox/online_screens/game_hub_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:blackbox/online_button.dart';
 import 'package:blackbox/units/blackbox_popup.dart';
 import 'package:blackbox/my_firebase.dart';
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({this.fromSetup = false});
 
-  final bool fromSetup;
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({this.withPop = false});
+
+  final bool withPop;
 
   @override
-  _LoginScreenState createState() => _LoginScreenState(fromSetup);
+  _LoginScreenState createState() => _LoginScreenState(withPop);
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  _LoginScreenState(this.fromSetup);
+  _LoginScreenState(this.withPop);
 
-  final bool fromSetup;
+  final bool withPop;
   bool showSpinner = false;
   String email = '';
   String password = '';
+  DocumentSnapshot hi;
 
   Future loginPress() async {
     setState(() {
       showSpinner = true;
     });
+
+    auth.UserCredential loginResponse;
+    String myUid;
+    String myScreenName;
+
     try {
-      var loginResponse = await MyFirebase.authObject.signInWithEmailAndPassword(email: email, password: password);
-//                    print(loginResponse);
-      print('Current user in LoginScreen is ${MyFirebase.authObject.currentUser}');
-      // initializeFirebaseCloudMessaging();
-      if (loginResponse != null) {
-        if (fromSetup) {
-          Navigator.pop(context);
-        } else {
-          Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (context) {
-//                          return OnlineWelcomeScreen();
-              return GameHubScreen();
-            },
-          ));
-        }
-      }
+      loginResponse = await MyFirebase.authObject.signInWithEmailAndPassword(email: email, password: password);
+      // print(loginResponse);
     } catch (e) {
-      print('Error caught! $e');
+      print('Login Error!: $e');
       BlackboxPopup(
         context: context,
         title: 'Login Error!',
         desc: '$e',
       ).show();
     }
+    print('loginResponse is $loginResponse');
+    print('Current user in LoginScreen is ${MyFirebase.authObject.currentUser}');
+
+    if (MyFirebase.authObject.currentUser != null) {
+      // I'm successfully logged in.
+      myUid = MyFirebase.authObject.currentUser.uid;
+      myScreenName = MyFirebase.authObject.currentUser.displayName;
+
+      // First, let's check if I have an entry in userinfo:
+      DocumentSnapshot myUserInfo;
+      Map<String, dynamic> myUserData;
+      try {
+        myUserInfo = await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).get();
+        myUserData = myUserInfo.data();
+      } catch (e) {
+        print('Error checking for entry in userinfo: $e');
+      }
+      print('myUserData is $myUserData}');
+
+      if (myUserData == null) {
+        // I don't have an entry in userinfo. That's bad!
+        print('I don\'t have an entry in userinfo! Making one.');
+        myUserData = {
+          'email': email,
+          kFieldScreenName: myScreenName, // It may be null, but if I didn't have any entry anyway...
+          kFieldNotifications: [
+            kTopicGameHubSetup,
+            kTopicPlayingSetup,
+            kTopicPlayingYourSetup,
+            kTopicAllAppUpdates,
+          ],
+        };
+        try {
+          await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).set(myUserData);
+          // If the above is successful, I need to initialize FCM again, because it doesn't
+          // function properly without a userinfo entry:
+          initializeFcm('', GlobalVariable.navState);
+        } catch (e) {
+          print('Error making a userinfo entry: $e');
+        }
+
+      } else {
+        // I already had an entry in userinfo
+        // Let's check if I have a display name in the auth object!
+        if (myScreenName == null && myUserData.containsKey(kFieldScreenName)) {
+          myScreenName = myUserData[kFieldScreenName];
+          MyFirebase.authObject.currentUser.updateDisplayName(myScreenName);
+        }
+      }
+      // Now, I should have an entry in userinfo, and both a screenName and
+      // a display name if either existed before
+
+      if (withPop) {
+        Navigator.pop(context);
+      } else {
+        Navigator.of(context).pushReplacement(MaterialPageRoute(settings: RouteSettings(name: routeGameHub), builder: (context){
+          return GameHubScreen();
+          },
+        ));
+      }
+    }
+
     setState(() {
       showSpinner = false;
     });
@@ -59,12 +121,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print("Building LoginScreen with fromSetup as $fromSetup");
+    print("Building LoginScreen with withPop as $withPop");
     return Scaffold(
       appBar: AppBar(
         title: GestureDetector(
           child: Text('log in'),
-          onTap: (){
+          onTap: () {
             setState(() {
               email = 'karolinahagegard@gmail.com';
               password = '123456';

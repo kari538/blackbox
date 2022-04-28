@@ -60,7 +60,7 @@ class GameHubMenu extends StatelessWidget {
             return done;
           });
           if(endRoute.isFirst){
-            Navigator.push(context, MaterialPageRoute(builder: (context){
+            Navigator.push(context, MaterialPageRoute(settings: RouteSettings(name: routeRegLogin), builder: (context){
               return RegistrationAndLoginScreen();
             }));
           }
@@ -97,8 +97,6 @@ class GameHubMenu extends StatelessWidget {
       onSelected: (value) {
         value();
       },
-      color: kHubDividerColor,
-      shape: RoundedRectangleBorder(side: BorderSide(color: kHubDividerColor)),
     );
   }
 }
