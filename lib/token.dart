@@ -1,1 +1,1 @@
-Future<String> myGlobalToken;
+Future<String?>? myGlobalToken;

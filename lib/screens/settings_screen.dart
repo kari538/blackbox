@@ -7,7 +7,7 @@ import 'make_setup_screen.dart';
 import 'package:blackbox/online_button.dart';
 
 class SettingsScreen extends StatefulWidget {
-  SettingsScreen({@required this.online});
+  SettingsScreen({required this.online});
   final bool online;
   @override
   _SettingsScreenState createState() => _SettingsScreenState();
@@ -49,7 +49,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     items: getNumberDropdown(),
                     onChanged: (value) {
                       setState(() {
-                        widthOfPlayArea = value;
+                        widthOfPlayArea = value!;
                       });
                     },
                   )
@@ -67,7 +67,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     items: getNumberDropdown(),
                     onChanged: (value) {
                       setState(() {
-                        heightOfPlayArea = value;
+                        heightOfPlayArea = value!;
                       });
                     },
                   ),
@@ -85,7 +85,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     items: getNumberDropdown(),
                     onChanged: (value) {
                       setState(() {
-                        numberOfAtoms = value;
+                        numberOfAtoms = value!;
                       });
                     },
                   ),
@@ -107,7 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                     onChanged: (value) {
                       setState(() {
-                        showAtomsSetting = value;
+                        showAtomsSetting = value!;
                       });
                     },
                   ),

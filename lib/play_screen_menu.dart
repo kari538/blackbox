@@ -1,12 +1,11 @@
-import 'route_names.dart';
-import 'package:blackbox/units/small_functions.dart';
+import 'package:blackbox/upload_player_atoms.dart';
 
+import 'upload_markup.dart';
+import 'route_names.dart';
 import 'my_firebase_labels.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
-import 'package:provider/provider.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
-import 'game_hub_updates.dart';
 import 'units/blackbox_popup.dart';
 import 'upload_setup_button.dart';
 import 'online_screens/game_hub_screen.dart';
@@ -25,12 +24,15 @@ import 'package:flutter/material.dart';
 
 enum selected { clearAtoms, clearMarkUp, fillAtoms, fillMarkUp, toGameHub }
 
+/// If entry 0, "clear all atoms" is used, rebuildPlayScreen can not be null.
+/// If thisGame.online, setup can not be null.
 class PlayScreenMenu extends StatelessWidget {
-  const PlayScreenMenu(this.thisGame, {this.rebuildPlayScreen, this.entries});
+  const PlayScreenMenu(this.thisGame, {this.setup, this.rebuildScreen, this.entries});
 
   final Play thisGame;
-  final Function rebuildPlayScreen;
-  final List<int> entries;
+  final DocumentSnapshot? setup;
+  final Function? rebuildScreen;
+  final List<int>? entries;
 
   static const List<PopupMenuItem> menu = [
     PopupMenuItem(child: Text("Clear all atoms"), value: selected.clearAtoms),
@@ -42,30 +44,65 @@ class PlayScreenMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Some checks before we execute:
+    if (entries != null && entries!.contains(0) && rebuildScreen == null) {
+      throw 'Error in ${this.runtimeType}:'
+          '\n rebuildScreen can\'t be null if menu entry "Clear all atoms" is used.';
+    }
+    if (thisGame.online && setup == null) {
+      throw 'Error in ${this.runtimeType}:'
+          '\n thisGame.online is true, but setup is null!';
+    }
+
     return PopupMenuButton(itemBuilder: (context) {
       List<PopupMenuItem> _menuEntries = [];
       if (entries == null) {
         _menuEntries = menu;
       } else {
         for (int i = 0; i < menu.length; i++) {
-          if (entries.contains(i)) _menuEntries.add(menu[i]);
+          if (entries!.contains(i)) _menuEntries.add(menu[i]);
         }
       }
       return _menuEntries;
-    }, onSelected: (value) async {
+    }, onSelected: (dynamic value) async {
       print('$value');
 
       switch (value) {
         case selected.clearAtoms:
           {
             thisGame.playerAtoms = [];
-            rebuildPlayScreen();
+            rebuildScreen!();
+
+            if (thisGame.online){
+              uploadPlayerAtoms(thisGame, setup!);
+              // List<int> playingAtomsArray = [];
+              // for (Atom pAtom in thisGame.playerAtoms) {
+              //   playingAtomsArray.add(pAtom.position.x);
+              //   playingAtomsArray.add(pAtom.position.y);
+              // }
+              // MyFirebase.storeObject.collection('setups').doc(setup!.id).update({
+              //   'playing.${thisGame.playerUid}.playingAtoms': playingAtomsArray,
+              //   'playing.${thisGame.playerUid}.$kSubFieldLastMove': FieldValue.serverTimestamp(),
+              // });
+            }
           }
           break;
         case selected.clearMarkUp:
           {
             thisGame.markUpList = [];
-            rebuildPlayScreen();
+            rebuildScreen!();
+
+            if (thisGame.online){
+              uploadMarkup(thisGame, setup!);
+              // List<int> markUpArray = [];
+              // for (List<int> markUp in thisGame.markUpList){
+              //   markUpArray.add(markUp[0]);
+              //   markUpArray.add(markUp[1]);
+              // }
+              // MyFirebase.storeObject.collection(kCollectionSetups).doc(setup!.id).update({
+              //   'playing.${thisGame.playerUid}.$kSubFieldMarkUpList': markUpArray,
+              // });
+            }
           }
           break;
         case selected.fillAtoms:
@@ -76,7 +113,11 @@ class PlayScreenMenu extends StatelessWidget {
                 thisGame.playerAtoms.add(Atom(x, y));
               }
             }
-            rebuildPlayScreen();
+
+            rebuildScreen!();
+            if (thisGame.online) {
+              uploadPlayerAtoms(thisGame, setup!);
+            }
           }
           break;
         case selected.fillMarkUp:
@@ -87,51 +128,49 @@ class PlayScreenMenu extends StatelessWidget {
                 thisGame.markUpList.add([x, y]);
               }
             }
-            rebuildPlayScreen();
+            rebuildScreen!();
+            if (thisGame.online) {
+              uploadMarkup(thisGame, setup!);
+            }
           }
           break;
         case selected.toGameHub:
           {
             print('Selected upload to game hub');
-            // If not logged in: Go to Log in Sign up page. No popup needed.
+            // If not logged in: Go to reg_n_login_screen. No popup needed.
             // If logged in: Popup to ask if you want to upload as User
             // - If yes: Upload
             // - If no: Cancel
             // - If change user: Go to Log in Sign up page.
+            //   - If change user successful: Upload
+            //   - If not successful: .....?
             print('MyFirebase.authObject.currentUser is ${MyFirebase.authObject.currentUser}');
             // String myUid = '';
             if (MyFirebase.authObject.currentUser == null) {
               // Not logged in
               changeLoginThenUpload(context, /*myUid,*/ thisGame);
             } else {
-              String myScreenName = MyFirebase.authObject.currentUser.displayName;
+              String myUid = MyFirebase.authObject.currentUser!.uid;
+              String? myScreenName = MyFirebase.authObject.currentUser!.displayName;
+
               if (myScreenName == null) {
-                DocumentSnapshot userInfo = await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).get();
-                Map<String, dynamic> myUserInfo = userInfo.data();
-                if (myUserInfo.containsKey(kFieldScreenName)) {
+                // Attempt to get hold of a screenName:
+                DocumentSnapshot? userInfo;
+                Map<String, dynamic>? myUserInfo;
+                try {
+                  userInfo = await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).get();
+                  myUserInfo = userInfo.data() as Map<String, dynamic>;
+                }  catch (e) {
+                  print('Error in ${this.runtimeType}: $e');
+                  // await BlackboxPopup(context: context, title: 'Error connecting to database', desc: '$e').show();
+                }
+                if (myUserInfo != null && myUserInfo.containsKey(kFieldScreenName)) {
                   myScreenName = myUserInfo[kFieldScreenName];
-                  MyFirebase.authObject.currentUser.updateDisplayName(myScreenName);
+                  MyFirebase.authObject.currentUser!.updateDisplayName(myScreenName);
                 }
               }
-              // Future<String> getMyPlayerId() async {
-              // String myScreenName;
-              // String myEmail = MyFirebase.authObject.currentUser.email;
-              // QuerySnapshot loggedInUserInfo = await MyFirebase.storeObject
-              //     .collection('userinfo')
-              //     .where('email', isEqualTo: myEmail)
-              //     .get(); //No stream needed, coz the document no is not supposed to change
-              // if (ListEquality().equals(loggedInUserInfo.docs, [])) {
-              //   //I don't have an entry in 'userinfo', which shouldn't ever happen:
-              //   print("I don't have an entry in 'userinfo', which shouldn't ever happen!!");
-              //   myScreenName = 'no screen name';
-              // } else {
-              //   Map myUserInfo = loggedInUserInfo.docs[0].data();
-              //   myScreenName = myUserInfo[kFieldScreenName];
-              // }
-              // print("My screen name is '$myScreenName'");
-              // }
 
-              // String myScreenName = Provider.of<GameHubUpdates>(context, listen: false).providerUserIdMap[myUid];
+              // With or without screenName:
               await BlackboxPopup(
                       context: context,
                       title: 'Upload',
@@ -175,10 +214,10 @@ class PlayScreenMenu extends StatelessWidget {
 }
 
 void changeLoginThenUpload(BuildContext context, Play thisGame) async {
-  auth.User userBefore;
-  String uidBefore;
-  auth.User userAfter;
-  String uidAfter;
+  auth.User? userBefore;
+  String? uidBefore;
+  auth.User? userAfter;
+  String? uidAfter;
   bool userChanged = false;
 
   userBefore = MyFirebase.authObject.currentUser;

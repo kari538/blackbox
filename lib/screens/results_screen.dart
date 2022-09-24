@@ -7,22 +7,20 @@ import 'package:provider/provider.dart';
 import 'package:blackbox/units/small_widgets.dart';
 import 'package:blackbox/board_grid.dart';
 import 'package:blackbox/play.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:blackbox/constants.dart';
 import 'package:blackbox/atom_n_beam.dart';
-import 'package:collection/collection.dart';
 
-Timestamp started;
-Timestamp finished;
-Duration timePlayed;
+Timestamp? started;
+Timestamp? finished;
+Duration? timePlayed;
 String startedString = 'N/A';
 String finishedString = 'N/A';
 String timePlayedString = 'N/A';
 
 class ResultsScreen extends StatelessWidget {
   ResultsScreen(
-      {@required this.thisGame, @required this.setupData, this.multiDisplay, this.altSol = false, /*this.beamsAndResults,*/ this.alternativeSolutions}) {
+      {required this.thisGame, required this.setupData, this.multiDisplay, this.altSol = false, /*this.beamsAndResults,*/ this.alternativeSolutions}) {
     // setupData is {} if offline
     started = null;
     finished = null;
@@ -31,21 +29,21 @@ class ResultsScreen extends StatelessWidget {
     finishedString = 'N/A';
     timePlayedString = 'N/A';
     // thisGame.getAtomScore(); // Moved to PlayScreen()
-    String resultPlayerId = thisGame.playerId;
+    String? resultPlayerId = thisGame.playerUid;
     print('resultPlayerId is $resultPlayerId');
     print('setupData is $setupData and setupData.isNotEmpty is ${setupData.isNotEmpty}');
     if (thisGame.online) {
       started = setupData[kFieldResults][resultPlayerId][kSubFieldStartedPlaying];
       finished = setupData[kFieldResults][resultPlayerId][kSubFieldFinishedPlaying];
       if (finished != null) {
-        finishedString = DateFormat('d MMM, HH:mm:ss').format(finished.toDate());
+        finishedString = DateFormat('d MMM, HH:mm:ss').format(finished!.toDate());
         // It is possible that somebody updates the app between starting and finishing playing, thus getting a "finished" but not a "started" value...
         if (started != null) {
-          startedString = DateFormat('d MMM, HH:mm:ss').format(started.toDate());
+          startedString = DateFormat('d MMM, HH:mm:ss').format(started!.toDate());
           // timePlayed = finished.compareTo(started);
           // print("timePlayed is $timePlayed");
           // print('Type of timePlayed is ${timePlayed.runtimeType}');
-          timePlayed = finished.toDate().difference(started.toDate());
+          timePlayed = finished!.toDate().difference(started!.toDate());
           // timePlayed = DateTime(2021, 3, 1).difference(started.toDate()); // timePlayed is -58:22:05 when started was 3 Mar, 10:22 AM
           timePlayedString = timePlayed.toString().substring(0, timePlayed.toString().length - 7);
           print('timePlayedString is $timePlayedString');
@@ -56,24 +54,24 @@ class ResultsScreen extends StatelessWidget {
 
   final Play thisGame;
   final Map<String, dynamic> setupData;
-  final List<int> multiDisplay;
+  final List<int>? multiDisplay;
   final bool altSol;
   // final List beamsAndResults;
-  final List<dynamic> alternativeSolutions;
+  final List<dynamic>? alternativeSolutions;
 
-  Widget getEdges({int x, int y}) {
-    int slotNo = Beam.convert(coordinates: Position(x, y), heightOfPlayArea: thisGame.heightOfPlayArea, widthOfPlayArea: thisGame.widthOfPlayArea);
+  Widget getEdges({required int x, required int y}) {
+    int slotNo = Beam.convert(coordinates: Position(x, y), heightOfPlayArea: thisGame.heightOfPlayArea, widthOfPlayArea: thisGame.widthOfPlayArea)!;
     return Expanded(
       child: Container(
         child: Center(
-            child: thisGame.edgeTileChildren[slotNo - 1] ??
+            child: thisGame.edgeTileChildren![slotNo - 1] ??
                 FittedBox(fit: BoxFit.contain, child: Text('$slotNo', style: TextStyle(color: kBoardEdgeTextColor, fontSize: 15)))),
         decoration: BoxDecoration(color: kBoardEdgeColor),
       ),
     );
   }
 
-  Widget getMiddleElements({int x, int y}) {
+  Widget getMiddleElements({required int x, required int y}) {
     bool correct = false;
     bool misplaced = false;
     bool missed = false;
@@ -274,7 +272,7 @@ class ResultsScreen extends StatelessWidget {
                                   child: Padding(
                                     padding: EdgeInsets.only(right: 26.0),
                                     child: Text(
-                                      '${thisGame.beamScore + thisGame.atomScore}',
+                                      '${thisGame.beamScore+ thisGame.atomScore}',
                                       textAlign: TextAlign.right,
                                       style: TextStyle(fontWeight: FontWeight.bold),
                                     ),
@@ -329,7 +327,7 @@ class ResultsScreen extends StatelessWidget {
                     child: ElevatedButton(
                       child: Text('View other solutions'),
                       onPressed: () async {
-                        int result = 0;
+                        int? result = 0;
                         int gameNo = 1;
                         // int i = 0;
                         Play displayGame;
@@ -346,14 +344,14 @@ class ResultsScreen extends StatelessWidget {
                           // for (Atom atom in alternativeSolutions[gameNo]) {
                           //   displayGame.correctAtoms.add(atom.position.toList());
                           // }
-                          displayGame = alternativeSolutions[gameNo];
-                          displayGame.edgeTileChildren = alternativeSolutions[0];
-                          print('alternativeSolutions[$gameNo] is ${alternativeSolutions[gameNo]}');
+                          displayGame = alternativeSolutions![gameNo];
+                          displayGame.edgeTileChildren = alternativeSolutions![0];
+                          print('alternativeSolutions[$gameNo] is ${alternativeSolutions![gameNo]}');
                           // Returns null if "Pop" is pressed:
                           result = await Navigator.push(context, PageRouteBuilder(pageBuilder: (context, anim1, anim2) {
-                            return ResultsScreen(thisGame: displayGame, setupData: {}, multiDisplay: [gameNo, alternativeSolutions.length-1]);
+                            return ResultsScreen(thisGame: displayGame, setupData: {}, multiDisplay: [gameNo, alternativeSolutions!.length-1]);
                           }));
-                          if (result != null && gameNo + result > 0 && gameNo + result <= alternativeSolutions.length-1) gameNo += result;
+                          if (result != null && gameNo + result > 0 && gameNo + result <= alternativeSolutions!.length-1) gameNo += result;
                           // displayGame.correctAtoms = [];
                           // i++;
                         } while (result != null /*&& i < 100*/);
@@ -375,18 +373,18 @@ class ResultsScreen extends StatelessWidget {
 
 class TestSetupsScrollWidget extends StatelessWidget {
   const TestSetupsScrollWidget({
-    Key key,
-    @required this.testing,
+    Key? key,
+    required this.testing,
   }) : super(key: key);
 
-  final List<int> testing;
+  final List<int>? testing;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text("Setup ${testing[0]} (${testing[1]})"),
-        testing[1] > 100 ? Row(
+        Text("Setup ${testing![0]} (${testing![1]})"),
+        testing![1] > 100 ? Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             TextButton(
@@ -417,7 +415,7 @@ class TestSetupsScrollWidget extends StatelessWidget {
                 )),
           ],
         ) : SizedBox(),
-        testing[1] > 10 ? Row(
+        testing![1] > 10 ? Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             TextButton(

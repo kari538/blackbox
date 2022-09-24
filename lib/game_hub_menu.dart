@@ -2,8 +2,6 @@ import 'package:blackbox/route_names.dart';
 import 'package:navigation_history_observer/navigation_history_observer.dart';
 import 'online_screens/settings_screen.dart';
 import 'online_screens/profile_screen.dart';
-import 'package:blackbox/constants.dart';
-//import 'package:blackbox/screens/welcome_screen.dart';
 import 'package:flutter/material.dart';
 //import 'online_screens/choose_board_screen.dart';
 import 'my_firebase.dart';
@@ -20,7 +18,7 @@ class GameHubMenu extends StatelessWidget {
       Item(
         text: 'My profile',
         value: () {
-          Route topRoute = NavigationHistoryObserver().top;
+          Route topRoute = NavigationHistoryObserver().top!;
           if (topRoute.settings.name != routeGameHub) {
             Navigator.pop(context);
           }
@@ -33,7 +31,7 @@ class GameHubMenu extends StatelessWidget {
         text: 'Settings',
         value: () {
           print('${NavigationHistoryObserver().history}');
-          Route topRoute = NavigationHistoryObserver().top;
+          Route topRoute = NavigationHistoryObserver().top!;
           if (topRoute.settings.name != routeGameHub) {
             Navigator.pop(context);
           }
@@ -46,7 +44,7 @@ class GameHubMenu extends StatelessWidget {
         text: 'Change user',
         value: () async {
 //          Navigator.popUntil(context, ModalRoute.withName('reg_n_log') ?? ModalRoute.of(context).isFirst);
-          Route endRoute;
+          late Route endRoute;
           Navigator.of(context).popUntil((route) {
             bool done = false;
             if (route.isFirst) {
@@ -94,7 +92,7 @@ class GameHubMenu extends StatelessWidget {
         }
         return itemList;
       },
-      onSelected: (value) {
+      onSelected: (dynamic value) {
         value();
       },
     );
@@ -103,11 +101,11 @@ class GameHubMenu extends StatelessWidget {
 
 class Item extends StatelessWidget {
 //class Item extends PopupMenuEntry {
-  Item({@required this.text, this.goto, this.value});
+  Item({required this.text, this.goto, this.value});
 
   final String text;
-  final Object goto;
-  final Function value;
+  final Object? goto;
+  final Function? value;
 
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
     return text;
@@ -122,7 +120,7 @@ class Item extends StatelessWidget {
           ? value ?? null
           : () {
         Navigator.push(context, MaterialPageRoute(builder: (context) {
-          return goto;
+          return goto as Widget;
         }));
       },
     );

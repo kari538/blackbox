@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 
 class OnlineButton extends StatelessWidget {
   const OnlineButton({
-    @required this.onPressed,
-    @required this.text,
+    required this.onPressed,
+    required this.text,
 //    this.color = kSlightPurple,
     this.color = Colors.blueAccent,
     this.fontSize = 15,
@@ -12,7 +12,7 @@ class OnlineButton extends StatelessWidget {
     this.borderColor = Colors.transparent,
   });
 
-  final Function onPressed;
+  final Function? onPressed;
   final String text;
   final Color color;
   final double fontSize;
@@ -30,7 +30,7 @@ class OnlineButton extends StatelessWidget {
         ),
       ),
 //              onPressed: null,
-      onPressed: onPressed,
+      onPressed: onPressed as void Function()?,
       color: color,
       shape: RoundedRectangleBorder(
         side: BorderSide(color: borderColor),

@@ -10,9 +10,9 @@ import 'package:flutter/material.dart';
 class Play {
 //  Play(this.atoms);
 //  Play({@required this.numberOfAtoms=4, @required this.heightOfPlayArea=8, @required this.widthOfPlayArea=8}){
-  Play({@required this.numberOfAtoms, @required this.widthOfPlayArea, @required this.heightOfPlayArea, this.showAtomSetting = false}) {
+  Play({required this.numberOfAtoms, required this.widthOfPlayArea, required this.heightOfPlayArea, this.showAtomSetting = false}) {
 //    edgeTileNumbers = List<int>((heightOfPlayArea + widthOfPlayArea) * 2);
-    edgeTileChildren = List<Widget>.filled((heightOfPlayArea + widthOfPlayArea) * 2, null);
+    edgeTileChildren = List<Widget?>.filled((heightOfPlayArea + widthOfPlayArea) * 2, null);
     beamImagesA = [
       Image(image: AssetImage('images/beams/beam_plane.png')),
       Image(image: AssetImage('images/beams/beam_violet.png')),
@@ -42,9 +42,9 @@ class Play {
       Image(image: AssetImage('images/beams/beam_green.png')),
     ];
     beamImageIndexA = List.generate(beamImagesA.length, (index) => index);
-    beamImageIndexA.shuffle();
+    beamImageIndexA!.shuffle();
     beamImageIndexB = List.generate(beamImagesB.length, (index) => index);
-    beamImageIndexB.shuffle();
+    beamImageIndexB!.shuffle();
     // beamImagesA.shuffle();
     // beamImagesB.shuffle();
   }
@@ -59,7 +59,7 @@ class Play {
   List<Atom> correctAtoms = [];
   List<Atom> misplacedAtoms = [];
   List<Atom> missedAtoms = [];
-  List<List<int>> markUpList = [];
+  List<List<int>> markUpList = [];  // I was lazy... This should better be a List<Position> but...
   // List<List<int>> playerAtoms = [];
   // List<List<int>> correctAtoms = [];
   // List<List<int>> misplacedAtoms = [];
@@ -68,15 +68,15 @@ class Play {
   int beamScore = 0;
   int atomScore = 0;
   List<int> sentBeams = [];
-  List<Widget> edgeTileChildren;
-  List<int> beamImageIndexA;
-  List<int> beamImageIndexB;
-  List<Widget> beamImagesA;
-  List<Widget> beamImagesB;
+  List<Widget?>? edgeTileChildren;
+  List<int?>? beamImageIndexA;
+  List<int?>? beamImageIndexB;
+  late List<Widget> beamImagesA;
+  late List<Widget> beamImagesB;
   bool online = false;
   String playerScreenName = 'Screen name';
-  String playerId;
-  Map<String, dynamic> setupData;
+  String? playerUid;
+  Map<String, dynamic>? setupData;
   List<List<dynamic>> beamsAndResults = [];
 
   void getAtomsRandomly() {
@@ -108,7 +108,7 @@ class Play {
 
 //  dynamic getBeamResult({@required Beam beam, @required int widthOfPlayArea, @required int heightOfPlayArea}) {
 //   dynamic getBeamResult({@required Beam beam}) {
-  dynamic getBeamResult({@required int inSlot}) {
+  dynamic getBeamResult({required int inSlot}) {
     Beam beam = Beam(start: inSlot, widthOfPlayArea: widthOfPlayArea, heightOfPlayArea: heightOfPlayArea);
     dynamic beamResult(){
       dynamic result = 'no result was found';
@@ -191,12 +191,12 @@ class Play {
     return result;
   }
 
-  void setEdgeTiles({int inSlot, dynamic beamResult}) {
+  void setEdgeTiles({int? inSlot, dynamic beamResult}) {
     if (beamResult == 'hit') {
-      edgeTileChildren[inSlot - 1] = Image(image: AssetImage('images/beams/beam_hit.png'));
+      edgeTileChildren![inSlot! - 1] = Image(image: AssetImage('images/beams/beam_hit.png'));
       beamScore++;
     } else if (beamResult == 'reflection') {
-      edgeTileChildren[inSlot - 1] = Image(image: AssetImage('images/beams/beam_reflection.png'));
+      edgeTileChildren![inSlot! - 1] = Image(image: AssetImage('images/beams/beam_reflection.png'));
       beamScore++;
     }
 
@@ -206,29 +206,29 @@ class Play {
 
       // If still on A list:
       if (beamCount < beamImagesA.length) {
-        int index = beamImageIndexA[beamCount];
+        int index = beamImageIndexA![beamCount]!;
         // If the sender has sent a beam which the receiver doesn't have:
         if (index >= beamImagesA.length) {
-          edgeTileChildren[inSlot - 1] = Image(image: AssetImage('images/beams/beam_doesnt_exist.png'));
-          edgeTileChildren[beamResult - 1] = Image(image: AssetImage('images/beams/beam_doesnt_exist.png'));
+          edgeTileChildren![inSlot! - 1] = Image(image: AssetImage('images/beams/beam_doesnt_exist.png'));
+          edgeTileChildren![beamResult - 1] = Image(image: AssetImage('images/beams/beam_doesnt_exist.png'));
         } else {
-          edgeTileChildren[inSlot - 1] = beamImagesA[index];
-          edgeTileChildren[beamResult - 1] = beamImagesA[index];
+          edgeTileChildren![inSlot! - 1] = beamImagesA[index];
+          edgeTileChildren![beamResult - 1] = beamImagesA[index];
           // edgeTileChildren[inSlot - 1] = beamImagesA[beamCount];
           // edgeTileChildren[beamResult - 1] = beamImagesA[beamCount];
         }
 
       } else {
         // Else use B list:
-        int index = beamImageIndexB[beamCount - beamImagesA.length];
+        int index = beamImageIndexB![beamCount - beamImagesA.length]!;
 
         // If the sender has sent a beam which the receiver doesn't have:
         if (index >= beamImagesB.length) {
-          edgeTileChildren[inSlot - 1] = Image(image: AssetImage('images/beams/beam_doesnt_exist.png'));
-          edgeTileChildren[beamResult - 1] = Image(image: AssetImage('images/beams/beam_doesnt_exist.png'));
+          edgeTileChildren![inSlot! - 1] = Image(image: AssetImage('images/beams/beam_doesnt_exist.png'));
+          edgeTileChildren![beamResult - 1] = Image(image: AssetImage('images/beams/beam_doesnt_exist.png'));
         } else {
-          edgeTileChildren[inSlot - 1] = beamImagesB[index];
-          edgeTileChildren[beamResult - 1] = beamImagesB[index];
+          edgeTileChildren![inSlot! - 1] = beamImagesB[index];
+          edgeTileChildren![beamResult - 1] = beamImagesB[index];
           // edgeTileChildren[inSlot - 1] = beamImagesB[beamCount - beamImagesA.length];
           // edgeTileChildren[beamResult - 1] = beamImagesB[beamCount - beamImagesA.length];
         }
@@ -281,11 +281,11 @@ class Play {
   }
 
   // List<List<Atom>> getScore() {
-  Future<List<dynamic>> getScore() async {
+  Future<List<dynamic>?> getScore() async {
     beamsAndResults = [];
     rawAtomScore();
     // bool equalSol = false;
-    if (atomScore > 0) {
+    if (atomScore> 0) {
       // Check if the player's provided answer is an alternative solution
       Play senderGame;
       Play playerGame;
@@ -382,7 +382,7 @@ class Play {
 
             // Find the index of the missed atom from missedAtoms that is supposed to be deleted from the correct altGame.atoms in altGame.atoms:
             int i = 0;
-            int replaceIndex;
+            int? replaceIndex;
             for (Atom atom in altGame.atoms){
               // If the atom in altGame.atoms is the same as the blueAtom we're on, that's the atom to be replaced:
               if (atom.position.toList().equals(blueAtom.position.toList())) replaceIndex = i;

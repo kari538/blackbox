@@ -76,35 +76,34 @@ const String kMsgOverrideNo = 'no';
 // const String kMsg = '';
 // const String kMsg = '';
 
+/// If I want to change the below, I have to change them in the Cloud Function as well!
 // Cloud topics:
 const String kTopicGameHubSetup = 'kTopicGameHubSetup';
-// const String kTopicNewSetup = 'newSetup';
 const String kTopicPlayingSetup = 'kTopicPlayingSetup';
 const String kTopicResumedPlayingSetup = 'kTopicResumedPlayingSetup';
 const String kTopicPlayingYourSetup = 'kTopicPlayingYourSetup';
-const String kTopicDeveloper = 'Developer';
 const String kTopicAllAppUpdates = 'AllAppUpdates';
 const String kTopicMajorAppUpdates = 'MajorAppUpdates';
+const String kTopicDeveloper = 'Developer';
 // const String kTopic = '';
 
 
 //API
+// TODO: ---Change "testing" to false in Cloud Function
+// TODO: ---Change from localhost!!.... if on. That is, change emulating to false:
+// const bool emulating = true;
+const bool emulating = false;
+
+// For functions emulator, to use with phone emulator (AVD):
+// const String kApiEmulatorLink = 'http://localhost:5001/blackbox-6b836/us-central1/'; // Didn't work before Uri update
+// const String kApiEmulatorLink = 'http://10.0.2.2:5001/blackbox-6b836/us-central1/';  // Worked before Uri update
+const String kApiEmulatorLink = '10.0.2.2:5001'; // Works after Uri update
+const String kApiEmulatorSendMsg = 'blackbox-6b836/us-central1/sendMsg';  // Works after Uri update. For emulator
+
 // For real case:
 // // Whole cloud function address: 'https://us-central1-blackbox-6b836.cloudfunctions.net/sendMsg'
 const String kApiCloudFunctionsLink = 'us-central1-blackbox-6b836.cloudfunctions.net';
 const String kApiSendMsg = 'sendMsg';
-
-// TODO: ---Change "testing" to false in Cloud Function
-
-// For functions emulator, to use with phone emulator (AVD):
-// TODO: ---Change from localhost!!.... if on. That is, change emulating to false:
-// const bool emulating = true;
-const bool emulating = false;
-// const String kApiEmulatorLink = 'http://localhost:5001/blackbox-6b836/us-central1/'; // Didn't work before Uri update
-// const String kApiEmulatorLink = 'http://10.0.2.2:5001/blackbox-6b836/us-central1/';  // Worked before Uri update
-const String kApiEmulatorLink = '10.0.2.2:5001'; // Works after Uri update
-// const String kApiEmulatorLink = 'localhost:5001'; // Doesn't work after Uri update
-const String kApiEmulatorSendMsg = 'blackbox-6b836/us-central1/sendMsg';  // Works after Uri update. For emulator
 
 const String kApiContentType = 'content-type';
 const String kApiApplicationJson = 'application/json';
@@ -116,8 +115,6 @@ const String kApiApplicationJson = 'application/json';
 // Responses:
 const String kFcmResponseSuccess = "Success";
 const String kFcmResponseError = 'Error';
-// const String kFcmResponseTokenNotRegistered = ''
-//     'messaging/registration-token-not-registered'; // Old version...?
 const String kFcmResponseTokenNotRegistered = 'messaging/registration-token-not-registered';
 // const String kFcmResponse = '';
 // const String kFcmResponse = '';

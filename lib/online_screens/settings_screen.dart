@@ -1,4 +1,5 @@
-import 'package:modal_progress_hud/modal_progress_hud.dart';
+// import 'flutter';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 import 'package:blackbox/my_firebase.dart';
 import 'package:blackbox/my_firebase_labels.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -22,7 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool inactive = true;
   bool appInactive = true;
   FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  String myUid = MyFirebase.authObject.currentUser.uid;
+  String myUid = MyFirebase.authObject.currentUser!.uid;
   bool showSpinner = true;
 
   @override
@@ -35,7 +36,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future getSettings() async {
     DocumentSnapshot userSnap = await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).get();
-    Map <String, dynamic> myUserData = userSnap.data();
+    Map <String, dynamic> myUserData = userSnap.data() as Map<String, dynamic>;
     if (myUserData.containsKey(kFieldNotifications)) {
       if (!myUserData[kFieldNotifications].contains(kTopicGameHubSetup)) {
         newSetup = false;

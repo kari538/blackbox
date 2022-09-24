@@ -1,7 +1,5 @@
 import 'package:blackbox/global.dart';
-import 'package:navigation_history_observer/navigation_history_observer.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:blackbox/units/small_widgets.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';import 'package:blackbox/units/small_widgets.dart';
 import 'package:blackbox/online_button.dart';
 import 'package:blackbox/units/blackbox_popup.dart';
 import 'package:pretty_json/pretty_json.dart';
@@ -10,8 +8,6 @@ import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:blackbox/game_hub_menu.dart';
 import 'package:blackbox/my_types_and_functions.dart';
 import 'package:blackbox/constants.dart';
-import 'package:blackbox/scratches/temp_firebase_operations.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blackbox/my_firebase_labels.dart';
 import 'package:blackbox/my_firebase.dart';
 import 'dart:async';
@@ -35,15 +31,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void dispose() {
     super.dispose();
-    if (profileListener != null) profileListener.cancel();
+    if (profileListener != null) profileListener!.cancel();
   }
 
   bool showSpinner = false;
-  StreamSubscription profileListener;
-  Map<String, dynamic> myProfileData;
+  StreamSubscription? profileListener;
+  Map<String, dynamic>? myProfileData;
 
   // String myUid = Myself.userData[kFieldUid];
-  String myUid = MyFirebase.authObject.currentUser.uid;
+  String myUid = MyFirebase.authObject.currentUser!.uid;
   List<String> profileTextFields = [kFieldScreenName, kPassword];
 
   Map<String, bool> editing = {};
@@ -58,7 +54,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (myProfileData != null) {
         for (String field in profileTextFields) {
           controller.addAll({
-            field: TextEditingController(text: myProfileData[field].toString()),
+            field: TextEditingController(text: myProfileData![field].toString()),
           });
         }
         print('controller map keys are ${controller.keys}');
@@ -74,7 +70,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget profileTextField(String key) {
     print('Building profileTextField');
-    String newValue;
+    String? newValue;
     return (editing[key] ?? false)
         ? Column(
       children: [
@@ -95,7 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   setState(() {
                           newValue = null;
                           editing[key] = false;
-                          controller[key].text = myProfileData[key].toString(); //Needed for zoom
+                          controller[key]!.text = myProfileData![key].toString(); //Needed for zoom
                         });
                 }),
             RaisedButton(
@@ -107,7 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           // print('Key is $key');
                           MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).update({key: newValue});
                           if (key == kFieldScreenName) {
-                            MyFirebase.authObject.currentUser.updateDisplayName(newValue);
+                            MyFirebase.authObject.currentUser!.updateDisplayName(newValue);
                             if (newValue == '' || newValue == 'Anonymous') {
                               setState(() {
                                 editing[key] = false;
@@ -137,7 +133,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Expanded(
             child: Text(
-              '${myProfileData != null ? myProfileData[key] : ''}',
+              '${myProfileData != null ? myProfileData![key] : ''}',
               style: TextStyle(color: Colors.blueGrey.shade100),
             )),
         GestureDetector(
@@ -185,7 +181,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onPressed: () {
                   setState(() {
                           editing[key] = false;
-                          controller[key].text = myProfileData[key].toString(); //Needed for zoom
+                          controller[key]!.text = myProfileData![key].toString(); //Needed for zoom
                         });
                 }),
             RaisedButton(
@@ -193,7 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onPressed: () async {
                   print('Before change password');
                   // await MyFirebase.authObject.currentUser.updatePassword('111111');  //Ok, this works...
-                  await MyFirebase.authObject.sendPasswordResetEmail(email: MyFirebase.authObject.currentUser.email);
+                  await MyFirebase.authObject.sendPasswordResetEmail(email: MyFirebase.authObject.currentUser!.email!);
                   print('After change password');
                         setState(() {
                           editing[key] = false;
@@ -232,7 +228,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void setProfileScreenState({@required bool spinner}) {
+  void setProfileScreenState({required bool spinner}) {
     print('Running setProfileScreenState()');
 
     setState(() {
@@ -327,13 +323,16 @@ Future deleteAccount(BuildContext context, Function setProfileScreenState) async
   ).show();
 }
 
+// class DeleteAccountButton extends StatelessWidget {
 class DeleteAccountButton extends BlackboxPopupButton {
-  DeleteAccountButton(this.context, this.setProfileScreenState);
+  // DeleteAccountButton(this.context, this.setProfileScreenState);
+  DeleteAccountButton(this.context, this.setProfileScreenState) : super(text: "text", onPressed: (){});
+  // DeleteAccountButton(this.context, this.setProfileScreenState);
 
   final BuildContext context;
   final Function setProfileScreenState;
   final text = 'Delete';
-  final String myUid = MyFirebase.authObject.currentUser.uid;
+  final String myUid = MyFirebase.authObject.currentUser!.uid;
 
   Widget build(BuildContext buttonContext) {
     return BlackboxPopupButton(
@@ -343,13 +342,13 @@ class DeleteAccountButton extends BlackboxPopupButton {
         setProfileScreenState(spinner: true);
         // await Future.delayed(Duration(seconds: 1));
         await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).delete();
-        await MyFirebase.authObject.currentUser.delete();
+        await MyFirebase.authObject.currentUser!.delete();
         // :.(
 
         Navigator.popUntil(context, (route) => route.isFirst);
 
         BlackboxPopup(
-          context: GlobalVariable.navState.currentContext,
+          context: GlobalVariable.navState.currentContext!,
           title: 'Complete',
           desc: 'Your blackbox account has been deleted',
         ).show();

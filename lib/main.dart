@@ -6,7 +6,6 @@ import 'package:navigation_history_observer/navigation_history_observer.dart';
 import 'local_notifications.dart';
 import 'fcm.dart';
 import 'package:flutter/material.dart';
-import 'constants.dart';
 import 'package:blackbox/screens/welcome_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:blackbox/game_hub_updates.dart';
@@ -22,15 +21,12 @@ import 'my_firebase.dart';
 void main() {
   print('Running main()');
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    MyFirebase.myFutureFirebaseApp = Firebase.initializeApp();
-  } catch (e) {
-    print('Error initializing App in main(): $e');
-  }
-  initializeFcm('', GlobalVariable.navState);
+  MyFirebase.myFutureFirebaseApp = Firebase.initializeApp();
+  initializeFcm('');
   userChangesListener();
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);  //This seems to be working!
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler); //This seems to be working!
   // Wakelock.enable();  // Prevents screen from sleeping for as long as main() is running.
+  LocalNotifications.initiate();
 
   runApp(Blackbox());
 }
@@ -39,7 +35,6 @@ void main() {
 class Blackbox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    LocalNotifications.initiate(context);
     return ChangeNotifierProvider<GameHubUpdates>(
       create: (_) {
         return GameHubUpdates();

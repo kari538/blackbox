@@ -1,6 +1,7 @@
 import 'package:blackbox/units/small_functions.dart';
 import 'package:blackbox/online_screens/sent_results_screen.dart';
 import 'package:blackbox/game_hub_updates.dart';
+import 'package:pretty_json/pretty_json.dart';
 import 'package:provider/provider.dart';
 import 'package:collection/collection.dart';
 import 'blackbox_popup.dart';
@@ -13,7 +14,7 @@ import 'package:flutter/material.dart';
 
 
 class RightSideChildren extends StatefulWidget {
-  RightSideChildren({@required Key key, @required this.setup, @required this.setupData, @required this.i}): super(key: key);
+  RightSideChildren({required Key key, required this.setup, required this.setupData, required this.i}): super(key: key);
 
   final DocumentSnapshot setup;
   final Map<String, dynamic> setupData;
@@ -30,8 +31,8 @@ class _RightSideChildrenState extends State<RightSideChildren> {
   Map<String, dynamic> currentSetupData = {};
   final int i;
 
-  StreamSubscription thisSetupStream; // For adding and removing Playing and Result tags
-  StreamSubscription pingStreamListener; // For determining active or not, if pings exist
+  StreamSubscription? thisSetupStream; // For adding and removing Playing and Result tags
+  StreamSubscription? pingStreamListener; // For determining active or not, if pings exist
   // StreamSubscription playingStream;
 
   Map<String, bool> activeMap = {}; // {String player: bool active}
@@ -74,8 +75,8 @@ class _RightSideChildrenState extends State<RightSideChildren> {
 
   @override
   void dispose() {
-    if (thisSetupStream != null) thisSetupStream.cancel();
-    if (pingStreamListener != null) pingStreamListener.cancel();
+    if (thisSetupStream != null) thisSetupStream!.cancel();
+    if (pingStreamListener != null) pingStreamListener!.cancel();
     // if (playingStream != null) playingStream.cancel();
     super.dispose();
   }
@@ -84,11 +85,20 @@ class _RightSideChildrenState extends State<RightSideChildren> {
     // If a player is removed, the countdown for that player ends:
     while (moveCountDownMap.containsKey(player) && this.mounted) {
       await Future.delayed(Duration(seconds: 1));
-      if (moveCountDownMap.containsKey(player)) {
-        moveCountDownMap[player]--;
+      if (moveCountDownMap.containsKey(player) && moveCountDownMap[player] != null) {
+        // It's ok to test the condition above, but it doesn't make it null-safe, since
+        // the player entry might be removed from the Map async at any tick!
+
+        int localCount = moveCountDownMap[player] ?? 0;
+        localCount--;
+        moveCountDownMap[player] = localCount; // Will add the entry again if it's been
+        // removed, but hey...
+
+        // moveCountDownMap[player]--;
         // countDown--;
         // == true has to be there, coz might have become null during countdown:
-        if (moveCountDownMap[player] == 0 && activeMap[player] == true && this.mounted) {
+        if (localCount <= 0 && activeMap[player] == true && this.mounted) {
+        // if (moveCountDownMap[player] == 0 && activeMap[player] == true && this.mounted) {
           // if (countDown < 0 && this.mounted) {
           setState(() {
             // print('setState in RightSideChildren moveCountDown()');
@@ -104,10 +114,16 @@ class _RightSideChildrenState extends State<RightSideChildren> {
     // If a player is removed, the countdown for that player ends:
     while (pingCountDownMap.containsKey(player) && this.mounted) {
       await Future.delayed(Duration(seconds: 1));
-      if (pingCountDownMap.containsKey(player)) {
-        pingCountDownMap[player]--;
+      if (pingCountDownMap.containsKey(player) && pingCountDownMap[player] != null) {
+        int localPing = pingCountDownMap[player] ?? 0;
+        localPing--;
+        pingCountDownMap[player] = localPing; // Will add the entry again if it's been
+        // removed, but hey...
+
+        // pingCountDownMap[player]--;
         // The entries may no longer exist, so == true has to be added:
-        if (pingCountDownMap[player] == 0 && activeMap[player] == true && this.mounted) {
+        if (localPing <= 0 && activeMap[player] == true && this.mounted) {
+        // if (pingCountDownMap[player] == 0 && activeMap[player] == true && this.mounted) {
           // if (countDown < 0 && this.mounted) {
           setState(() {
             // print('setState in RightSideChildren');
@@ -116,7 +132,7 @@ class _RightSideChildrenState extends State<RightSideChildren> {
           });
         }
       }
-    }
+    }//...
   }
 
   void getThisSetupStream() async {
@@ -130,8 +146,8 @@ class _RightSideChildrenState extends State<RightSideChildren> {
       // Since everything that can come into this stream is probably a change in a Playing field,
       // why not just check if active has changed? And if it has, setState!
 
-      Map<String, dynamic> newSetupData = event.data();
-      Map<String, dynamic> newResultsData = newSetupData[kFieldResults];
+      Map<String, dynamic> newSetupData = event.data()!;
+      Map<String, dynamic>? newResultsData = newSetupData[kFieldResults];
       Map<String, dynamic> newPlayingData = newSetupData[kFieldPlaying] ?? {};
       Map<String, dynamic> oldPlayingData = currentSetupData[kFieldPlaying] ?? {};
 
@@ -172,7 +188,7 @@ class _RightSideChildrenState extends State<RightSideChildren> {
         //     '\nnewResultsData is \n$newResultsData '
         //     '\nand currentSetupData[kFieldResults is \n${currentSetupData[kFieldResults]}'
         //     '');
-        int resultLengthBefore = currentSetupData[kFieldResults] != null ? currentSetupData[kFieldResults].length : 0;
+        int? resultLengthBefore = currentSetupData[kFieldResults] != null ? currentSetupData[kFieldResults].length : 0;
         int resultLengthAfter = newResultsData != null ? newResultsData.length : 0;
         // If the number of Results are different, setState:
         if (resultLengthAfter != resultLengthBefore) {
@@ -284,21 +300,21 @@ class _RightSideChildrenState extends State<RightSideChildren> {
 
     DateTime now = DateTime.now();
     bool freshPingExists = pingMap != null && pingMap[player] != null;
-    DateTime lastPing = freshPingExists ? pingMap[player].toDate() : null;
+    DateTime? lastPing = freshPingExists ? pingMap[player].toDate() : null;
     bool lastMoveExists = /*setupData[kFieldPlaying][player].containsKey(kSubFieldLastMove) &&*/ setupData[kFieldPlaying][player]
     [kSubFieldLastMove] !=
         null;
-    DateTime lastMove = lastMoveExists ? setupData[kFieldPlaying][player][kSubFieldLastMove].toDate() : null;
+    DateTime? lastMove = lastMoveExists ? setupData[kFieldPlaying][player][kSubFieldLastMove].toDate() : null;
     // If the last move is much later than the last ping, maybe the user changed to an app version that doesn't have ping or something...:
-    if (lastMoveExists && freshPingExists && lastMove.isAfter(lastPing.add(Duration(seconds: pingExpiry)))) freshPingExists = false;
+    if (lastMoveExists && freshPingExists && lastMove!.isAfter(lastPing!.add(Duration(seconds: pingExpiry)))) freshPingExists = false;
     bool startTimeExists = setupData[kFieldPlaying][player][kSubFieldStartedPlaying] != null;
-    DateTime startTime = startTimeExists ? setupData[kFieldPlaying][player][kSubFieldStartedPlaying].toDate() : null;
+    DateTime? startTime = startTimeExists ? setupData[kFieldPlaying][player][kSubFieldStartedPlaying].toDate() : null;
 
     if (freshPingExists) {
       // print('lastPing of player $player in setup $i is $lastPing');
       // print('now in setup $i is $now');
       // print('lastPing.isAfter(now.subtract(Duration(minutes: 60))) ("active") is ${lastPing.isAfter(now.subtract(Duration(minutes: 60)))}');
-      _active = lastPing.isAfter(now.subtract(Duration(seconds: pingExpiry)));
+      _active = lastPing!.isAfter(now.subtract(Duration(seconds: pingExpiry)));
       return _active;
     }
     if (lastMoveExists) {
@@ -308,12 +324,12 @@ class _RightSideChildrenState extends State<RightSideChildren> {
       // print('now in setup $i is $now');
       // print('lastMove.isAfter(now.subtract(Duration(minutes: 60))) ("active") is ${lastMove.isAfter(now.subtract(Duration(minutes: 60)))}');
 
-      _active = lastMove.isAfter(now.subtract(Duration(seconds: moveExpiry))); // Last move is less than 60 sec ago
+      _active = lastMove!.isAfter(now.subtract(Duration(seconds: moveExpiry))); // Last move is less than 60 sec ago
       // _active = lastMove.isAfter(now.subtract(Duration(minutes: 60)));
     } else if (startTimeExists) {
       // If they have a move version app but haven't yet made a move
       // if (i == 333) print('setupData[kFieldPlaying][player][kSubFieldStartedPlaying] != null for setup $i');
-      _active = startTime.isAfter(now.subtract(Duration(seconds: moveExpiry)));
+      _active = startTime!.isAfter(now.subtract(Duration(seconds: moveExpiry)));
     }
     // if (i == 333) print('_active is $_active for setup $i');
     return _active;
@@ -322,8 +338,8 @@ class _RightSideChildrenState extends State<RightSideChildren> {
   List<Widget> getChildren(
       BuildContext context,
       ) {
-    final String me = Provider.of<GameHubUpdates>(context).myScreenName;
-    final String myUid = MyFirebase.authObject.currentUser.uid;
+    final String? me = Provider.of<GameHubUpdates>(context).myScreenName;
+    final String myUid = MyFirebase.authObject.currentUser!.uid;
     final Map userIdMap = Provider.of<GameHubUpdates>(context).userIdMap;
     // final String myEmail = Provider.of<GameHubUpdates>(context, listen: false).myEmail; // Varför ska just den här vara false?
     // final String myEmail = Provider.of<GameHubUpdates>(context, listen: false).myEmail; // Varför ska just den här vara false?
@@ -360,7 +376,7 @@ class _RightSideChildrenState extends State<RightSideChildren> {
             active: activeMap[player],
             // myEmail: myEmail,
             myUid: myUid,
-            me: me,
+            myScreenName: me,
             i: i,
             j: j,
           ),
@@ -424,12 +440,16 @@ class _RightSideChildrenState extends State<RightSideChildren> {
                 ),
               ),
               onTap: () {
+                print("currentSetupData['results'].containsKey(me) is ${currentSetupData['results'].containsKey(me)}"
+                    "\ncurrentSetupData['results'].containsKey(myUid) is ${currentSetupData['results'].containsKey(myUid)}"
+                    "\ncurrentSetupData[kFieldSender] == MyFirebase.authObject.currentUser!.email is ${currentSetupData[kFieldSender] == MyFirebase.authObject.currentUser!.email}"
+                    "\ncurrentSetupData[kFieldSender] == myUid is ${currentSetupData[kFieldSender] == myUid}");
                 currentSetupData['results'].containsKey(me) ||
                     currentSetupData['results'].containsKey(myUid) ||
-                    currentSetupData[kFieldSender] == MyFirebase.authObject.currentUser.email ||
+                    currentSetupData[kFieldSender] == MyFirebase.authObject.currentUser!.email ||
                     currentSetupData[kFieldSender] == myUid
                 //If I either played or made this setup
-                    ? showResult(context: context, setupData: setup.data(), resultPlayerId: resultPlayerId)
+                    ? showResult(context: context, setupData: currentSetupData, resultPlayerId: resultPlayerId)
                     : BlackboxPopup(
                   title: "Not yet!",
                   desc: "You have to play this setup before you can see the results of others.",
@@ -462,25 +482,25 @@ class _RightSideChildrenState extends State<RightSideChildren> {
 
 class PlayingTag extends StatelessWidget {
   PlayingTag(
-      {@required this.setParentState,
-        @required this.player,
-        @required this.setup,
-        @required this.setupData,
-        @required this.active,
+      {required this.setParentState,
+        required this.player,
+        required this.setup,
+        required this.setupData,
+        required this.active,
         // @required this.myEmail,
-        @required this.myUid,
-        @required this.me,
-        @required this.i,
-        @required this.j});
+        required this.myUid,
+        required this.myScreenName,
+        required this.i,
+        required this.j});
 
   final Function setParentState;
   final String player;
   final DocumentSnapshot setup;
-  final Map<String, dynamic> setupData;
-  final bool active;
+  final Map<String, dynamic>? setupData;
+  final bool? active;
   // final String myEmail;
   final String myUid;
-  final String me;
+  final String? myScreenName;
   final int i;
   final int j;
 
@@ -506,17 +526,24 @@ class PlayingTag extends StatelessWidget {
           ),
         ),
         onTap: (){
-          tappedFollowPlaying(context: context, setupData: setupData, setup: setup, /*myEmail: myEmail,*/ me: me, /*myUid: myUid,*/ player: player);
+          tappedFollowPlaying(context: context, setupData: setupData, setup: setup, /*myEmail: myEmail,*/ myScreenName: myScreenName, /*myUid: myUid,*/ player: player);
         }
     );
 
   }}
 
-void showResult({BuildContext context, Map<String, dynamic> setupData, String resultPlayerId}) {
+void showResult({required BuildContext context, required Map<String, dynamic> setupData, String? resultPlayerId}) {
+  print("setupData in showResult() is:");
+  try {
+    printPrettyJson(setupData);
+  } catch (e) {
+    print("Error in prettyJson: $e");
+  }
   Navigator.push(
     context,
     MaterialPageRoute(builder: (context) {
       return SentResultsScreen(
+        key: ValueKey(setupData),
         setupData: setupData,
         resultPlayerId: '$resultPlayerId',
       );

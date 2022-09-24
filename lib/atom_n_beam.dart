@@ -1,7 +1,6 @@
 //import 'package:flutter/cupertino.dart';
 //import 'package:flutter/material.dart';
 //import 'dart:ui';
-import 'package:meta/meta.dart';
 
 class Atom {
   Atom(this._x, this._y) {
@@ -14,8 +13,10 @@ class Atom {
   }
   int _x;
   int _y;
+  // int? _x;
+  // int? _y;
 //  List<int> position;
-  Position position;
+  late Position position;
 //  Map<String, int> position;
   String toString(){
     return '[$_x,$_y]';
@@ -24,7 +25,7 @@ class Atom {
 
 class Beam {
   ///A beam has a position, (x, y), and a direction, (xDir, yDir) where 1 means a positive direction along the respective axis, 0 means no direction along that axis, and -1 is a negative direction along that axis.
-  Beam({@required this.start, @required int widthOfPlayArea, @required int heightOfPlayArea}) {
+  Beam({required this.start, required int widthOfPlayArea, required int heightOfPlayArea}) {
     //Bottom edge:
     if (1 <= start && start <= widthOfPlayArea) {
       _y = 0;
@@ -49,23 +50,23 @@ class Beam {
     position = Position(_x, _y);
   }
 
-  int start;
-  int _x;
-  int _y;
-  Position position;
-  Direction direction;
+  late int start;
+  late int _x;
+  late int _y;
+  late Position position;
+  late Direction direction;
   Position projectedPosition=Position(0, 0);
 
-  static int convert({Position coordinates, int widthOfPlayArea, int heightOfPlayArea}){
-    int slot;
+  static int? convert({required Position coordinates, int? widthOfPlayArea, int? heightOfPlayArea}){
+    int? slot;
     //Bottom edge:
     if (coordinates.y == 0){
       slot = coordinates.x;
       //Right edge:
-    } else if (coordinates.x == widthOfPlayArea+1) {
+    } else if (coordinates.x == widthOfPlayArea!+1) {
       slot = coordinates.y + widthOfPlayArea;
       //Top edge:
-    } else if (coordinates.y == heightOfPlayArea+1) {
+    } else if (coordinates.y == heightOfPlayArea!+1) {
       slot = 2*widthOfPlayArea + heightOfPlayArea+1 - coordinates.x;
       //Left edge:
     } else if (coordinates.x == 0) {
@@ -80,6 +81,8 @@ class Position {
   Position(this.x, this.y);
   int x;
   int y;
+  // int? x;
+  // int? y;
   List<int> toList(){
     return [x, y];
   }

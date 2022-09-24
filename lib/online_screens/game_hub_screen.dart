@@ -8,7 +8,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:blackbox/screens/play_screen.dart';
 import 'package:blackbox/game_entry.dart';
-import 'package:collection/collection.dart';
 import 'package:pretty_json/pretty_json.dart';
 import 'package:provider/provider.dart';
 import 'package:blackbox/game_hub_updates.dart';
@@ -21,16 +20,16 @@ class GameHubScreen extends StatefulWidget {
 }
 
 class _GameHubScreenState extends State<GameHubScreen> {
-  StreamSubscription<auth.User> currentUserListener;
-  StreamSubscription<QuerySnapshot> setupStreamListener;
+  late StreamSubscription<auth.User?> currentUserListener;
+  late StreamSubscription<QuerySnapshot> setupStreamListener;
 
   // auth.User loggedInUser;
-  String myUid = MyFirebase.authObject.currentUser != null ? MyFirebase.authObject.currentUser.uid : null;
+  String? myUid = MyFirebase.authObject.currentUser != null ? MyFirebase.authObject.currentUser!.uid : null;
   int delayToShowSpinner = 200; // milliseconds
 
   // Map<String, String> userIdMap;
   int del = 0; // Used for delete-script
-  GameHubUpdates providerNoListen;
+  late GameHubUpdates providerNoListen;
   // TODO: (Maybe take back a 'No connection with database' option...:)
   List<Widget> gameList = [
     // Container(
@@ -69,10 +68,10 @@ class _GameHubScreenState extends State<GameHubScreen> {
 
   void getMyInfo() async {
     print('Getting my info');
-    print('My displayName is ${MyFirebase.authObject.currentUser.displayName}');
-    print('My user ID is ${MyFirebase.authObject.currentUser.uid}');
+    print('My displayName is ${MyFirebase.authObject.currentUser!.displayName}');
+    print('My user ID is ${MyFirebase.authObject.currentUser!.uid}');
 
-    String myScreenName = 'Loading...';
+    String? myScreenName = 'Loading...';
 
     await Future.delayed(Duration(milliseconds: delayToShowSpinner)); // To give the spinner time to start...
 
@@ -81,7 +80,7 @@ class _GameHubScreenState extends State<GameHubScreen> {
 
       if (event != null) {
         // New values:
-        myUid = MyFirebase.authObject.currentUser.uid;
+        myUid = MyFirebase.authObject.currentUser!.uid;
         print("currentUserListener event is null? ${event == null}");
         //      print("currentUserListener loggedInUser is $loggedInUser");
         if (MyFirebase.authObject.currentUser != null && context != null) {
@@ -92,9 +91,9 @@ class _GameHubScreenState extends State<GameHubScreen> {
             print('A new snapshot has come in from current user document');
             //Stream of QuerySnapshots which sends a new Snapshot every time the 'userinfo' collection is changed for loggedInUser.
             //Returns an empty list if there is no such entry in the 'userinfo' collection.
-            Map<String, dynamic> loggedInUserInfoData = loggedInUserInfo.data();
+            Map<String, dynamic>? loggedInUserInfoData = loggedInUserInfo.data() as Map<String, dynamic>?;
             if (!loggedInUserInfo.exists ||
-                !loggedInUserInfoData.containsKey(kFieldScreenName) ||
+                !loggedInUserInfoData!.containsKey(kFieldScreenName) ||
                 loggedInUserInfo.get(kFieldScreenName) == 'Anonymous' ||
                 loggedInUserInfo.get(kFieldScreenName) == '' ||
                 loggedInUserInfo.get(kFieldScreenName) == null) {
@@ -133,12 +132,12 @@ class _GameHubScreenState extends State<GameHubScreen> {
 
     await Future.delayed(Duration(milliseconds: delayToShowSpinner)); // To give the spinner time to start...
 
-    Map<String, String> map = {};
+    Map<String, String?> map = {};
     await for (QuerySnapshot users in MyFirebase.storeObject.collection(kCollectionUserInfo).snapshots()) {
       print('A new "collection userinfo" snapshot has come in in getUserIdMap()');
       for (DocumentSnapshot user in users.docs) {
-        Map<String, dynamic> userData = user.data();
-        String screenName;
+        Map<String, dynamic> userData = user.data() as Map<String, dynamic>;
+        String? screenName;
         if (userData.containsKey(kFieldScreenName) && userData[kFieldScreenName] != '' && userData[kFieldScreenName] != null) {
           screenName = userData[kFieldScreenName];
         } else
@@ -169,72 +168,75 @@ class _GameHubScreenState extends State<GameHubScreen> {
       print('New snapshot in game hub getSetupStream()');
       gameList = [];
       List<Widget> _newGameList = [];
-      int i;
+      int? i;
       // int j = 0;
 
       for (DocumentSnapshot setup in event.docs) {
-        Map<String, dynamic> setupData = setup.data();
-        if (setupData != null && setupData.containsKey('i')) {
-          i = setupData['i'];
-        }
-        // j++;
-        if (i != null) {
-          // The Cloud Function "i" has finished, giving the game a number.
-          // Before this, the game shouldn't show up.
-          _newGameList.add(GestureDetector(
-            child: GameEntry(
-              setup: setup,
-              setupData: setup.data(),
-              i: i,
-              setParentState: () {
-                setState(() {});
-              },
-            ),
-            onTap: () async {
-              ///Run this to delete results by clicking:
-              //                        del++;
-              //                        print('Delete all results for entry no. $i?');
-              //                        if(del==2){
-              //                          firestoreObject.collection('setups').doc(setup.id).updateData(
-              //                              {'results': FieldValue.delete()}
-              //                          ).whenComplete(() {
-              //                            print('Field deleted');
-              //                          });
-              //                          del=0;
-              //                        }
-              ///Run this to change sender from email to playerId by clicking:
-              //                        QuerySnapshot userInfos = await firestoreObject.collection('userinfo').get();  //No stream needed, coz the document no is not supposed to change
-              //                        String senderId;
-              //                        for(var user in userInfos.docs) {
-              //                          if(setup.data()['sender']== user['email']){
-              //                            senderId = user.id;
-              //                            print('senderId is $senderId');
-              //                          }
-              //
-              //                        }
-              //                          firestoreObject.collection('setups'
-              //                              ).doc(setup.id).updateData(
-              //                              {'sender': senderId}
-              //                          ).whenComplete(() {
-              //                            print('Field deleted');
-              //                          });
-              //                          del=0;
-              ///---------
+        if (setup.data() != null) {
+          Map<String, dynamic> setupData = setup.data() as Map<String, dynamic>;
+          if (setupData.containsKey('i')) {
+            i = setupData['i'];
+          }
+          // j++;
+          if (i != null) {
+            // The Cloud Function "i" has finished, giving the game a number.
+            // Before this, the game shouldn't show up.
+            _newGameList.add(GestureDetector(
+              child: GameEntry(
+                setup: setup,
+                setupData: setupData,
+                // setupData: setup.data(),
+                i: i,
+                setParentState: () {
+                  setState(() {});
+                },
+              ),
+              onTap: () async {
+                ///Run this to delete results by clicking:
+                //                        del++;
+                //                        print('Delete all results for entry no. $i?');
+                //                        if(del==2){
+                //                          firestoreObject.collection('setups').doc(setup.id).updateData(
+                //                              {'results': FieldValue.delete()}
+                //                          ).whenComplete(() {
+                //                            print('Field deleted');
+                //                          });
+                //                          del=0;
+                //                        }
+                ///Run this to change sender from email to playerId by clicking:
+                //                        QuerySnapshot userInfos = await firestoreObject.collection('userinfo').get();  //No stream needed, coz the document no is not supposed to change
+                //                        String senderId;
+                //                        for(var user in userInfos.docs) {
+                //                          if(setup.data()['sender']== user['email']){
+                //                            senderId = user.id;
+                //                            print('senderId is $senderId');
+                //                          }
+                //
+                //                        }
+                //                          firestoreObject.collection('setups'
+                //                              ).doc(setup.id).updateData(
+                //                              {'sender': senderId}
+                //                          ).whenComplete(() {
+                //                            print('Field deleted');
+                //                          });
+                //                          del=0;
+                ///---------
 
-              Play thisGame = Play(
-                  numberOfAtoms: (setup.get('atoms').length / 2).toInt(),
-                  widthOfPlayArea: setup.get('widthAndHeight')[0],
-                  heightOfPlayArea: setup.get('widthAndHeight')[1]);
-              thisGame.setupData = setupData;
-              // thisGame.setupData = setup.data();
-              thisGame.online = true;
-              thisGame.playerId = myUid;
-              // thisGame.playerId = await futurePlayerId;
-              Navigator.push(context, MaterialPageRoute(builder: (context) {
-                return PlayScreen(thisGame: thisGame, setup: setup);
-              }));
-            },
-          ));
+                Play thisGame = Play(
+                    numberOfAtoms: (setup.get('atoms').length / 2).toInt(),
+                    widthOfPlayArea: setup.get('widthAndHeight')[0],
+                    heightOfPlayArea: setup.get('widthAndHeight')[1]);
+                thisGame.setupData = setupData;
+                // thisGame.setupData = setup.data();
+                thisGame.online = true;
+                thisGame.playerUid = myUid;
+                // thisGame.playerId = await futurePlayerId;
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return PlayScreen(thisGame: thisGame, setup: setup);
+                }));
+              },
+            ));
+          }
         }
       }
 
@@ -411,7 +413,7 @@ class _GameHubScreenState extends State<GameHubScreen> {
             child: Container(
               height: 40,
               child: FlatButton(
-                child: Text('Add', style: Theme.of(context).textTheme.bodyText2.copyWith(fontWeight: FontWeight.bold)),
+                child: Text('Add', style: Theme.of(context).textTheme.bodyText2!.copyWith(fontWeight: FontWeight.bold)),
                 // child: Text('Add', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 onPressed: (){
                   Navigator.push(context, MaterialPageRoute(builder: (context) {

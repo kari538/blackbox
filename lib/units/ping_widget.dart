@@ -1,26 +1,21 @@
 import 'dart:convert';
-
 import 'package:pretty_json/pretty_json.dart';
-import 'package:provider/provider.dart';
 import 'package:blackbox/game_hub_updates.dart';
-import 'package:blackbox/constants.dart';
-// import 'package:blackbox/my_firebase_labels.dart';
-// import 'package:blackbox/my_firebase.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-
-// Monkey-patch gone horribly wrong:
-// Map<String, bool> activeMap = {}; // {String follower: bool active}
+// Set printPing to true to get debug prints throughout the widget
+final bool printPing = false;
+// final bool printPing = true;
 
 class PingWidget extends StatefulWidget {
-  const PingWidget({@required this.pingStream, @required this.createChild});
+  const PingWidget({required this.pingStream, required this.createChild});
   // Map<String, bool> getActiveMap() {
   //   // return {};
   //   return activeMap;
   // }
 
-  final Stream pingStream;
+  final Stream? pingStream;
   final Function createChild;
 
   @override
@@ -29,17 +24,16 @@ class PingWidget extends StatefulWidget {
 
 class _PingWidgetState extends State<PingWidget> {
   _PingWidgetState(this.pingStream, this.createChild);
-  Stream pingStream;
+  Stream? pingStream;
   final Function createChild;
 
-  StreamSubscription pingStreamListener;
+  StreamSubscription? pingStreamListener;
 
   Map<String, bool> activeMap = {}; // {String follower: bool active}
   Map<String, dynamic> pingMap = {}; // {String follower: TimeStamp ping}
   Map<String, int> pingCountDownMap = {}; // {String follower: int countDown}
   int pingCountDownStart = 6;
   int pingExpiry = 5; // sec
-  GameHubUpdates gameHubProvider;
 
   @override
   void initState() {
@@ -49,7 +43,7 @@ class _PingWidgetState extends State<PingWidget> {
 
   @override
   void dispose() {
-    if (pingStreamListener != null) pingStreamListener.cancel();
+    if (pingStreamListener != null) pingStreamListener!.cancel();
     super.dispose();
   }
 
@@ -57,7 +51,7 @@ class _PingWidgetState extends State<PingWidget> {
   void getPingStream() async {
     // print('getPingStream() in ${this.widget}');
 
-    pingStreamListener = pingStream.listen((event) {
+    pingStreamListener = pingStream!.listen((event) {
       // pingStreamListener = MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).collection(kSubCollectionPlayingPings).doc(kSubCollectionPlayingPings).snapshots().listen((event) {
       // print('Event in pingStreamListener in ${this.widget}');
       Map<String, dynamic> newPingMap = event.data() ?? {}; // Should I ever want to compare new with old...
@@ -100,10 +94,12 @@ class _PingWidgetState extends State<PingWidget> {
       }
 
       pingMap = newPingMap;
-      print('pingMap in PingWidget, pingStreamListener is:');
-      printPrettyJson(jsonDecode(jsonEncode(pingMap, toEncodable: (object) => object.toString())));
-      print('activeMap in PingWidget, pingStreamListener is');
-      printPrettyJson(jsonDecode(jsonEncode(activeMap, toEncodable: (object) => object.toString())));
+      if (printPing) {
+        print('pingMap in PingWidget, pingStreamListener is:');
+        printPrettyJson(jsonDecode(jsonEncode(pingMap, toEncodable: (object) => object.toString())));
+        print('activeMap in PingWidget, pingStreamListener is');
+        printPrettyJson(jsonDecode(jsonEncode(activeMap, toEncodable: (object) => object.toString())));
+      }
     });
   }
 
@@ -111,10 +107,33 @@ class _PingWidgetState extends State<PingWidget> {
     // If a follower is removed, the countdown for that follower ends:
     while (pingCountDownMap.containsKey(follower) && this.mounted) {
       await Future.delayed(Duration(seconds: 1));
-      if (pingCountDownMap.containsKey(follower)) {
-        pingCountDownMap[follower]--;
+      if (pingCountDownMap.containsKey(follower) && pingCountDownMap[follower] != null) {
+        // Original:
+        // pingCountDownMap[follower]--;
+
+        // From Dart developer on GitHub:
+        // pingCountDownMap[follower] = pingCountDownMap[follower]! -1;
+
+        // Monkey-patch:
+        // int localPing = pingCountDownMap[follower] as int; // Unsafe, coz it may no longer be an int...
+        // localPing--;
+        // pingCountDownMap[follower] = localPing;
+
+        // Should work, according to documents, but doesn't:
+        // if (pingCountDownMap[follower] is int) {
+        //   pingCountDownMap[follower]--;
+        // }
+
+        // The only truly null-safe way:
+        int localPing = pingCountDownMap[follower] ?? 0;
+        localPing--;  // This is the only way to guarantee that the operator won't be used
+        // on null, since the ping can be removed async at any point in time, including
+        // between when the condition is tested and when the operation is carried out!
+        if (localPing >= 0 && pingCountDownMap.containsKey(follower)) pingCountDownMap[follower] = localPing;
+
         // The entries may no longer exist, so == true has to be added:
-        if (pingCountDownMap[follower] <= 0 && activeMap[follower] == true && this.mounted) {
+        if (localPing <= 0 && activeMap[follower] == true && this.mounted) {
+        // if (pingCountDownMap[follower]! <= 0 && activeMap[follower] == true && this.mounted) {
           setState(() {
             // print('setState in ${this.widget} pingCountDown()');
             // print('Changing active to passive for $follower in ${this.widget} pingCountDown()');
@@ -126,28 +145,14 @@ class _PingWidgetState extends State<PingWidget> {
     }
   }
 
-  Widget getChild(){
-  // List<Widget> getChild(){
-    Widget _child;
-    // List<Widget> _children = [];
-
+  Widget? getChild(){
+    Widget? _child;
     _child = createChild(activeMap);
-
-    // _children = createChildren(pingMap);
-    // for (String follower in pingMap.keys) {
-    //   _children.add(Text('${gameHubProvider.getScreenName(follower)}'));
-    // }
-    //
-    // if (_children.length == 0) _children = [Text('(none)', style: kConversationResultsResultsStyle)];
     return _child;
   }
 
   @override
   Widget build(BuildContext context) {
-    // gameHubProvider = Provider.of<GameHubUpdates>(context);
-    return getChild();
-    // return Column(
-    //   children: getChild(),
-    // );
+    return getChild()!;
   }
 }

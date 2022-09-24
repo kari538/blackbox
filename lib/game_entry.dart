@@ -9,10 +9,10 @@ import 'package:blackbox/game_hub_updates.dart';
 
 class GameEntry extends StatelessWidget {
   GameEntry({
-    @required this.setupData,
-    @required this.setup,
-    @required this.i,
-    @required this.setParentState,
+    required this.setupData,
+    required this.setup,
+    required this.i,
+    required this.setParentState,
   });
 
   final DocumentSnapshot setup;
@@ -29,12 +29,12 @@ class GameEntry extends StatelessWidget {
     // final Map userIdMap = gameHubProviderListen.userIdMap;
     // final Map userIdMap = Provider.of<GameHubUpdates>(context).userIdMap;
     // final Map userIdMap = Provider.of<GameHubUpdates>(parentContext).providerUserIdMap;
-    final String senderScreenName = gameHubProviderListen.getScreenName(setup.get(kFieldSender));
+    final String? senderScreenName = gameHubProviderListen.getScreenName(setup.get(kFieldSender));
     // final String senderScreenName = userIdMap[setup.get(kFieldSender)] ?? 'Loading...';
     // final String senderScreenName = setup.get(kFieldSender) == myUid && userIdMap[setup.get(kFieldSender)] == 'Anonymous'
     //     ? "Me"
     //     : userIdMap[setup.get(kFieldSender)] ?? setup.get(kFieldSender);
-    final String me = Provider.of<GameHubUpdates>(context).myScreenName;
+    final String? me = Provider.of<GameHubUpdates>(context).myScreenName;
     final List<Widget> _children = [
       Text('Setup $i', style: TextStyle(color: kHubSetupColor)),
       Text(
@@ -70,7 +70,8 @@ class GameEntry extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: RightSideChildren(key: ValueKey(i), setup: setup, setupData: setupData, i: i),
+            child: RightSideChildren(key: ValueKey(setupData), setup: setup, setupData: setupData, i: i),
+            // child: RightSideChildren(key: ValueKey(i), setup: setup, setupData: setupData, i: i),
           ),
         ],
       ),

@@ -2,20 +2,25 @@ import 'package:blackbox/screens/results_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:blackbox/my_firebase_labels.dart';
 import 'package:blackbox/units/small_widgets.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:blackbox/board_grid.dart';
 import 'package:blackbox/play.dart';
 import 'package:blackbox/constants.dart';
 import 'package:blackbox/atom_n_beam.dart';
-import 'package:collection/collection.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blackbox/game_hub_updates.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';import 'package:pretty_json/pretty_json.dart';
 import 'package:provider/provider.dart';
 
+/// Called from tapping a result or from automatically navigated from
+/// FollowPlayingScreen(). When playing oneself, you instead go to the
+/// ResultsScreen() in offline screens.
+///
+/// In both cases, setupData and resultPlayerId are both known. What
+/// isn't known is multiple solutions, and for that reason, getScore()
+/// needs to be run.
 class SentResultsScreen extends StatefulWidget {
-  SentResultsScreen({@required this.setupData, @required this.resultPlayerId});
+  SentResultsScreen({required Key key, required this.setupData, required this.resultPlayerId}) : super(key: key);
   final Map<String, dynamic> setupData;
   final String resultPlayerId;  //The ID associated with this result in the setup (whether name or code)
 
@@ -26,25 +31,25 @@ class SentResultsScreen extends StatefulWidget {
 class _SentResultsScreenState extends State<SentResultsScreen> {
   _SentResultsScreenState(this.setupData, this.resultPlayerId);
   final Map<String, dynamic> setupData;
-  final String resultPlayerId;  //The ID associated with this result in the setup (whether name or code)
+  final String? resultPlayerId;  //The ID associated with this result in the setup (whether name or code)
   FirebaseFirestore firestoreObject = FirebaseFirestore.instance;
-  Play thisGame;
+  late Play thisGame;
   bool resultsReady = false;
   String errorMsg = '';
   // int beamScore;
   // int atomScore;
-  int totalScore;
+  int? totalScore;
   bool playerAtoms = false;
   bool awaitingData = false;
-  Timestamp started;
-  Timestamp finished;
-  Duration timePlayed;
+  Timestamp? started;
+  Timestamp? finished;
+  Duration? timePlayed;
   String startedString = 'N/A';
   String finishedString = 'N/A';
   String timePlayedString = 'N/A';
   bool altSol = false;
-  List<dynamic> alternativeSolutions;
-  List<dynamic> multiDisplay;
+  List<dynamic>? alternativeSolutions;
+  List<dynamic>? multiDisplay;
   bool showSpinner = true;
   int delayForSpinner = 500;  // milliseconds
 
@@ -60,14 +65,14 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
       finished = setupData[kFieldResults][resultPlayerId][kSubFieldFinishedPlaying];
       print('Started is $started and finished is $finished');
       if (finished != null) {
-        finishedString = DateFormat('d MMM, HH:mm:ss').format(finished.toDate());
+        finishedString = DateFormat('d MMM, HH:mm:ss').format(finished!.toDate());
         // It is possible that somebody updates the app between starting and finishing playing, thus getting a "finished" but not a "started" value...
         if (started != null) {
-          startedString = DateFormat('d MMM, HH:mm:ss').format(started.toDate());
+          startedString = DateFormat('d MMM, HH:mm:ss').format(started!.toDate());
           // timePlayed = finished.compareTo(started);
           // print("timePlayed is $timePlayed");
           // print('Type of timePlayed is ${timePlayed.runtimeType}');
-          timePlayed = finished.toDate().difference(started.toDate());
+          timePlayed = finished!.toDate().difference(started!.toDate());
           // timePlayed = DateTime(2021, 3, 1).difference(started.toDate()); // timePlayed is -58:22:05 when started was 3 Mar, 10:22 AM
           timePlayedString = timePlayed.toString().substring(0, timePlayed.toString().length-7);
           print('timePlayedString is $timePlayedString');
@@ -79,15 +84,20 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
   void getGameData() async {
     await Future.delayed(Duration(milliseconds: delayForSpinner));  // To give spinner time to show...
     Map<String, dynamic> setupData = widget.setupData;
-    print('setupData in SentResultsScreen is $setupData');
     print('setupData.keys in SentResultsScreen is ${setupData.keys}');
+    print('setupData in SentResultsScreen is:');
+    try {
+      printPrettyJson(setupData);
+    } catch (e) {
+      print('Error in prettyJason: $e');
+    }
 
-    if (setupData == null) {
-      setState(() {
-        errorMsg = 'Document contains no data';
-        showSpinner = false;
-      });
-    } else {
+    // if (setupData == null) {
+    //   setState(() {
+    //     errorMsg = 'Document contains no data';
+    //     showSpinner = false;
+    //   });
+    // } else {
       int numberOfAtoms = (setupData['atoms'].length / 2).toInt();
       print('number of atoms $numberOfAtoms');
       int width = setupData['widthAndHeight'][0];
@@ -97,12 +107,12 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
       if (setupData.containsKey(kFieldShuffleA) && setupData.containsKey(kFieldShuffleB)) {
         thisGame.beamImageIndexA = [];
         for (int i = 0; i < setupData[kFieldShuffleA].length; i++){
-          thisGame.beamImageIndexA.add(setupData[kFieldShuffleA][i]);
+          thisGame.beamImageIndexA!.add(setupData[kFieldShuffleA][i]);
         }
 
         thisGame.beamImageIndexB = [];
         for (int i = 0; i < setupData[kFieldShuffleB].length; i++){
-          thisGame.beamImageIndexB.add(setupData[kFieldShuffleB][i]);
+          thisGame.beamImageIndexB!.add(setupData[kFieldShuffleB][i]);
         }
       }
 
@@ -158,9 +168,12 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
           alternativeSolutions = await thisGame.getScore();
           altSol = alternativeSolutions != null ? true : false;
           setState(() {
-            thisGame.atomScore = setupData[kFieldResults][widget.resultPlayerId][kSubFieldA];
-            thisGame.beamScore = setupData[kFieldResults][widget.resultPlayerId][kSubFieldB];
-            totalScore = thisGame.atomScore + thisGame.beamScore;
+            print('setupData[kFieldResults][widget.resultPlayerId][kSubFieldA] is ${setupData[kFieldResults][widget.resultPlayerId][kSubFieldA]}');
+            print('setupData[kFieldResults][widget.resultPlayerId] is ${setupData[kFieldResults][widget.resultPlayerId]}');
+            print('setupData[kFieldResults] is ${setupData[kFieldResults]}');
+            thisGame.atomScore = setupData[kFieldResults][widget.resultPlayerId][kSubFieldA] ?? thisGame.atomScore;
+            thisGame.beamScore = setupData[kFieldResults][widget.resultPlayerId][kSubFieldB] ?? thisGame.beamScore;
+            totalScore = thisGame.atomScore+ thisGame.beamScore;
           });
         }
 
@@ -172,7 +185,7 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
 //          print('Results ready $resultsReady');
        });
       }
-    }
+    // }
   }
 
   List<dynamic> alternativeSolutionsFromSetup() {
@@ -180,18 +193,18 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
     return [];
   }
 
-  Widget getEdges({int x, int y}) {
-    int slotNo = Beam.convert(coordinates: Position(x, y), heightOfPlayArea: thisGame.heightOfPlayArea, widthOfPlayArea: thisGame.widthOfPlayArea);
+  Widget getEdges({required int x, required int y}) {
+    int slotNo = Beam.convert(coordinates: Position(x, y), heightOfPlayArea: thisGame.heightOfPlayArea, widthOfPlayArea: thisGame.widthOfPlayArea)!;
     return Expanded(
       child: Container(
         child: Center(
-            child: thisGame.edgeTileChildren[slotNo - 1] ?? FittedBox(fit: BoxFit.contain, child: Text('$slotNo', style: TextStyle(color: kBoardEdgeTextColor, fontSize: 15)))),
+            child: thisGame.edgeTileChildren![slotNo - 1] ?? FittedBox(fit: BoxFit.contain, child: Text('$slotNo', style: TextStyle(color: kBoardEdgeTextColor, fontSize: 15)))),
         decoration: BoxDecoration(color: kBoardEdgeColor),
       ),
     );
   }
 
-  Widget getMiddleElements({int x, int y}) {
+  Widget getMiddleElements({required int x, required int y}) {
     bool correct = false;
     bool misplaced = false;
     bool missed = false;
@@ -259,7 +272,7 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
   @override
   Widget build(BuildContext context) {
     GameHubUpdates gameHubProviderListening = Provider.of<GameHubUpdates>(context);
-    String resultPlayerScreenName = gameHubProviderListening.userIdMap.containsKey(widget.resultPlayerId)
+    String? resultPlayerScreenName = gameHubProviderListening.userIdMap.containsKey(widget.resultPlayerId)
         ? gameHubProviderListening.userIdMap[widget.resultPlayerId]
         : widget.resultPlayerId;
 
@@ -551,7 +564,7 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
                       child: ElevatedButton(
                         child: Text('View other solutions'),
                         onPressed: () async {
-                          int result = 0;
+                          int? result = 0;
                           int gameNo = 1;
                           // int i = 0;
                           Play displayGame;
@@ -568,14 +581,14 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
                             // for (Atom atom in alternativeSolutions[gameNo]) {
                             //   displayGame.correctAtoms.add(atom.position.toList());
                             // }
-                            displayGame = alternativeSolutions[gameNo];
-                            displayGame.edgeTileChildren = alternativeSolutions[0];
-                            print('alternativeSolutions[$gameNo] is ${alternativeSolutions[gameNo]}');
+                            displayGame = alternativeSolutions![gameNo];
+                            displayGame.edgeTileChildren = alternativeSolutions![0];
+                            print('alternativeSolutions[$gameNo] is ${alternativeSolutions![gameNo]}');
                             // Returns null if "Pop" is pressed:
                             result = await Navigator.push(context, PageRouteBuilder(pageBuilder: (context, anim1, anim2) {
-                              return ResultsScreen(thisGame: displayGame, setupData: {}, multiDisplay: [gameNo, alternativeSolutions.length-1]);
+                              return ResultsScreen(thisGame: displayGame, setupData: {}, multiDisplay: [gameNo, alternativeSolutions!.length-1]);
                             }));
-                            if (result != null && gameNo + result > 0 && gameNo + result <= alternativeSolutions.length-1) gameNo += result;
+                            if (result != null && gameNo + result > 0 && gameNo + result <= alternativeSolutions!.length-1) gameNo += result;
                             // displayGame.correctAtoms = [];
                             // i++;
                           } while (result != null /*&& i < 100*/);

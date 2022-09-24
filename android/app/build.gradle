@@ -1,3 +1,15 @@
+//plugins {
+//    kotlin("<...>") version "1.6.21"
+//}
+
+//plugins {
+//    kotlin("jvm") version "1.6.21"
+//}
+
+//plugins {
+//    id "org.jetbrains.kotlin.jvm" version "1.6.21"
+//}
+
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
 if (localPropertiesFile.exists()) {
@@ -12,18 +24,19 @@ if (flutterRoot == null) {
 }
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
-if (flutterVersionCode == null) {
-    flutterVersionCode = '18' // TODO: ---Count up with each release
-}
+//if (flutterVersionCode == null) {
+    flutterVersionCode = '21' // TODO: ---Count up with each release
+//}
 
 def flutterVersionName = localProperties.getProperty('flutter.versionName')
-if (flutterVersionName == null) {
-    flutterVersionName = '1.0'
-}
+//if (flutterVersionName == null) {
+    flutterVersionName = '1.0.0+3'
+//}
 
 apply plugin: 'com.android.application'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 apply plugin: 'com.google.gms.google-services'
+//apply plugin: 'kotlin'
 
 //From the firebase docs:
 dependencies {
@@ -46,7 +59,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
 
     lintOptions {
         disable 'InvalidPackage'
@@ -55,7 +68,7 @@ android {
     defaultConfig {
         applicationId "com.karolinadart.blackbox"
         minSdkVersion 21
-        targetSdkVersion 30
+        targetSdkVersion 31
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true //in defaultConfig

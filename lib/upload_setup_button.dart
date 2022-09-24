@@ -18,12 +18,12 @@ import 'online_screens/game_hub_screen.dart';
 import 'atom_n_beam.dart';
 import 'route_names.dart';
 
-Future<String> token;
+Future<String?>? token;
 final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
 class UploadSetupButton extends StatelessWidget {
   const UploadSetupButton({
-    @required this.widget,
+    required this.widget,
 //    this.currentUser
   });
 
@@ -64,8 +64,8 @@ class UploadSetupButton extends StatelessWidget {
     "body": "A new setup has come in to the game hub",
   };
 
-  Future<String> getToken() async {
-    String _token = await _firebaseMessaging.getToken();
+  Future<String?> getToken() async {
+    String? _token = await _firebaseMessaging.getToken();
     print("Token in Upload Button is $_token");
     return _token;
   }
@@ -93,25 +93,26 @@ class UploadSetupButton extends StatelessWidget {
   //   }
   // }
 
-  static Future uploadButtonPress({@required BuildContext context, @required Play thisGame, bool popToEndRoute = true}) async {
+  static Future uploadButtonPress({required BuildContext context, required Play thisGame, bool popToEndRoute = true}) async {
     // print("Token in onPressed is ${await token}");
-    String myUid = MyFirebase.authObject.currentUser.uid;
+    String myUid = MyFirebase.authObject.currentUser!.uid;
     // String myUid = await getMyPlayerId();   // I believe this was rendered unnecessary when I made all 'userinfo' doc IDs into the Uid!...
     print('OnlineButton printing player ID: $myUid');
-    bool needLogin = false;
+    bool? needLogin = false;
 
     if (myUid == null) {
       //If no user is logged in
-      needLogin = await BlackboxPopup(
+      needLogin = await (BlackboxPopup(
         context: context,
         title: 'Not Logged In!',
         desc: 'You are no longer logged in. Click OK to log in again.',
-      ).show();
+      ).show());
+      // ).show() as FutureOr<bool>);
       // needLogin = true;
       if (needLogin == false) return; // If the user cancelled login, do nothing.
     }
 
-    if (needLogin) {
+    if (needLogin == true) {
       await Navigator.push(context, MaterialPageRoute(settings: RouteSettings(name: routeRegLogin), builder: (context) {
         return RegistrationAndLoginScreen(withPop: true);
       }));
@@ -119,16 +120,16 @@ class UploadSetupButton extends StatelessWidget {
     }
 
     if (MyFirebase.authObject.currentUser != null) {
-      myUid = MyFirebase.authObject.currentUser.uid;
+      myUid = MyFirebase.authObject.currentUser!.uid;
 
-      List<int> atomArray = [];
+      List<int?> atomArray = [];
       for (Atom atom in thisGame.atoms) {
         atomArray.add(atom.position.x);
         atomArray.add(atom.position.y);
       }
 
       DocumentReference setupRef;
-      String setupID;
+      String? setupID;
       try {
         setupRef = await MyFirebase.storeObject.collection('setups').add({
           'sender': myUid,
@@ -159,15 +160,15 @@ class UploadSetupButton extends StatelessWidget {
 
       // To pop back to game hub from Add button:
       if (popToEndRoute == true) {
-        ModalRoute endRoute;
+        late ModalRoute endRoute;
         Navigator.popUntil(context, (route) {
           if (route.isFirst) {
-            endRoute = route;
+            endRoute = route as ModalRoute<dynamic>;
             return true;
           }
 
           if (route.settings.name == routeGameHub) {
-            endRoute = route;
+            endRoute = route as ModalRoute<dynamic>;
             return true;
           }
           return false;
@@ -186,7 +187,7 @@ class UploadSetupButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     token = getToken();
-    String myUid = MyFirebase.authObject.currentUser.uid;
+    String myUid = MyFirebase.authObject.currentUser!.uid;
 
     return OnlineButton(
       text: 'Upload',

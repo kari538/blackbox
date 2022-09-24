@@ -1,23 +1,23 @@
-//import 'package:blackbox/play_screen.dart';
+import 'upload_player_atoms.dart';
+import 'upload_markup.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'atom_n_beam.dart';
 import 'constants.dart';
-import 'package:collection/collection.dart';
 import 'my_firebase_labels.dart';
 import 'play.dart';
 import 'board_grid.dart';
 import 'my_firebase.dart';
 
 class PlayBoard extends StatefulWidget {
-  PlayBoard({this.playWidth, this.playHeight, this.numberOfAtoms, this.thisGame, this.setup, this.refreshParent});
+  PlayBoard({required this.playWidth, required this.playHeight, required this.numberOfAtoms, required this.thisGame, this.setup, required this.refreshParent});
 
   final int playWidth;
   final int playHeight;
   final int numberOfAtoms;
   final Play thisGame;
   final Function refreshParent;
-  final DocumentSnapshot setup;
+  final DocumentSnapshot? setup;
 
   @override
   _PlayBoardState createState() => _PlayBoardState(playWidth, playHeight, numberOfAtoms, thisGame, setup, refreshParent);
@@ -27,16 +27,16 @@ class _PlayBoardState extends State<PlayBoard> {
   _PlayBoardState(this.playWidth, this.playHeight, this.numberOfAtoms, this.thisGame, this.setup, this.refreshParent);
 
   //Since it gets thisGame, it doesn't actually need the other stuff!... It's the same info twice!
-  final int playWidth;
-  final int playHeight;
-  final int numberOfAtoms;
+  final int? playWidth;
+  final int? playHeight;
+  final int? numberOfAtoms;
   final Play thisGame;
   final Function refreshParent;
-  final DocumentSnapshot setup;
+  final DocumentSnapshot? setup;
 
 
 //  Widget getMiddleElements({int x, int y, bool showAtom = false}) {
-  Widget getMiddleElements({int x, int y}) {
+  Widget getMiddleElements({required int x, required int y}) {
     bool showAtom = false;
     bool showMarkUp = false;
 //    bool receivedAtom = false;
@@ -57,7 +57,7 @@ class _PlayBoardState extends State<PlayBoard> {
       }
     }
 
-    for (List<int> marked in thisGame.markUpList){
+    for (List<int?>? marked in thisGame.markUpList){
       // if (ListEquality().equals([x, y], marked)) print('[$x, $y] showMarkUp = true');
       if (ListEquality().equals([x, y], marked)) showMarkUp = true;
     }
@@ -68,17 +68,17 @@ class _PlayBoardState extends State<PlayBoard> {
   }
 
 //  Widget getEdges(int row, int element) {
-  Widget getEdges({int x, int y}) {
+  Widget getEdges({required int x, required int y}) {
 //    int slotNo = myBeam.convert({'x': element, 'y': row});
-    int slotNo = Beam.convert(coordinates: Position(x, y), heightOfPlayArea: thisGame.heightOfPlayArea, widthOfPlayArea: thisGame.widthOfPlayArea);
+    int slotNo = Beam.convert(coordinates: Position(x, y), heightOfPlayArea: thisGame.heightOfPlayArea, widthOfPlayArea: thisGame.widthOfPlayArea)!;
     return Expanded(
       child: GestureDetector(
         child: Container(
-          child: Center(child: thisGame.edgeTileChildren[slotNo - 1] ?? FittedBox(
+          child: Center(child: thisGame.edgeTileChildren![slotNo - 1] ?? FittedBox(
         fit: BoxFit.contain, child: Text('$slotNo', style: TextStyle(color: kBoardEdgeTextColor, fontSize: 15)))),
           decoration: BoxDecoration(color: kBoardEdgeColor),
         ),
-        onTap: thisGame.edgeTileChildren[slotNo - 1] != null ? null : () async {
+        onTap: thisGame.edgeTileChildren![slotNo - 1] != null ? null : () async {
                 dynamic result = thisGame.getBeamResult(inSlot: slotNo);
                 // dynamic result = thisGame.getBeamResult(
                 //   beam: Beam(start: slotNo, widthOfPlayArea: thisGame.widthOfPlayArea, heightOfPlayArea: thisGame.heightOfPlayArea),
@@ -87,9 +87,9 @@ class _PlayBoardState extends State<PlayBoard> {
                 setState(() {});
                 refreshParent();
                 if(thisGame.online){
-                  MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).update({
-                    'playing.${thisGame.playerId}.playingBeams': thisGame.sentBeams,
-                    'playing.${thisGame.playerId}.$kSubFieldLastMove': FieldValue.serverTimestamp(),
+                  MyFirebase.storeObject.collection(kCollectionSetups).doc(setup!.id).update({
+                    'playing.${thisGame.playerUid}.playingBeams': thisGame.sentBeams,
+                    'playing.${thisGame.playerUid}.$kSubFieldLastMove': FieldValue.serverTimestamp(),
                     } //The dots take me down in the nested map.
                   );
 //                DocumentSnapshot x = await  MyFirebase.storeObject.collection('setups').doc(setup.id).get();
@@ -110,14 +110,14 @@ class _PlayBoardState extends State<PlayBoard> {
 //-----------------------------------------------------------------------------------------------------
 //PlayBoardTile Stateful Widget:
 class PlayBoardTile extends StatefulWidget {
-  PlayBoardTile({this.position, this.showAtom, @required this.showMarkUp, /*this.receivedAtom,*/ @required this.thisGame, this.setup, this.refreshParent});
+  PlayBoardTile({required this.position, required this.showAtom, required this.showMarkUp, /*this.receivedAtom,*/ required this.thisGame, this.setup, required this.refreshParent});
 
   final Position position;
   final bool showAtom;
   final bool showMarkUp;
 //  final bool receivedAtom;
   final Play thisGame;
-  final DocumentSnapshot setup;
+  final DocumentSnapshot? setup;
   final Function refreshParent;
 
   @override
@@ -137,8 +137,8 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
 //  bool receivedAtom;
   final Position position;
   final Play thisGame;
-  final DocumentSnapshot setup;
-  List<int> thisAtomCoordinates;
+  final DocumentSnapshot? setup;  // Will have a value if online
+  late List<int> thisAtomCoordinates;
 
   @override
   Widget build(BuildContext context) {
@@ -178,7 +178,7 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
               print('Removing $thisAtomCoordinates');
               //This worked so wonderfully, but if atoms were sent rather than added from here, they will not be removed... unless I add them from here as well!
 //              thisGame.playerAtoms.remove(thisAtomCoordinates);
-              int removeIndex;
+              int? removeIndex;
               int i = 0;
               // for(List<int> mark in thisGame.playerAtoms){
               for(Atom playerAtom in thisGame.playerAtoms){
@@ -192,26 +192,7 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
             }
 
             if(thisGame.online){
-              //Because Firebase can't stomach a List<List<int>>:
-              //Put player atoms in array to send:
-              List<int> playingAtomsArray = [];
-              print("thisGame.playerAtoms are ${thisGame.playerAtoms}");
-              // for (List<int> pAtom in thisGame.playerAtoms) {
-              for (Atom pAtom in thisGame.playerAtoms) {
-                playingAtomsArray.add(pAtom.position.x);
-                playingAtomsArray.add(pAtom.position.y);
-                // playingAtomsArray.add(pAtom[0]);
-                // playingAtomsArray.add(pAtom[1]);
-              }
-              print("playingAtomsArray is $playingAtomsArray\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-              MyFirebase.storeObject.collection('setups').doc(setup.id).update({
-                'playing.${thisGame.playerId}.playingAtoms': playingAtomsArray,
-                'playing.${thisGame.playerId}.$kSubFieldLastMove': FieldValue.serverTimestamp(),
-              } //The dots should take me down in the nested map...
-              );
-              // DocumentSnapshot y = await  MyFirebase.storeObject.collection('setups').doc(setup.id).get();
-              // Map<String, dynamic> updatedAtomSetup = y.data();
-              // print('************************\nMiddle element pressed. updatedAtomSetup is $updatedAtomSetup\n************************');
+              uploadPlayerAtoms(thisGame, setup!);
             }
             //Toggling showAtom below meant that atoms would be added several times if a person clicked quickly, especially if their network was slow.
 //            setState(() {
@@ -238,9 +219,9 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
               showMarkUp = false;
             });
             print('Removing markup $thisAtomCoordinates');
-            int removeIndex;
+            int? removeIndex;
             int i = 0;
-            for(List<int> mark in thisGame.markUpList){
+            for(List<int?>? mark in thisGame.markUpList){
               if(ListEquality().equals(thisAtomCoordinates, mark)){
                 removeIndex = i;
               }
@@ -251,14 +232,15 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
           }
           
           if (thisGame.online){
-            List<int> markUpArray = [];
-            for (List<int> markUp in thisGame.markUpList){
-              markUpArray.add(markUp[0]);
-              markUpArray.add(markUp[1]);
-            }
-            MyFirebase.storeObject.collection(kCollectionSetups).doc(setup.id).update({
-              'playing.${thisGame.playerId}.$kSubFieldMarkUpList': markUpArray,
-            });
+            uploadMarkup(thisGame, setup!);
+            // List<int> markUpArray = [];
+            // for (List<int> markUp in thisGame.markUpList){
+            //   markUpArray.add(markUp[0]);
+            //   markUpArray.add(markUp[1]);
+            // }
+            // MyFirebase.storeObject.collection(kCollectionSetups).doc(setup!.id).update({
+            //   'playing.${thisGame.playerUid}.$kSubFieldMarkUpList': markUpArray,
+            // });
           }
         },
       ),

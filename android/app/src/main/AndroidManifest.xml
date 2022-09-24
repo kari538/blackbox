@@ -1,5 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.karolinadart.blackbox">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.karolinadart.blackbox"
+    android:versionCode="19"
+    android:versionName="1.1">
     <uses-permission android:name="android.permission.INTERNET"/>
     <!--    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>-->
 
@@ -9,17 +12,24 @@
          additional functionality it is fine to subclass or reimplement
          FlutterApplication and put your custom class here. -->
     <!--    android:name="io.flutter.embedding.android.FlutterActivity"-->
+
+    <!--            The below was removed when migrating to Android embedding V2:-->
+    <!--        android:name="io.flutter.app.FlutterApplication"-->
+    <!--            android:name=".MainActivity"-->
     <application
-        android:name="io.flutter.app.FlutterApplication"
+        android:name="${applicationName}"
         android:label="blackbox"
         android:icon="@mipmap/ic_launcher">
         <activity
-            android:name=".MainActivity"
+            android:name="io.flutter.embedding.android.FlutterActivity"
             android:launchMode="singleTop"
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:exported="true"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
+<!--            tools:node="merge-only-attributes"-->
+
             <!-- Specifies an Android theme to apply to this Activity as soon as
                  the Android process has started. This theme is visible to the user
                  while the Flutter UI initializes. After that, this theme continues
@@ -53,6 +63,10 @@
             android:resource="@drawable/ic_stat_name" />
         <!--        <meta-data android:name="com.google.firebase.messaging.default_notification_color"-->
         <!--            android:resource="@color/google_blue" />-->
+        <!-- The below was added to migrate to Android embedding V2:-->
+<!--        <meta-data-->
+<!--            android:name="flutterEmbedding"-->
+<!--            android:value="2" />-->
     </application>
 </manifest>
 

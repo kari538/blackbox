@@ -21,7 +21,7 @@ import 'package:blackbox/online_screens/reg_n_login_screen.dart';
 import 'package:blackbox/upload_setup_button.dart';
 
 class MakeSetupScreen extends StatefulWidget {
-  MakeSetupScreen({this.thisGame});
+  MakeSetupScreen({required this.thisGame});
   final Play thisGame;
 
   @override
@@ -34,19 +34,19 @@ class _MakeSetupScreenState extends State<MakeSetupScreen> {
     setState(() {});
   }
 
-  Widget getEdges({int x, int y}) {
+  Widget getEdges({required int x, required int y}) {
 //    int slotNo = myBeam.convert({'x': element, 'y': row});
-    int slotNo = Beam.convert(coordinates: Position(x, y), heightOfPlayArea: widget.thisGame.heightOfPlayArea, widthOfPlayArea: widget.thisGame.widthOfPlayArea);
+    int slotNo = Beam.convert(coordinates: Position(x, y), heightOfPlayArea: widget.thisGame.heightOfPlayArea, widthOfPlayArea: widget.thisGame.widthOfPlayArea)!;
     return Expanded(
       child: Container(
-        child: Center(child: widget.thisGame.edgeTileChildren[slotNo - 1] ?? FittedBox(
+        child: Center(child: widget.thisGame.edgeTileChildren![slotNo - 1] ?? FittedBox(
             fit: BoxFit.contain, child: Text('$slotNo', style: TextStyle(color: kBoardEdgeTextColor, fontSize: 15)))),
         decoration: BoxDecoration(color: kBoardEdgeColor),
       ),
     );
   }
 
-  Widget getMiddleElements({int x, int y}) {
+  Widget getMiddleElements({required int x, required int y}) {
 //    return Expanded(child: Container(decoration: BoxDecoration(border: Border.all(color: kBoardGridlineColor))));
     return PlayBoardTile(position: Position(x, y), showAtom: false, thisGame: widget.thisGame, refreshParent: refresh);
 //    return PlayBoardTile(x, y);
@@ -121,7 +121,7 @@ class _MakeSetupScreenState extends State<MakeSetupScreen> {
 
 class PlayButton extends StatelessWidget {
   const PlayButton({
-    @required this.widget,
+    required this.widget,
   });
 
   final MakeSetupScreen widget;
@@ -146,15 +146,15 @@ class PlayButton extends StatelessWidget {
 //-----------------------------------------------------------------------------------------------------
 //PlayBoardTile Stateful Widget:
 class PlayBoardTile extends StatefulWidget {
-  PlayBoardTile({this.position, this.showAtom, this.thisGame, this.refreshParent});
+  PlayBoardTile({this.position, this.showAtom, required this.thisGame, this.refreshParent});
 
-  final Position position;
-  final bool showAtom;
+  final Position? position;
+  final bool? showAtom;
   final Play thisGame;
-  final Function refreshParent;
+  final Function? refreshParent;
 
   @override
-  _PlayBoardTileState createState() => _PlayBoardTileState(position, showAtom, thisGame);
+  _PlayBoardTileState createState() => _PlayBoardTileState(position!, showAtom, thisGame);
 }
 
 class _PlayBoardTileState extends State<PlayBoardTile> {
@@ -162,10 +162,10 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
     thisAtom=Atom(position.x, position.y);
   }
 
-  bool showAtom;
+  bool? showAtom;
   final Position position;
   final Play thisGame;
-  Atom thisAtom;
+  late Atom thisAtom;
 
   @override
   Widget build(BuildContext context) {
@@ -174,13 +174,13 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
       child: GestureDetector(
           child: Container(
             child: Center(
-              child: showAtom ? Image(image: AssetImage('images/atom_yellow.png')) : FittedBox(
+              child: showAtom! ? Image(image: AssetImage('images/atom_yellow.png')) : FittedBox(
                   fit: BoxFit.contain, child: Text('${position.x},${position.y}', style: TextStyle(color: kBoardTextColor, fontSize: 15))),
             ),
             decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridLineColor, width: 0.5)),
           ),
           onTap: () {
-            if(showAtom){
+            if(showAtom!){
               print('Removing ${position.toList()}');
 //              thisGame.playerAtoms.remove(position.toList());
               thisGame.atoms.remove(thisAtom);
@@ -193,9 +193,9 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
             }
 //              print('Button ${position.toList()} was pressed');
             setState(() {
-              showAtom = showAtom ? false : true;
+              showAtom = showAtom! ? false : true;
             });
-            widget.refreshParent();
+            widget.refreshParent!();
           }),
     );
   }

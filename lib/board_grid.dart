@@ -3,18 +3,20 @@ import 'package:flutter/material.dart';
 import 'constants.dart';
 
 class BoardGrid extends StatelessWidget {
-  BoardGrid({@required this.playWidth, @required this.playHeight, @required this.getEdgeTiles, @required this.getMiddleTiles});
+  BoardGrid({required this.playWidth, required this.playHeight, required this.getEdgeTiles, required this.getMiddleTiles});
   final int playWidth;
   final int playHeight;
-  final Widget Function({int x, int y}) getEdgeTiles;
-  final Widget Function({int x, int y}) getMiddleTiles;
+  final Widget Function({required int x, required int y}) getEdgeTiles;
+  final Widget Function({required int x, required int y}) getMiddleTiles;
+  // final Widget Function({int x, int y}) getEdgeTiles;
+  // final Widget Function({int? x, int? y}) getMiddleTiles;
 
-  List<Widget> getBoardRows({int playWidth, int playHeight}) {
+  List<Widget> getBoardRows({required int playWidth, required int playHeight}) {
     int numberOfRows = playHeight + 2;
     int numberOfElements = playWidth + 2;
     List<Widget> boardRows = []; //List of Rows
 //    List<List<Widget>> allElements = List<List<Widget>>(numberOfRows); //2D List of row elements, which are Widgets
-    List<List<Widget>> allElements = List.generate(numberOfRows, (int i) => List.filled(numberOfElements, null, growable: false));
+    List<List<Widget>> allElements = List.generate(numberOfRows, (int i) => List.filled(numberOfElements, SizedBox(), growable: false));
 
     for (int row = 0; row < numberOfRows; row++) {
 //      print('row is $row');
@@ -38,6 +40,7 @@ class BoardGrid extends StatelessWidget {
         Expanded(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
+            // children: allElements[row],
             children: allElements[row],
           ),
         ),

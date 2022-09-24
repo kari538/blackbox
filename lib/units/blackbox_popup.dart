@@ -3,12 +3,12 @@ import 'package:rflutter_alert/rflutter_alert.dart';
 
 class BlackboxPopup extends Alert {
   BlackboxPopup({
-    @required this.context,
-    @required this.title,
-    @required this.desc,
+    required this.context,
+    required this.title,
+    required this.desc,
     this.buttons,
     this.buttonsDirection,
-  }){
+  }) : super (context: context) {
 //  Function onPressed = (){Navigator.pop(context);};
     buttons = buttons ?? [
       DialogButton(
@@ -31,18 +31,19 @@ class BlackboxPopup extends Alert {
   String title;
   String desc;
   BuildContext context;
-  List<DialogButton> buttons;
-  ButtonsDirection buttonsDirection;
+  List<DialogButton>? buttons;
+  ButtonsDirection? buttonsDirection;
 
-  AlertStyle style;
+  late AlertStyle style;
 
 }
 
 
 class BlackboxPopupButton extends DialogButton {
-  BlackboxPopupButton({@required this.text, @required this.onPressed});
+  BlackboxPopupButton({required this.text, required this.onPressed}) : super(child: null, onPressed: null);
+  // BlackboxPopupButton({required this.text, required this.onPressed});
   final String text;
-  final Function onPressed;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {

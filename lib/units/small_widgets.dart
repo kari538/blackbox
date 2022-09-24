@@ -19,7 +19,7 @@ class InfoText extends StatelessWidget {
 
 /// Button with text 'Cancel'. Pops the popup with result 'false'.
 class CancelPopupButton extends BlackboxPopupButton {
-  CancelPopupButton(this.context);
+  CancelPopupButton(this.context) : super (text: '', onPressed: (){});
 
   final BuildContext context;
   final String text = 'Cancel';

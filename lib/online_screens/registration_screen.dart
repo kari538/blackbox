@@ -4,8 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:blackbox/my_firebase.dart';
 import 'package:blackbox/my_firebase_labels.dart';
 import 'package:flutter/material.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:blackbox/online_button.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';import 'package:blackbox/online_button.dart';
 import 'package:blackbox/units/blackbox_popup.dart';
 import 'game_hub_screen.dart';
 
@@ -23,9 +22,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   final bool withPop;
   bool showSpinner = false;
-  String email;
-  String screenName;
-  String password1;
+  String? email;
+  String? screenName;
+  String? password1;
   String password2 = '';
   FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
@@ -36,10 +35,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       showSpinner = true;
     });
     try {
-      var user = await MyFirebase.authObject.createUserWithEmailAndPassword(email: email, password: password1);
+      var user = await MyFirebase.authObject.createUserWithEmailAndPassword(email: email!, password: password1!);
       if (user != null) {
-        MyFirebase.authObject.currentUser.updateDisplayName(screenName);
-        String myUid = MyFirebase.authObject.currentUser.uid;
+        MyFirebase.authObject.currentUser!.updateDisplayName(screenName);
+        String myUid = MyFirebase.authObject.currentUser!.uid;
         if (screenName == null || screenName == '') screenName = 'Anonymous';
 //                            database.collection('userinfo').add({
 //                             database.collection('userinfo').doc(myUid).set({

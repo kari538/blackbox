@@ -1,16 +1,12 @@
 import 'package:blackbox/route_names.dart';
-import 'package:blackbox/global.dart';
 import 'package:blackbox/fcm.dart';
 import 'package:blackbox/my_firebase_labels.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-// import 'package:blackbox/fcm.dart';
 import 'package:blackbox/constants.dart';
 import 'package:blackbox/online_screens/game_hub_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:blackbox/online_button.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';import 'package:blackbox/online_button.dart';
 import 'package:blackbox/units/blackbox_popup.dart';
 import 'package:blackbox/my_firebase.dart';
 
@@ -30,23 +26,26 @@ class _LoginScreenState extends State<LoginScreen> {
   bool showSpinner = false;
   String email = '';
   String password = '';
-  DocumentSnapshot hi;
 
   Future loginPress() async {
     setState(() {
       showSpinner = true;
     });
 
-    auth.UserCredential loginResponse;
-    String myUid;
-    String myScreenName;
+    auth.UserCredential? loginResponse;
+    String? _myUid;
+    String? _myScreenName;
+    bool? loginSuccess;
 
+    // Try to log in:
     try {
       loginResponse = await MyFirebase.authObject.signInWithEmailAndPassword(email: email, password: password);
       // print(loginResponse);
+      loginSuccess = true;
     } catch (e) {
       print('Login Error!: $e');
-      BlackboxPopup(
+      loginSuccess = false;
+      await BlackboxPopup(
         context: context,
         title: 'Login Error!',
         desc: '$e',
@@ -55,17 +54,18 @@ class _LoginScreenState extends State<LoginScreen> {
     print('loginResponse is $loginResponse');
     print('Current user in LoginScreen is ${MyFirebase.authObject.currentUser}');
 
-    if (MyFirebase.authObject.currentUser != null) {
-      // I'm successfully logged in.
-      myUid = MyFirebase.authObject.currentUser.uid;
-      myScreenName = MyFirebase.authObject.currentUser.displayName;
+    // If the login was successful:
+    if (loginSuccess && MyFirebase.authObject.currentUser != null) {
+    // if (MyFirebase.authObject.currentUser != null) { // If from Change User, the login might have been unsuccessful even if there is a currentUser
+      _myUid = MyFirebase.authObject.currentUser!.uid;
+      _myScreenName = MyFirebase.authObject.currentUser!.displayName;
 
       // First, let's check if I have an entry in userinfo:
       DocumentSnapshot myUserInfo;
-      Map<String, dynamic> myUserData;
+      Map<String, dynamic>? myUserData;
       try {
-        myUserInfo = await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).get();
-        myUserData = myUserInfo.data();
+        myUserInfo = await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(_myUid).get();
+        myUserData = myUserInfo.data() as Map<String, dynamic>?;
       } catch (e) {
         print('Error checking for entry in userinfo: $e');
       }
@@ -76,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
         print('I don\'t have an entry in userinfo! Making one.');
         myUserData = {
           'email': email,
-          kFieldScreenName: myScreenName, // It may be null, but if I didn't have any entry anyway...
+          kFieldScreenName: _myScreenName, // It may be null, but if I didn't have any entry anyway...
           kFieldNotifications: [
             kTopicGameHubSetup,
             kTopicPlayingSetup,
@@ -85,20 +85,20 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         };
         try {
-          await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).set(myUserData);
+          await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(_myUid).set(myUserData);
           // If the above is successful, I need to initialize FCM again, because it doesn't
           // function properly without a userinfo entry:
-          initializeFcm('', GlobalVariable.navState);
+          initializeFcm('');
         } catch (e) {
           print('Error making a userinfo entry: $e');
         }
 
       } else {
         // I already had an entry in userinfo
-        // Let's check if I have a display name in the auth object!
-        if (myScreenName == null && myUserData.containsKey(kFieldScreenName)) {
-          myScreenName = myUserData[kFieldScreenName];
-          MyFirebase.authObject.currentUser.updateDisplayName(myScreenName);
+        // Let's check if I lack a display name in the auth object!
+        if (_myScreenName == null && myUserData.containsKey(kFieldScreenName)) {
+          _myScreenName = myUserData[kFieldScreenName];
+          MyFirebase.authObject.currentUser!.updateDisplayName(_myScreenName);
         }
       }
       // Now, I should have an entry in userinfo, and both a screenName and

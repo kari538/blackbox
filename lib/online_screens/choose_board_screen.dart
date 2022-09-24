@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-// import 'file:///C:/Users/karol/AndroidStudioProjects/blackbox/lib/units/play.dart';
 import 'package:blackbox/play.dart';
 import 'package:blackbox/screens/settings_screen.dart';
 import 'package:blackbox/screens/make_setup_screen.dart';
-// import 'file:///C:/Users/karol/AndroidStudioProjects/blackbox/lib/units/online_button.dart';
 import 'package:blackbox/online_button.dart';
 
 class ChooseBoardScreen extends StatelessWidget {
