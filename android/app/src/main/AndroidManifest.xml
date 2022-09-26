@@ -19,7 +19,7 @@
     <application
         android:name="${applicationName}"
         android:label="blackbox"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
         <activity
             android:name="io.flutter.embedding.android.FlutterActivity"
             android:launchMode="singleTop"
@@ -76,7 +76,7 @@
 <!--    package="com.example.blackbox">-->
 <!--   <application-->
 <!--        android:label="blackbox"-->
-<!--        android:icon="@mipmap/ic_launcher">-->
+<!--        android:icon="@mipmap/launcher_icon">-->
 <!--        <activity-->
 <!--            android:name=".MainActivity"-->
 <!--            android:launchMode="singleTop"-->

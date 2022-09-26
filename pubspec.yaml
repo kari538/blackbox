@@ -24,21 +24,36 @@ dependencies:
   flutter_linkify: ^5.0.2
   url_launcher: ^6.1.2
   pretty_json: ^2.0.0
+  intl: ^0.17.0
+  http: ^0.13.4
+  flutter_local_notifications: ^9.5.2
+  flutter_launcher_icons: ^0.10.0
 
+  firebase_core: ^1.23.0
+  firebase_auth: ^3.10.0
+  firebase_messaging: ^13.0.3
+  cloud_firestore: ^3.4.9
 #  firebase_core: ^1.16.0
 #  firebase_auth: ^3.3.17
 #  cloud_firestore: ^3.1.14
 #  firebase_messaging: ^11.3.0
 #  #  firebase_admin: ^0.1.4
 
-  intl: ^0.17.0
-  http: ^0.13.4
-  flutter_local_notifications: ^9.5.2
-  firebase_core: ^1.23.0
-  firebase_auth: ^3.10.0
-  firebase_messaging: ^13.0.3
-  cloud_firestore: ^3.4.9
-
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  remove_alpha_ios: true
+  image_path: "images/app_icon_3.png"
+  min_sdk_android: 21 # android min sdk min:16, default 21
+  web:
+    generate: false
+#    image_path: "path/to/image.png"
+#    background_color: "#hexcode"
+#    theme_color: "#hexcode"
+  windows:
+    generate: false
+#    image_path: "path/to/image.png"
+#    icon_size: 48 # min:48, max:256, default: 48
 
 dev_dependencies:
   flutter_test:
