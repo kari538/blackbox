@@ -128,8 +128,9 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Text('log in'),
           onTap: () {
             setState(() {
-              email = 'karolinahagegard@gmail.com';
-              password = '123456';
+              // TODO: ---Comment out login credentials:
+              // email = 'karolinahagegard@gmail.com';
+              // password = '123456';
             });
           },
         ),

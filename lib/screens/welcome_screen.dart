@@ -2,6 +2,7 @@
 // import 'package:blackbox/atom_n_beam.dart';
 // import 'package:blackbox/multiple_solutions.dart';
 // import 'results_screen.dart';
+import 'package:blackbox/units/small_widgets.dart';
 import 'package:flutter/material.dart';
 import 'play_screen.dart';
 import 'package:blackbox/play.dart';
@@ -26,10 +27,10 @@ class WelcomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            RaisedButton(
+            MyRaisedButton(
               child: Text('Play'),
               onPressed: (){
-                print('pressed Test');
+                print('pressed Play');
                 Play thisGame = Play(numberOfAtoms: 4, heightOfPlayArea: 8, widthOfPlayArea: 8);
                 thisGame.getAtomsRandomly();
                 thisGame.online=false;
@@ -38,7 +39,7 @@ class WelcomeScreen extends StatelessWidget {
                 }));
               },
             ),
-            RaisedButton(
+            MyRaisedButton(
               child: Text('Make Setup'),
               onPressed: (){
                 Navigator.push(context, MaterialPageRoute(builder: (context){
@@ -48,7 +49,7 @@ class WelcomeScreen extends StatelessWidget {
                 }));
               },
             ),
-            RaisedButton(
+            MyRaisedButton(
               child: Text('Settings'),
               onPressed: (){
                 Navigator.push(context, MaterialPageRoute(builder: (context){
@@ -84,7 +85,7 @@ class WelcomeScreen extends StatelessWidget {
                 }
               },
             ),
-            RaisedButton(
+            MyRaisedButton(
               child: Text('How to Play'),
               onPressed: () async {
                 ///How to play:

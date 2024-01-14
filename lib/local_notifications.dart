@@ -6,7 +6,6 @@ import 'my_firebase_labels.dart';
 import 'package:collection/collection.dart';
 import 'dart:convert';
 
-import 'package:pretty_json/pretty_json.dart';
 import 'route_names.dart';
 import 'package:blackbox/online_screens/game_hub_screen.dart';
 import 'dart:async';
@@ -23,15 +22,26 @@ class LocalNotifications {
     print('Running LocalNotifications.initiate()');
 
     var android = AndroidInitializationSettings('@drawable/ic_stat_name');
-    var iOS = IOSInitializationSettings();
+    var iOS = DarwinInitializationSettings();
     var initSettings = InitializationSettings(android: android, iOS: iOS);
 
-    Future onSelectNotification(String? payload) async {
+    Future onSelectNotification(NotificationResponse notRes) async {
+    // Future onSelectNotification(String? payload) async {
       // TODO: Navigate to game!
-      print('onSelectNotification() (Local notification opened app).');
-      printPrettyJson(jsonDecode(payload!));
+      print('onSelectNotification() (Local notification opened app).'
+          '\nnotRes is $notRes and'
+          '\nPayload is ${notRes.payload}');
+      // printPrettyJson(jsonDecode(payload!));
 
-      Map<String, dynamic>? msgData = jsonDecode(payload);
+      // Map<String, dynamic>? msgData = payload.;
+      Map<String, dynamic>? msgData;
+      if (notRes.payload != null) {
+        try {
+          msgData = jsonDecode(notRes.payload!);
+        } catch (e) {
+          print('couldn\'t decode msg payload. e is: \n$e');
+        }
+      }
       bool containsData = !(MapEquality().equals(msgData, {}) || msgData == null);
       bool playingEvent = containsData && (msgData[kMsgEvent] == kMsgEventStartedPlaying || msgData[kMsgEvent] == kMsgEventResumedPlaying);
       bool newSetupEvent = containsData && msgData[kMsgEvent] == kMsgEventNewGameHubSetup;
@@ -52,7 +62,7 @@ class LocalNotifications {
       }
     }
 
-    flutterLocalNotificationsPlugin.initialize(initSettings, onSelectNotification: onSelectNotification);
+    flutterLocalNotificationsPlugin.initialize(initSettings, onDidReceiveNotificationResponse: onSelectNotification);
   }
 
   static Future showNotification({String? title, String? notification, String? data, required String category, required String description}) async {
@@ -75,7 +85,7 @@ class LocalNotifications {
       // sound: UriAndroidNotificationSound('C:\\Users\\karol\\AndroidStudioProjects\\my_giggz\\assets\\note3.wav'),
       // sound: UriAndroidNotificationSound('assets/note3.wav'),
     );
-    var iOS = IOSNotificationDetails(
+    var iOS = DarwinNotificationDetails(
       presentAlert: true, //Display an alert when the notification is triggered while app is in the foreground (in iOS 10 or newer)
       threadIdentifier: category,
     );

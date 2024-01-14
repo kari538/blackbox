@@ -313,7 +313,7 @@ class _PlayScreenState extends State<PlayScreen> {
       //  });
       await Future.delayed(Duration(seconds: 4));
       // i++;
-    } while (this.mounted);
+    } while (mounted);
   }
 
   Future<Timestamp?> getStartedPlaying(Future<void> uploadDoc) async {
@@ -715,7 +715,7 @@ class _PlayScreenState extends State<PlayScreen> {
                   //Answer button:
                   Padding(
                     padding: const EdgeInsets.only(right: 10),
-                    child: RaisedButton(
+                    child: MyRaisedButton(
                       child: Text('This is my\nfinal answer'),
                       onPressed: thisGame.playerAtoms.length != thisGame.atoms.length
                           ? null

@@ -1,6 +1,5 @@
+import 'package:blackbox/units/small_functions.dart';
 import 'dart:convert';
-import 'package:pretty_json/pretty_json.dart';
-import 'package:blackbox/game_hub_updates.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 
@@ -96,9 +95,9 @@ class _PingWidgetState extends State<PingWidget> {
       pingMap = newPingMap;
       if (printPing) {
         print('pingMap in PingWidget, pingStreamListener is:');
-        printPrettyJson(jsonDecode(jsonEncode(pingMap, toEncodable: (object) => object.toString())));
+        myPrettyPrint(jsonDecode(jsonEncode(pingMap, toEncodable: (object) => object.toString())));
         print('activeMap in PingWidget, pingStreamListener is');
-        printPrettyJson(jsonDecode(jsonEncode(activeMap, toEncodable: (object) => object.toString())));
+        myPrettyPrint(jsonDecode(jsonEncode(activeMap, toEncodable: (object) => object.toString())));
       }
     });
   }

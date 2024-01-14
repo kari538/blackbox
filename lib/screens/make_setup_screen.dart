@@ -1,3 +1,4 @@
+import 'package:blackbox/units/small_widgets.dart';
 import 'package:blackbox/route_names.dart';
 import 'package:blackbox/play_screen_menu.dart';
 import 'package:blackbox/board_grid.dart';
@@ -128,7 +129,7 @@ class PlayButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RaisedButton(
+    return MyRaisedButton(
       child: Text('Play'),
       onPressed: widget.thisGame.atoms.length != widget.thisGame.atoms.length ? null : () {
 //                      Navigator.push(context, MaterialPageRoute(builder: (context) {

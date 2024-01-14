@@ -1,3 +1,4 @@
+import 'package:blackbox/units/small_functions.dart';
 import 'package:blackbox/screens/results_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:blackbox/my_firebase_labels.dart';
@@ -9,8 +10,7 @@ import 'package:blackbox/constants.dart';
 import 'package:blackbox/atom_n_beam.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blackbox/game_hub_updates.dart';
-import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';import 'package:pretty_json/pretty_json.dart';
-import 'package:provider/provider.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';import 'package:provider/provider.dart';
 
 /// Called from tapping a result or from automatically navigated from
 /// FollowPlayingScreen(). When playing oneself, you instead go to the
@@ -87,7 +87,7 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
     print('setupData.keys in SentResultsScreen is ${setupData.keys}');
     print('setupData in SentResultsScreen is:');
     try {
-      printPrettyJson(setupData);
+      myPrettyPrint(setupData);
     } catch (e) {
       print('Error in prettyJason: $e');
     }

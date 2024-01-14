@@ -1,8 +1,8 @@
+import 'package:blackbox/units/small_functions.dart';
 import 'package:blackbox/global.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';import 'package:blackbox/units/small_widgets.dart';
 import 'package:blackbox/online_button.dart';
 import 'package:blackbox/units/blackbox_popup.dart';
-import 'package:pretty_json/pretty_json.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:blackbox/game_hub_menu.dart';
@@ -49,7 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     profileListener = MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).snapshots().listen((event) {
       myProfileData = event.data();
       print('myProfileData is');
-      printPrettyJson(myProfileData);
+      myPrettyPrint(myProfileData);
 
       if (myProfileData != null) {
         for (String field in profileTextFields) {
@@ -65,6 +65,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           //Build again with new values
         });
       }
+    });
+  }
+
+  void tappedEdit({required String key}) async {
+    setState(() {
+      editing[key] = true;
     });
   }
 
@@ -85,7 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            RaisedButton(
+            MyRaisedButton(
                 child: Text('Cancel'),
                 onPressed: () {
                   setState(() {
@@ -94,7 +100,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           controller[key]!.text = myProfileData![key].toString(); //Needed for zoom
                         });
                 }),
-            RaisedButton(
+            MyRaisedButton(
                 child: Text('Save Changes'),
                 onPressed: () async {
                         print('newValue is $newValue');
@@ -132,16 +138,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Expanded(
-            child: Text(
-              '${myProfileData != null ? myProfileData![key] : ''}',
-              style: TextStyle(color: Colors.blueGrey.shade100),
+            child: GestureDetector(
+              child: Text(
+                '${myProfileData != null ? myProfileData![key] : ''}',
+                style: TextStyle(color: Colors.blueGrey.shade100),
+              ),
+              onTap: () {
+                tappedEdit(key: key);
+              },
             )),
         GestureDetector(
           child: Icon(Icons.edit),
-          onTap: () async {
-            setState(() {
-              editing[key] = true;
-            });
+          onTap: () {
+            tappedEdit(key: key);
           },
         ),
       ],
@@ -176,7 +185,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            RaisedButton(
+            MyRaisedButton(
                 child: Text('Cancel'),
                 onPressed: () {
                   setState(() {
@@ -184,7 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           controller[key]!.text = myProfileData![key].toString(); //Needed for zoom
                         });
                 }),
-            RaisedButton(
+            MyRaisedButton(
                 child: Text('Change ${capitalizeFirst(key)}'),
                 onPressed: () async {
                   print('Before change password');

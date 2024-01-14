@@ -10,7 +10,7 @@
 //TODO: Add launch icon for iOS (in ios/Runner/Assets.xcassets/AppIcon.appioconset)
 //Todo: (Make step-by-step game review)
 //TODO: (Save offline games to disk)
-//TODO: (Get rid of deprecations. (Make my own RaisedButton?))
+//TODO: (Get rid of deprecations. (Make my own MyRaizedButton?))
 //TODO: *** Don't send private "playing your setup" msg when I'm the one playing (Cloud)
 //TODO: Add game hub menu entries also to Play Screen menu when online?
 //TODO: *** Pop-and-repush MakeSetupScreen()? (Not just pop)

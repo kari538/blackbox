@@ -1,4 +1,4 @@
-import 'package:pretty_json/pretty_json.dart';
+import 'package:blackbox/units/small_functions.dart';
 import 'package:blackbox/units/ping_widget.dart';
 import 'package:blackbox/my_firebase_labels.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
@@ -79,9 +79,10 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
     setupData = setup!.data() as Map<String, dynamic>; // This may not be up to date, but some things can
     // still be done since they never change
     print('setupData.keys in FollowPlayingScreen initState() are:');
-    printPrettyJson(setupData.keys);
+    myPrettyPrint(setupData.keys);
+    // printPrettyJson(setupData.keys);
     print('setupData in FollowPlayingScreen initState() is:');
-    printPrettyJson(setupData);
+    myPrettyPrint(setupData);
     thisGame = Play(numberOfAtoms: 0, widthOfPlayArea: setupData['widthAndHeight'][0], heightOfPlayArea: setupData['widthAndHeight'][1]);
     thisGame.online = true;
 
@@ -189,14 +190,14 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
     print('thisGame.playerId in uploadFollowing() is ${thisGame.playerUid}');
     print('setupData keys in uploadFollowing() is ${setupData.keys}');
     print('setupData in uploadFollowing() is:');
-    printPrettyJson(setupData);
+    myPrettyPrint(setupData);
 
     await refreshed;
     List<dynamic>? followers = []; // Must be dynamic because Firebase...
     if (setupData[kFieldPlaying][widget.playingId].containsKey(kSubFieldFollowing)) {
       followers = setupData[kFieldPlaying][widget.playingId][kSubFieldFollowing];
       print('followers List is:');
-      printPrettyJson(followers);
+      myPrettyPrint(followers);
     }
     followers!.add(myUid);
     // String myName = widget.me;
@@ -265,7 +266,7 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
       Map<String, dynamic> eventData;
       eventData = event.data() as Map<String, dynamic>;
       print('FollowingPlayingScreen getPlayingStream() event data:');
-      printPrettyJson(eventData);
+      myPrettyPrint(eventData);
 
       //Beams:
       List<dynamic>? receivedBeams = eventData[kFieldPlaying][playingId][kSubFieldPlayingBeams];
@@ -635,7 +636,7 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
                   ),
 //                Padding(
 //                  padding: const EdgeInsets.only(right: 10),
-//                  child: RaisedButton(
+//                  child: MyRaizedButton(
 //                    child: Text('Test play'),
 //                    onPressed:  () async {
 //                      testPlayButtonPress();

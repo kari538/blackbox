@@ -1,3 +1,5 @@
+import 'package:blackbox/online_button.dart';
+
 import 'blackbox_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:blackbox/constants.dart';
@@ -28,9 +30,41 @@ class CancelPopupButton extends BlackboxPopupButton {
   Widget build(BuildContext buttonContext) {
     return BlackboxPopupButton(
       text: text,
-      onPressed: (){
+      onPressed: () {
         Navigator.pop(context, false);
       },
     );
+  }
+}
+
+class MyRaisedButton extends StatelessWidget {
+  const MyRaisedButton({
+    required this.child,
+    required this.onPressed,
+    this.color,
+    this.shape,
+    Key? key,
+  }) : super(key: key);
+  final Function? onPressed;
+  final Widget child;
+  // final String text;
+  final Color? color;
+  final OutlinedBorder? shape;
+
+  @override
+  Widget build(BuildContext context) {
+    // if (color != null && shape != null) {
+      return ElevatedButton(
+        // onPressed: onPressed,
+        onPressed: onPressed != null ? (){onPressed!();} : null,
+        child: child,
+        // child: Text('$text'),
+        style: ButtonStyle(
+          backgroundColor: MaterialStatePropertyAll<Color?>(color),
+          shape: MaterialStatePropertyAll<OutlinedBorder?>(shape),
+        ),
+      );
+    // }
+    // return ElevatedButton(onPressed: onPressed(), child: child);
   }
 }

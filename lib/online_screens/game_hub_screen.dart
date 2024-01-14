@@ -1,3 +1,4 @@
+import 'package:blackbox/units/small_functions.dart';
 import 'package:blackbox/scratches/temp_firebase_operations.dart';
 import 'package:blackbox/my_firebase.dart';
 import 'package:blackbox/my_firebase_labels.dart';
@@ -8,7 +9,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:blackbox/screens/play_screen.dart';
 import 'package:blackbox/game_entry.dart';
-import 'package:pretty_json/pretty_json.dart';
 import 'package:provider/provider.dart';
 import 'package:blackbox/game_hub_updates.dart';
 import 'package:blackbox/game_hub_menu.dart';
@@ -148,7 +148,7 @@ class _GameHubScreenState extends State<GameHubScreen> {
 
       providerNoListen.updateUserIdMap(map);
       print('userIdMap in getUserIdMap is:');
-      printPrettyJson(providerNoListen.userIdMap);
+      myPrettyPrint(providerNoListen.userIdMap);
 
       // Replaced setState with provider:
 //      if (this.mounted)
@@ -407,22 +407,33 @@ class _GameHubScreenState extends State<GameHubScreen> {
 //               },
 //             ),
 //           ),
-          BottomAppBar(
-            color: Colors.pink.shade600,
-            elevation: 5,
+          MaterialButton(
             child: Container(
               height: 40,
-              child: FlatButton(
-                child: Text('Add', style: Theme.of(context).textTheme.bodyText2!.copyWith(fontWeight: FontWeight.bold)),
-                // child: Text('Add', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                onPressed: (){
-                  Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return ChooseBoardScreen();
-                  }));
-                },
-                minWidth: double.infinity,
-              ),
+              width: double.infinity,
+              child: Center(child: Text('Add', style: Theme.of(context).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold))),
+              // child: FlatButton(
+              //   child: Text('Add', style: Theme.of(context).textTheme.bodyText2!.copyWith(fontWeight: FontWeight.bold)),
+              //   // child: Text('Add', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              //   onPressed: (){
+              //     Navigator.push(context, MaterialPageRoute(builder: (context) {
+              //       return ChooseBoardScreen();
+              //     }));
+              //   },
+              //   minWidth: double.infinity,
+              // ),),
             ),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) {
+                return ChooseBoardScreen();
+              }));
+            },
+            // BottomAppBar(
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            shape: RoundedRectangleBorder(),
+            padding: EdgeInsets.all(0),
+            color: Colors.pink.shade600,
+            elevation: 0,
 //             child: GestureDetector(
 //               child: Container(
 // //              child: Center(child: Text('Add', style: TextStyle(color: kBoardColor, fontWeight: FontWeight.bold))),
