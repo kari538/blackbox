@@ -1,4 +1,4 @@
-import 'firebase_options.dart';
+// import 'firebase_options.dart';
 import 'theme.dart';
 import 'global.dart';
 // import 'package:wakelock/wakelock.dart';
@@ -19,117 +19,37 @@ import 'my_firebase.dart';
 //import 'online_screens/game_hub_screen.dart';
 //import 'online_screens/reg_n_login_screen.dart';
 
-void main() {
-  print('Running main()');
-  WidgetsFlutterBinding.ensureInitialized();
-  MyFirebase.myFutureFirebaseApp = Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  initializeFcm('');
-  userChangesListener();
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler); //This seems to be working!
-  // Wakelock.enable();  // Prevents screen from sleeping for as long as main() is running.
-  LocalNotifications.initiate();
-
-  runApp(Blackbox());
-}
-
-
-class Blackbox extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider<GameHubUpdates>(
-      create: (_) {
-        return GameHubUpdates();
-      },
-      lazy: true, // Don't remember why I put this to true!...
-      // Removing it doesn't seem to do anything...
-      // In InheritedProvider - an ancestor of ChangeNotifierProvider - it says that
-      // if lazy is false, it forces "the value to be computed"... Seems null will count as true...
-      child: MaterialApp(
-        theme: blackboxTheme,
-//        home: BlackBoxScreen(),
-//        home: ResultsScreen(),
-//        home: WelcomeScreen(),
-        home: WelcomeScreen(),
-//        home: ConversationsScreen(),
-//        home: RegistrationAndLoginScreen(),
-        debugShowCheckedModeBanner: false,
-        navigatorObservers: [NavigationHistoryObserver()],
-        navigatorKey: GlobalVariable.navState,
-      ),
-    );
-  }
-}
-
-// Found in other crashed file:
-// import 'package:wakelock/wakelock.dart';
-// import 'package:firebase_messaging/firebase_messaging.dart';
-// import 'local_notifications.dart';
-// import 'fcm.dart';
-// import 'package:flutter/material.dart';
-// import 'constants.dart';
-// import 'package:blackbox/screens/welcome_screen.dart';
-// import 'package:provider/provider.dart';
-// import 'package:blackbox/game_hub_updates.dart';
-// import 'package:firebase_core/firebase_core.dart';
-// import 'my_firebase.dart';
-//
-// //import 'screens/play_screen.dart';
-// //import 'screens/results_screen.dart';
-// //import 'screens/rules_screen.dart';
-// //import 'online_screens/game_hub_screen.dart';
-// //import 'online_screens/reg_n_login_screen.dart';
-//
+//--------------------------------------------------
+// The real main:
 // void main() {
 //   print('Running main()');
 //   WidgetsFlutterBinding.ensureInitialized();
-//   MyFirebase.myFutureFirebaseApp = Firebase.initializeApp();
+//   MyFirebase.myFutureFirebaseApp = Firebase.initializeApp(
+//     options: DefaultFirebaseOptions.currentPlatform,
+//   );
 //   initializeFcm('');
 //   userChangesListener();
-//   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);  //This seems to be working!
+//   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler); //This seems to be working!
 //   // Wakelock.enable();  // Prevents screen from sleeping for as long as main() is running.
-//
-//   // Map<String, dynamic> map = {
-//   //   'one': 1,
-//   //   'two': 2,
-//   // };
-//   // print('map before is $map');
-//   // changeMap(map);
-//   // print('map after is $map');
+//   LocalNotifications.initiate();
 //
 //   runApp(Blackbox());
 // }
 //
-// // void changeMap(Map<String, dynamic> _map){
-// //   _map = {
-// //     'one': 1,
-// //     'two': 2,
-// //     'three': 3,
-// //   };
-// // }
 //
 // class Blackbox extends StatelessWidget {
 //   @override
 //   Widget build(BuildContext context) {
-//     LocalNotifications.initiate(context);
 //     return ChangeNotifierProvider<GameHubUpdates>(
 //       create: (_) {
 //         return GameHubUpdates();
 //       },
+//       lazy: true, // Don't remember why I put this to true!...
+//       // Removing it doesn't seem to do anything...
+//       // In InheritedProvider - an ancestor of ChangeNotifierProvider - it says that
+//       // if lazy is false, it forces "the value to be computed"... Seems null will count as true...
 //       child: MaterialApp(
-//         theme: ThemeData.dark().copyWith(
-//           appBarTheme: AppBarTheme(color: Colors.black),
-//           scaffoldBackgroundColor: kScaffoldBackgroundColor,
-// //          scaffoldBackgroundColor: Colors.pink,
-//           buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary),
-//           textTheme: TextTheme(
-//             bodyText2: TextStyle(
-//               fontSize: 18,
-//             ),
-//             button: TextStyle(color: Colors.pink),
-//           ),
-//         ),
+//         theme: blackboxTheme,
 // //        home: BlackBoxScreen(),
 // //        home: ResultsScreen(),
 // //        home: WelcomeScreen(),
@@ -137,7 +57,136 @@ class Blackbox extends StatelessWidget {
 // //        home: ConversationsScreen(),
 // //        home: RegistrationAndLoginScreen(),
 //         debugShowCheckedModeBanner: false,
+//         navigatorObservers: [NavigationHistoryObserver()],
+//         navigatorKey: GlobalVariable.navState,
 //       ),
 //     );
 //   }
 // }
+//
+// // Found in other crashed file:
+// // import 'package:wakelock/wakelock.dart';
+// // import 'package:firebase_messaging/firebase_messaging.dart';
+// // import 'local_notifications.dart';
+// // import 'fcm.dart';
+// // import 'package:flutter/material.dart';
+// // import 'constants.dart';
+// // import 'package:blackbox/screens/welcome_screen.dart';
+// // import 'package:provider/provider.dart';
+// // import 'package:blackbox/game_hub_updates.dart';
+// // import 'package:firebase_core/firebase_core.dart';
+// // import 'my_firebase.dart';
+// //
+// // //import 'screens/play_screen.dart';
+// // //import 'screens/results_screen.dart';
+// // //import 'screens/rules_screen.dart';
+// // //import 'online_screens/game_hub_screen.dart';
+// // //import 'online_screens/reg_n_login_screen.dart';
+// //
+// // void main() {
+// //   print('Running main()');
+// //   WidgetsFlutterBinding.ensureInitialized();
+// //   MyFirebase.myFutureFirebaseApp = Firebase.initializeApp();
+// //   initializeFcm('');
+// //   userChangesListener();
+// //   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);  //This seems to be working!
+// //   // Wakelock.enable();  // Prevents screen from sleeping for as long as main() is running.
+// //
+// //   // Map<String, dynamic> map = {
+// //   //   'one': 1,
+// //   //   'two': 2,
+// //   // };
+// //   // print('map before is $map');
+// //   // changeMap(map);
+// //   // print('map after is $map');
+// //
+// //   runApp(Blackbox());
+// // }
+// //
+// // // void changeMap(Map<String, dynamic> _map){
+// // //   _map = {
+// // //     'one': 1,
+// // //     'two': 2,
+// // //     'three': 3,
+// // //   };
+// // // }
+// //
+// // class Blackbox extends StatelessWidget {
+// //   @override
+// //   Widget build(BuildContext context) {
+// //     LocalNotifications.initiate(context);
+// //     return ChangeNotifierProvider<GameHubUpdates>(
+// //       create: (_) {
+// //         return GameHubUpdates();
+// //       },
+// //       child: MaterialApp(
+// //         theme: ThemeData.dark().copyWith(
+// //           appBarTheme: AppBarTheme(color: Colors.black),
+// //           scaffoldBackgroundColor: kScaffoldBackgroundColor,
+// // //          scaffoldBackgroundColor: Colors.pink,
+// //           buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary),
+// //           textTheme: TextTheme(
+// //             bodyText2: TextStyle(
+// //               fontSize: 18,
+// //             ),
+// //             button: TextStyle(color: Colors.pink),
+// //           ),
+// //         ),
+// // //        home: BlackBoxScreen(),
+// // //        home: ResultsScreen(),
+// // //        home: WelcomeScreen(),
+// //         home: WelcomeScreen(),
+// // //        home: ConversationsScreen(),
+// // //        home: RegistrationAndLoginScreen(),
+// //         debugShowCheckedModeBanner: false,
+// //       ),
+// //     );
+// //   }
+// // }
+
+//-------------------------------------------------------------
+//main for testing:
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: ThemeData(
+        primarySwatch: Colors.purple,
+      ),
+      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
+
+  final String title;
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: const Text(
+          'Hello world!',
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: (){},
+        tooltip: 'Increment',
+        child: const Icon(Icons.add),
+      ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+}
