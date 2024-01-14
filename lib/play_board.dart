@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'upload_player_atoms.dart';
 import 'upload_markup.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -49,7 +50,7 @@ class _PlayBoardState extends State<PlayBoard> {
       }
     }
     for(Atom playerAtom in thisGame.playerAtoms){
-    // for(List<int> playerAtom in thisGame.playerAtoms){
+      // for(List<int> playerAtom in thisGame.playerAtoms){
 //    for(List<int> playerAtom in thisGame.receivedPlayingAtoms){
       if(ListEquality().equals([x,y], playerAtom.position.toList())){
         showAtom = true;
@@ -75,27 +76,27 @@ class _PlayBoardState extends State<PlayBoard> {
       child: GestureDetector(
         child: Container(
           child: Center(child: thisGame.edgeTileChildren![slotNo - 1] ?? FittedBox(
-        fit: BoxFit.contain, child: Text('$slotNo', style: TextStyle(color: kBoardEdgeTextColor, fontSize: 15)))),
+              fit: BoxFit.contain, child: Text('$slotNo', style: TextStyle(color: kBoardEdgeTextColor, fontSize: 15)))),
           decoration: BoxDecoration(color: kBoardEdgeColor),
         ),
         onTap: thisGame.edgeTileChildren![slotNo - 1] != null ? null : () async {
-                dynamic result = thisGame.getBeamResult(inSlot: slotNo);
-                // dynamic result = thisGame.getBeamResult(
-                //   beam: Beam(start: slotNo, widthOfPlayArea: thisGame.widthOfPlayArea, heightOfPlayArea: thisGame.heightOfPlayArea),
-                // );
-                thisGame.setEdgeTiles(inSlot: slotNo, beamResult: result);
-                setState(() {});
-                refreshParent();
-                if(thisGame.online){
-                  MyFirebase.storeObject.collection(kCollectionSetups).doc(setup!.id).update({
-                    'playing.${thisGame.playerUid}.playingBeams': thisGame.sentBeams,
-                    'playing.${thisGame.playerUid}.$kSubFieldLastMove': FieldValue.serverTimestamp(),
-                    } //The dots take me down in the nested map.
-                  );
+          dynamic result = thisGame.getBeamResult(inSlot: slotNo);
+          // dynamic result = thisGame.getBeamResult(
+          //   beam: Beam(start: slotNo, widthOfPlayArea: thisGame.widthOfPlayArea, heightOfPlayArea: thisGame.heightOfPlayArea),
+          // );
+          thisGame.setEdgeTiles(inSlot: slotNo, beamResult: result);
+          setState(() {});
+          refreshParent();
+          if(thisGame.online){
+            MyFirebase.storeObject.collection(kCollectionSetups).doc(setup!.id).update({
+              'playing.${thisGame.playerUid}.playingBeams': thisGame.sentBeams,
+              'playing.${thisGame.playerUid}.$kSubFieldLastMove': FieldValue.serverTimestamp(),
+            } //The dots take me down in the nested map.
+            );
 //                DocumentSnapshot x = await  MyFirebase.storeObject.collection('setups').doc(setup.id).get();
 //                Map<String, dynamic> updatedAtomSetup = x.data();
-                  print('************************\nEdge element pressed. The sent beam is $slotNo\n************************');
-                }
+            print('************************\nEdge element pressed. The sent beam is $slotNo\n************************');
+          }
         },
       ),
     );
@@ -144,105 +145,206 @@ class _PlayBoardTileState extends State<PlayBoardTile> {
   Widget build(BuildContext context) {
 //    print('Building tile ${position.toList()} with showAtom as $showAtom');
     return Expanded(
-      child: GestureDetector(
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                child: Center(
-                  child: showAtom ? Image(image: AssetImage('images/atom_yellow.png')) : FittedBox(
-                    fit: BoxFit.contain, child: Text('${position.x},${position.y}', style: TextStyle(color: kBoardTextColor, fontSize: 15))),
-              ),
-              decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridLineColor, width: 0.5)),
+      child: RawGestureDetector(
+        gestures: <Type, GestureRecognizerFactory>{
+          LongPressGestureRecognizer: GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+            () => LongPressGestureRecognizer(
+              debugOwner: this,
+              duration: Duration(milliseconds: 250),
             ),
-              showMarkUp
-                  ? Image(image: AssetImage('images/markup.png'))
-                  : SizedBox()
-            ],
-          ),
-          onTap: () async {
-//            print('Button ${position.toList()} was pressed');
-            if(showAtom==false){
-              //This box didn't have an atom before
-              setState(() {
-                showAtom = true;
-              });
-              print('Adding ${position.toList()}');
-              thisGame.playerAtoms.add(Atom(thisAtomCoordinates[0], thisAtomCoordinates[1]));
-              print('Player atoms list in PlayBoard is ${thisGame.playerAtoms}');
-            } else {
-              //This box had an atom before
-              setState(() {
-                showAtom = false;
-              });
-              print('Removing $thisAtomCoordinates');
-              //This worked so wonderfully, but if atoms were sent rather than added from here, they will not be removed... unless I add them from here as well!
-//              thisGame.playerAtoms.remove(thisAtomCoordinates);
-              int? removeIndex;
-              int i = 0;
-              // for(List<int> mark in thisGame.playerAtoms){
-              for(Atom playerAtom in thisGame.playerAtoms){
-                if(ListEquality().equals(thisAtomCoordinates, playerAtom.position.toList())){
-                  removeIndex = i;
-                }
-                i++;
-              }
-              if(removeIndex!=null) thisGame.playerAtoms.removeAt(removeIndex);
-              print('Player atoms list is ${thisGame.playerAtoms}');
-            }
+            (LongPressGestureRecognizer instance) {
+              instance.onLongPress = () {
+                print('long press');
 
-            if(thisGame.online){
-              uploadPlayerAtoms(thisGame, setup!);
-            }
-            //Toggling showAtom below meant that atoms would be added several times if a person clicked quickly, especially if their network was slow.
+                if (showMarkUp == false) {
+                  //This box didn't have a markup before
+                  setState(() {
+                    showMarkUp = true;
+                  });
+                  print('Adding markup ${position.toList()}');
+                  thisGame.markUpList.add(thisAtomCoordinates);
+                  // thisGame.markUpList.add([thisAtomCoordinates[0], thisAtomCoordinates[1]]);
+                  // thisGame.markUpList.add(Atom(thisAtomCoordinates[0], thisAtomCoordinates[1]));
+                  print('Markup list in PlayBoard is ${thisGame.markUpList}');
+                } else {
+                  //This box had a markup before
+                  setState(() {
+                    showMarkUp = false;
+                  });
+                  print('Removing markup $thisAtomCoordinates');
+                  int? removeIndex;
+                  int i = 0;
+                  for(List<int?>? mark in thisGame.markUpList){
+                    if(ListEquality().equals(thisAtomCoordinates, mark)){
+                      removeIndex = i;
+                    }
+                    i++;
+                  }
+                  if(removeIndex!=null) thisGame.markUpList.removeAt(removeIndex);
+                  print('Markup list is ${thisGame.markUpList}');
+                }
+
+                if (thisGame.online){
+                  uploadMarkup(thisGame, setup!);
+                  // List<int> markUpArray = [];
+                  // for (List<int> markUp in thisGame.markUpList){
+                  //   markUpArray.add(markUp[0]);
+                  //   markUpArray.add(markUp[1]);
+                  // }
+                  // MyFirebase.storeObject.collection(kCollectionSetups).doc(setup!.id).update({
+                  //   'playing.${thisGame.playerUid}.$kSubFieldMarkUpList': markUpArray,
+                  // });
+                }
+              };
+            },
+          ),
+               TapGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+                 () => TapGestureRecognizer(),
+                 (TapGestureRecognizer instance) {
+                   instance.onTap = () async {
+//            print('Button ${position.toList()} was pressed');
+                     if(showAtom==false){
+                       //This box didn't have an atom before
+                       setState(() {
+                         showAtom = true;
+                       });
+                       print('Adding ${position.toList()}');
+                       thisGame.playerAtoms.add(Atom(thisAtomCoordinates[0], thisAtomCoordinates[1]));
+                       print('Player atoms list in PlayBoard is ${thisGame.playerAtoms}');
+                     } else {
+                       //This box had an atom before
+                       setState(() {
+                         showAtom = false;
+                       });
+                       print('Removing $thisAtomCoordinates');
+                       //This worked so wonderfully, but if atoms were sent rather than added from here, they will not be removed... unless I add them from here as well!
+//              thisGame.playerAtoms.remove(thisAtomCoordinates);
+                       int? removeIndex;
+                       int i = 0;
+                       // for(List<int> mark in thisGame.playerAtoms){
+                       for(Atom playerAtom in thisGame.playerAtoms){
+                         if(ListEquality().equals(thisAtomCoordinates, playerAtom.position.toList())){
+                           removeIndex = i;
+                         }
+                         i++;
+                       }
+                       if(removeIndex!=null) thisGame.playerAtoms.removeAt(removeIndex);
+                       print('Player atoms list is ${thisGame.playerAtoms}');
+                     }
+
+                     if(thisGame.online){
+                       uploadPlayerAtoms(thisGame, setup!);
+                     }
+                     //Toggling showAtom below meant that atoms would be added several times if a person clicked quickly, especially if their network was slow.
 //            setState(() {
 //              showAtom = showAtom ? false : true;
 //            });
-            widget.refreshParent();
-          },
-        onLongPress: () async {
-          print('long press');
-
-          if(showMarkUp==false){
-            //This box didn't have a markup before
-            setState(() {
-              showMarkUp = true;
-            });
-            print('Adding markup ${position.toList()}');
-            thisGame.markUpList.add(thisAtomCoordinates);
-            // thisGame.markUpList.add([thisAtomCoordinates[0], thisAtomCoordinates[1]]);
-            // thisGame.markUpList.add(Atom(thisAtomCoordinates[0], thisAtomCoordinates[1]));
-            print('Markup list in PlayBoard is ${thisGame.markUpList}');
-          } else {
-            //This box had a markup before
-            setState(() {
-              showMarkUp = false;
-            });
-            print('Removing markup $thisAtomCoordinates');
-            int? removeIndex;
-            int i = 0;
-            for(List<int?>? mark in thisGame.markUpList){
-              if(ListEquality().equals(thisAtomCoordinates, mark)){
-                removeIndex = i;
-              }
-              i++;
-            }
-            if(removeIndex!=null) thisGame.markUpList.removeAt(removeIndex);
-            print('Markup list is ${thisGame.markUpList}');
-          }
-          
-          if (thisGame.online){
-            uploadMarkup(thisGame, setup!);
-            // List<int> markUpArray = [];
-            // for (List<int> markUp in thisGame.markUpList){
-            //   markUpArray.add(markUp[0]);
-            //   markUpArray.add(markUp[1]);
-            // }
-            // MyFirebase.storeObject.collection(kCollectionSetups).doc(setup!.id).update({
-            //   'playing.${thisGame.playerUid}.$kSubFieldMarkUpList': markUpArray,
-            // });
-          }
+                     widget.refreshParent();
+                   };
+                 },
+               ),
         },
+        // child: GestureDetector(
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              child: Center(
+                child: showAtom
+                    ? Image(image: AssetImage('images/atom_yellow.png'))
+                    : FittedBox(
+                        fit: BoxFit.contain, child: Text('${position.x},${position.y}', style: TextStyle(color: kBoardTextColor, fontSize: 15))),
+              ),
+              decoration: BoxDecoration(color: kBoardColor, border: Border.all(color: kBoardGridLineColor, width: 0.5)),
+            ),
+            showMarkUp
+                ? Image(image: AssetImage('images/markup.png'))
+                : SizedBox()
+          ],
+        ),
+//         onTap: () async {
+// //            print('Button ${position.toList()} was pressed');
+//           if(showAtom==false){
+//             //This box didn't have an atom before
+//             setState(() {
+//               showAtom = true;
+//             });
+//             print('Adding ${position.toList()}');
+//             thisGame.playerAtoms.add(Atom(thisAtomCoordinates[0], thisAtomCoordinates[1]));
+//             print('Player atoms list in PlayBoard is ${thisGame.playerAtoms}');
+//           } else {
+//             //This box had an atom before
+//             setState(() {
+//               showAtom = false;
+//             });
+//             print('Removing $thisAtomCoordinates');
+//             //This worked so wonderfully, but if atoms were sent rather than added from here, they will not be removed... unless I add them from here as well!
+// //              thisGame.playerAtoms.remove(thisAtomCoordinates);
+//             int? removeIndex;
+//             int i = 0;
+//             // for(List<int> mark in thisGame.playerAtoms){
+//             for(Atom playerAtom in thisGame.playerAtoms){
+//               if(ListEquality().equals(thisAtomCoordinates, playerAtom.position.toList())){
+//                 removeIndex = i;
+//               }
+//               i++;
+//             }
+//             if(removeIndex!=null) thisGame.playerAtoms.removeAt(removeIndex);
+//             print('Player atoms list is ${thisGame.playerAtoms}');
+//           }
+//
+//           if(thisGame.online){
+//             uploadPlayerAtoms(thisGame, setup!);
+//           }
+//           //Toggling showAtom below meant that atoms would be added several times if a person clicked quickly, especially if their network was slow.
+// //            setState(() {
+// //              showAtom = showAtom ? false : true;
+// //            });
+//           widget.refreshParent();
+//         },
+//         onLongPress: () {
+//           print('long press');
+//
+//           if (showMarkUp == false) {
+//             //This box didn't have a markup before
+//             setState(() {
+//               showMarkUp = true;
+//             });
+//             print('Adding markup ${position.toList()}');
+//             thisGame.markUpList.add(thisAtomCoordinates);
+//             // thisGame.markUpList.add([thisAtomCoordinates[0], thisAtomCoordinates[1]]);
+//             // thisGame.markUpList.add(Atom(thisAtomCoordinates[0], thisAtomCoordinates[1]));
+//             print('Markup list in PlayBoard is ${thisGame.markUpList}');
+//           } else {
+//             //This box had a markup before
+//             setState(() {
+//               showMarkUp = false;
+//             });
+//             print('Removing markup $thisAtomCoordinates');
+//             int? removeIndex;
+//             int i = 0;
+//             for(List<int?>? mark in thisGame.markUpList){
+//               if(ListEquality().equals(thisAtomCoordinates, mark)){
+//                 removeIndex = i;
+//               }
+//               i++;
+//             }
+//             if(removeIndex!=null) thisGame.markUpList.removeAt(removeIndex);
+//             print('Markup list is ${thisGame.markUpList}');
+//           }
+//
+//           if (thisGame.online){
+//             uploadMarkup(thisGame, setup!);
+//             // List<int> markUpArray = [];
+//             // for (List<int> markUp in thisGame.markUpList){
+//             //   markUpArray.add(markUp[0]);
+//             //   markUpArray.add(markUp[1]);
+//             // }
+//             // MyFirebase.storeObject.collection(kCollectionSetups).doc(setup!.id).update({
+//             //   'playing.${thisGame.playerUid}.$kSubFieldMarkUpList': markUpArray,
+//             // });
+//           }
+//         },
       ),
     );
   }

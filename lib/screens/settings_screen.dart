@@ -1,3 +1,4 @@
+import 'package:blackbox/units/small_widgets.dart';
 import 'package:flutter/material.dart';
 import 'play_screen.dart';
 // import 'file:///C:/Users/karol/AndroidStudioProjects/blackbox/lib/units/play.dart';
@@ -114,7 +115,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
               SizedBox(height: 50,),
-              widget.online ? SizedBox() : RaisedButton(
+              widget.online ? SizedBox() : MyRaisedButton(
                 child: Text('Play Random'),
                 onPressed: () {
                   Play thisGame = Play(numberOfAtoms: numberOfAtoms, widthOfPlayArea: widthOfPlayArea, heightOfPlayArea: heightOfPlayArea);
@@ -137,7 +138,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }));
                 }
               )
-                  : RaisedButton(
+                  : MyRaisedButton(
                 child: Text('Make Setup'),
                 onPressed: () {
                   Play thisGame = Play(numberOfAtoms: 4, widthOfPlayArea: widthOfPlayArea, heightOfPlayArea: heightOfPlayArea);

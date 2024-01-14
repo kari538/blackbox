@@ -1,9 +1,8 @@
+import 'package:pretty_json/pretty_json.dart';
 import 'package:blackbox/online_screens/game_hub_screen.dart';
 import 'package:blackbox/global.dart';
 import 'package:navigation_history_observer/navigation_history_observer.dart';
 import 'package:blackbox/route_names.dart';
-import 'package:blackbox/game_hub_updates.dart';
-import 'package:provider/provider.dart';
 import 'package:blackbox/my_firebase.dart';
 import 'blackbox_popup.dart';
 import 'package:blackbox/online_screens/follow_playing_screen.dart';
@@ -11,7 +10,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:blackbox/my_firebase_labels.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:pretty_json/pretty_json.dart';
 
 
 Map<String, dynamic> castRemoteMessageToMap(RemoteMessage remoteMsg, {bool verbose = true}) {
@@ -56,7 +54,7 @@ Map<String, dynamic> castRemoteMessageToMap(RemoteMessage remoteMsg, {bool verbo
 
     print("data.keys:");
     List<String> x = List.of(remoteMsg.data.keys);
-    printPrettyJson(x);
+    myPrettyPrint(x);
   }
 
   return map;
@@ -199,3 +197,15 @@ void printLargeStrings(String text) {
 }
 // Use it like
 // printLargeStrings("Your very long string ...");
+
+
+void myPrettyPrint(var object) {
+  try {
+    printLargeStrings(prettyJson(object));
+  } catch (e) {
+    printLargeStrings('Not possible to prettyPrint. Printing as String:'
+        '\n$object');
+    // print('Not possible to prettyPrint. Printing as String:'
+    //     '\n$object');
+  }
+}

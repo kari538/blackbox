@@ -1,3 +1,4 @@
+import 'package:blackbox/units/small_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blackbox/my_firebase.dart';
 import 'package:blackbox/my_firebase_labels.dart';
@@ -5,7 +6,6 @@ import 'package:blackbox/units/blackbox_popup.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:pretty_json/pretty_json.dart';
 // import 'package:flutter/material.dart';
 
 /// Send a BuildContext if you want to get a popup for errors
@@ -28,7 +28,7 @@ Future<http.Response>  fcmSendMsg(String jsonString, [BuildContext? context]) as
   //   "topic": kTopicGameHubSetup,
   // });
   print("jsonString in fcmSendMsg() is:");
-  printPrettyJson(jsonDecode(jsonString));
+  myPrettyPrint(jsonDecode(jsonString));
 
   Map<String, String> headers = {
     kApiContentType: kApiApplicationJson
@@ -75,7 +75,7 @@ Future<http.Response>  fcmSendMsg(String jsonString, [BuildContext? context]) as
     code = res.statusCode.toString();
 // BlackboxPopup(context: context, title: 'Response $code', desc: '$desc').show();
   print('fcmSendMsg(): code is $code and desc is:');
-  printPrettyJson(jsonDecode(desc));
+  myPrettyPrint(jsonDecode(desc));
   return res;
 }
 

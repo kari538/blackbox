@@ -1,4 +1,4 @@
-import 'firebase_options.dart';
+import 'package:flutter/services.dart';
 import 'theme.dart';
 import 'global.dart';
 // import 'package:wakelock/wakelock.dart';
@@ -22,9 +22,7 @@ import 'my_firebase.dart';
 void main() {
   print('Running main()');
   WidgetsFlutterBinding.ensureInitialized();
-  MyFirebase.myFutureFirebaseApp = Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  MyFirebase.myFutureFirebaseApp = Firebase.initializeApp();
   initializeFcm('');
   userChangesListener();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler); //This seems to be working!
@@ -51,7 +49,13 @@ class Blackbox extends StatelessWidget {
 //        home: BlackBoxScreen(),
 //        home: ResultsScreen(),
 //        home: WelcomeScreen(),
-        home: WelcomeScreen(),
+        home: AnnotatedRegion<SystemUiOverlayStyle>(
+          child: WelcomeScreen(),
+          value: SystemUiOverlayStyle.dark.copyWith(
+            statusBarColor: Colors.black,
+            systemNavigationBarColor: Colors.black,
+          ),
+        ),
 //        home: ConversationsScreen(),
 //        home: RegistrationAndLoginScreen(),
         debugShowCheckedModeBanner: false,

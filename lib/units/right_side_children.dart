@@ -1,7 +1,6 @@
 import 'package:blackbox/units/small_functions.dart';
 import 'package:blackbox/online_screens/sent_results_screen.dart';
 import 'package:blackbox/game_hub_updates.dart';
-import 'package:pretty_json/pretty_json.dart';
 import 'package:provider/provider.dart';
 import 'package:collection/collection.dart';
 import 'blackbox_popup.dart';
@@ -535,7 +534,7 @@ class PlayingTag extends StatelessWidget {
 void showResult({required BuildContext context, required Map<String, dynamic> setupData, String? resultPlayerId}) {
   print("setupData in showResult() is:");
   try {
-    printPrettyJson(setupData);
+    myPrettyPrint(setupData);
   } catch (e) {
     print("Error in prettyJson: $e");
   }

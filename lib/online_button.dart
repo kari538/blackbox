@@ -21,21 +21,42 @@ class OnlineButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RaisedButton(
+    return ElevatedButton(
+      onPressed: onPressed as void Function()?,
       child: Text('$text',
-//        style: TextStyle(color: Colors.teal,
         style: TextStyle(
           color: textColor,
           fontSize: fontSize,
         ),
       ),
-//              onPressed: null,
-      onPressed: onPressed as void Function()?,
-      color: color,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: borderColor),
-        borderRadius: BorderRadius.circular(30),
+      style: ButtonStyle().copyWith(
+        backgroundColor: MaterialStatePropertyAll<Color>(color),
+        shape: MaterialStatePropertyAll(RoundedRectangleBorder(
+          side: BorderSide(color: borderColor),
+          borderRadius: BorderRadius.circular(30),
+        ),)
       ),
+//       color: color,
+//       shape: RoundedRectangleBorder(
+//         side: BorderSide(color: borderColor),
+//         borderRadius: BorderRadius.circular(30),
+//       ),
     );
+//     return MyRaizedButton(
+//       child: Text('$text',
+// //        style: TextStyle(color: Colors.teal,
+//         style: TextStyle(
+//           color: textColor,
+//           fontSize: fontSize,
+//         ),
+//       ),
+// //              onPressed: null,
+//       onPressed: onPressed as void Function()?,
+//       color: color,
+//       shape: RoundedRectangleBorder(
+//         side: BorderSide(color: borderColor),
+//         borderRadius: BorderRadius.circular(30),
+//       ),
+//     );
   }
 }
