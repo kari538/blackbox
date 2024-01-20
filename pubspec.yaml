@@ -24,7 +24,7 @@ dependencies:
   navigation_history_observer: ^1.1.0
   flutter_linkify: ^6.0.0
   url_launcher: ^6.1.2
-  pretty_json: ^2.0.0
+#  pretty_json: ^2.0.0
 
   firebase_core: ^2.14.0
   firebase_auth: ^4.6.3

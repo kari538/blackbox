@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'route_names.dart';
 import 'package:navigation_history_observer/navigation_history_observer.dart';
 import 'package:blackbox/units/small_functions.dart';
-import 'package:pretty_json/pretty_json.dart';
 import 'units/fcm_send_msg.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -46,7 +45,8 @@ void initializeFcm(String token) async {
     }
 
     print('myUserInfo.data() in initializeFcm() is:');
-    printPrettyJson(myUserInfo.data());
+    // printPrettyJson(myUserInfo.data());
+    myPrettyPrint(myUserInfo.data());
 
     if (myUserInfo.data() != null) {
       // I have an entry in the userinfo collection.
@@ -112,7 +112,7 @@ void initializeFcm(String token) async {
         }
 
         print('remoteMsg is:');
-        printPrettyJson(castRemoteMessageToMap(remoteMsg));
+        myPrettyPrint(castRemoteMessageToMap(remoteMsg));
         // print('Or with built-in map cast:');
         // printPrettyJson(remoteMsg.data.cast());  //Only the data property...
         // print('remoteMsg.data is:');
@@ -134,7 +134,7 @@ void initializeFcm(String token) async {
           Map<String, dynamic> data = remoteMsg.data.cast(); //!!!!!!! :D
           Map<String, dynamic>? notificationData = {};
           print('Msg data is:');
-          printPrettyJson(data);
+          myPrettyPrint(data);
           localNotificationField = data.containsKey(kMsgShowLocalNotification);
           notificationOverride = data[kMsgOverride] == kMsgOverrideYes;
           print("localNotificationField is $localNotificationField");
@@ -226,7 +226,7 @@ void initializeFcm(String token) async {
       // Fired if notification opened app from background, not from terminated:
       FirebaseMessaging.onMessageOpenedApp.listen((remoteMsg) {
         print('Remote message opened app from background - not terminated. remoteMsg is:');
-        printPrettyJson(castRemoteMessageToMap(remoteMsg));
+        myPrettyPrint(castRemoteMessageToMap(remoteMsg));
         openAction(remoteMsg);
       });
 
@@ -383,7 +383,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage remoteMsg) async {
   //       "\nData:");
   //   printPrettyJson(remoteMsg.data);
   // }
-  printPrettyJson(castRemoteMessageToMap(remoteMsg));
+  myPrettyPrint(castRemoteMessageToMap(remoteMsg));
 
   //TODO: ***Add the same conditions as for onMessage:
   // On second thought... Let's just not show any local notifications if
