@@ -29,9 +29,9 @@ def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
 //}
 
 def flutterVersionName = localProperties.getProperty('flutter.versionName')
-//if (flutterVersionName == null) {
+if (flutterVersionName == null) {
     flutterVersionName = '1.0.0+3'
-//}
+}
 
 apply plugin: 'com.android.application'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
@@ -59,7 +59,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 33
 
     lintOptions {
         disable 'InvalidPackage'
@@ -68,7 +68,7 @@ android {
     defaultConfig {
         applicationId "com.karolinadart.blackbox"
         minSdkVersion 21
-        targetSdkVersion 31
+        targetSdkVersion 33
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true //in defaultConfig
