@@ -1,3 +1,4 @@
+import 'firebase_options.dart'; //File added in new project
 import 'package:flutter/services.dart';
 import 'theme.dart';
 import 'global.dart';
