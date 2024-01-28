@@ -23,7 +23,9 @@ import 'my_firebase.dart';
 void main() {
   print('Running main()');
   WidgetsFlutterBinding.ensureInitialized();
-  MyFirebase.myFutureFirebaseApp = Firebase.initializeApp();
+  MyFirebase.myFutureFirebaseApp = Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   initializeFcm('');
   userChangesListener();
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler); //This seems to be working!
