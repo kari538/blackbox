@@ -49,3 +49,16 @@ app.*.map.json
 /lib/key_DO_NOT_EXPOSE.dart
 /lib/scratches/stackoverflow_code.dart
 /lib/firebase_options.dart
+
+.metadata
+android/app/build.gradle
+android/build.gradle
+android/gradle.properties
+android/gradle/wrapper/gradle-wrapper.properties
+android/settings.gradle
+ios/Flutter/AppFrameworkInfo.plist
+ios/Flutter/Debug.xcconfig
+ios/Flutter/Release.xcconfig
+ios/Podfile
+ios/Podfile.lock
+pubspec.lock
