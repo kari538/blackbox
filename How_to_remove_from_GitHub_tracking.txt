@@ -1,6 +1,6 @@
 How to remove from GitHub tracking:
 
-Add to .gitignore
+Add to .gitignore. Then:
 
 For files:
 

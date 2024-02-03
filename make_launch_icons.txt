@@ -47,3 +47,9 @@ $ flutter pub get
 $ dart run flutter_launcher_icons
 
 Now, since this is done on PC and ios is in .gitignore, I will have to run this again on Mac, at least for the ios version.
+
+-------------------------------------------------------------
+If updating the flutter_launcher_icons.yaml file, do:
+
+$ flutter pub get
+$ dart run flutter_launcher_icons
