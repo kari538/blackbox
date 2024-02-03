@@ -1,13 +1,18 @@
-gradle-wrapper.jar
-/.gradle
+#gradle-wrapper.jar
 /captures/
+GeneratedPluginRegistrant.java
+
+/gradle
+/build.gradle
+/gradle.properties
 /gradlew
 /gradlew.bat
 /local.properties
-GeneratedPluginRegistrant.java
+/settings.gradle
 
-/build.gradle
 /app/build.gradle
+
+app/Blackbox – Database – Firebase console_files
 
 # Remember to never publicly share your keystore.
 # See https://flutter.dev/docs/deployment/android#reference-the-keystore-from-the-app
