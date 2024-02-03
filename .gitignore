@@ -44,8 +44,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-/android/app/google-services.json
-/android/key.properties
 /lib/key_DO_NOT_EXPOSE.dart
 /lib/scratches/stackoverflow_code.dart
 /lib/firebase_options.dart
