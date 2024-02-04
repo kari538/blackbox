@@ -53,6 +53,6 @@ app.*.map.json
 .gradle
 
 # Temporarily ignore ios, since I've lost it when rebuilding on PC:
-ios/
+#ios/
 # Will recover from Mac and then unignore the above... maybe...
 # At least parts that are not automatically generated! Such as
