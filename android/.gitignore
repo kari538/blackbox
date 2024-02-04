@@ -2,6 +2,7 @@
 /captures/
 GeneratedPluginRegistrant.java
 
+#Karolina:
 /gradle
 /build.gradle
 /gradle.properties
@@ -14,6 +15,9 @@ GeneratedPluginRegistrant.java
 
 app/Blackbox – Database – Firebase console_files
 
+app/src/java/
+app/src/kotlin/
+
 # Remember to never publicly share your keystore.
 # See https://flutter.dev/docs/deployment/android#reference-the-keystore-from-the-app
 key.properties
@@ -21,3 +25,7 @@ key.properties
 # Let me try and commit and push, to see if buid.gradle files
 # become brownish green to show that they are ignored...
 # If not: Move to project root .gitignore!
+/app/src/main/java/io/flutter/app/FlutterMultiDexApplication.java
+/app/src/main/java/com/karolinadart/blackbox/MainActivity.java
+/app/src/main/kotlin/com/example/blackbox/MainActivity.kt
+/app/src/main/kotlin/com/karolinadart/blackbox/MainActivity.kt
