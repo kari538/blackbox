@@ -66,8 +66,14 @@ class WelcomeScreen extends StatelessWidget {
 //              onPressed: null,
               onPressed: () async {
                 CircularProgressIndicator();
-                GooglePlayServicesAvailability availability = await GoogleApiAvailability.instance.checkGooglePlayServicesAvailability();
-                print('availability in Online button is $availability');
+                // GooglePlayServicesAvailability availability = GooglePlayServicesAvailability.unknown;
+                // try {
+                //   availability = await GoogleApiAvailability.instance.checkGooglePlayServicesAvailability();
+                //   // GooglePlayServicesAvailability availability = await GoogleApiAvailability.instance.checkGooglePlayServicesAvailability();
+                //   print('availability in Online button is $availability');
+                // } catch (e) {
+                //   print('GoogleApiAvailability error: $e');
+                // }
                 await MyFirebase.myFutureFirebaseApp;
                 auth.User? loggedInUser = auth.FirebaseAuth.instance.currentUser;
                 if(loggedInUser == null) {
