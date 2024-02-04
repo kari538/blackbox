@@ -2,6 +2,7 @@
 /captures/
 GeneratedPluginRegistrant.java
 
+#Karolina:
 /gradle
 /build.gradle
 /gradle.properties
@@ -13,6 +14,9 @@ GeneratedPluginRegistrant.java
 /app/build.gradle
 
 app/Blackbox – Database – Firebase console_files
+
+app/src/java/
+app/src/kotlin/
 
 # Remember to never publicly share your keystore.
 # See https://flutter.dev/docs/deployment/android#reference-the-keystore-from-the-app
