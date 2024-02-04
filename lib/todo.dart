@@ -18,6 +18,9 @@
 //TODO: *** If somebody removed their 'playing' tag and you click a notification to watch them play, there should be an info popup saying they stopped playing...
 //TODO: *** If a playing tag is removed while somebody is watching, it comes back when they stop watching. Bad.
 //TODO: *** Increase tap target size for results and playing tags
+//TODO: If you're watching somebody play, and they go back without placing a beam so that the entry is deleted, your following-screen should pop, and entry should stay deleted!
+//TODO: Pop login screen after having logged in the first time
+//TODO:
 //TODO:
 
 //(Learn AlertDialogs:)
