@@ -26,11 +26,16 @@ dependencies:
   url_launcher: ^6.1.2
   pretty_json: ^2.0.0
 
-  firebase_core: ^2.14.0
-  firebase_auth: ^4.6.3
-  cloud_firestore: ^4.8.2
-  firebase_messaging: ^14.6.4
-  #  firebase_admin: ^0.1.4
+  firebase_core: ^2.25.3
+  firebase_auth: ^4.17.3
+  cloud_firestore: ^4.15.3
+  firebase_messaging: ^14.7.14
+
+#  firebase_core: ^2.14.0
+#  firebase_auth: ^4.6.3
+#  cloud_firestore: ^4.8.2
+#  firebase_messaging: ^14.6.4
+#  #  firebase_admin: ^0.1.4
 
   intl: ^0.19.0
   http: ^1.1.0
