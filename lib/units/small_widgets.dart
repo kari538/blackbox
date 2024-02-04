@@ -41,15 +41,17 @@ class MyRaisedButton extends StatelessWidget {
   const MyRaisedButton({
     required this.child,
     required this.onPressed,
-    this.color,
-    this.shape,
+    this.color = Colors.blue,
+    this.textColor = Colors.white,
+    this.shape = const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
     Key? key,
   }) : super(key: key);
   final Function? onPressed;
   final Widget child;
   // final String text;
-  final Color? color;
-  final OutlinedBorder? shape;
+  final Color color;
+  final Color textColor;
+  final OutlinedBorder shape;
 
   @override
   Widget build(BuildContext context) {
@@ -60,8 +62,9 @@ class MyRaisedButton extends StatelessWidget {
         child: child,
         // child: Text('$text'),
         style: ButtonStyle(
-          backgroundColor: MaterialStatePropertyAll<Color?>(color),
-          shape: MaterialStatePropertyAll<OutlinedBorder?>(shape),
+          backgroundColor: MaterialStatePropertyAll<Color>(color),
+          foregroundColor: MaterialStatePropertyAll<Color>(textColor),
+          shape: MaterialStatePropertyAll<OutlinedBorder>(shape),
         ),
       );
     // }
