@@ -1,6 +1,7 @@
 # In terminal: dart run flutter_launcher_icons
 flutter_launcher_icons:
-  image_path: "images/splash_screen_image-removebg.png"
+  image_path: "images/launch_icon_from_splash_screen.png"
+#  image_path: "images/splash_screen_image-removebg.png"
 #  image_path: "images/app_icon_launch.png"
   #  image_path: "assets/icon/icon.png"
 

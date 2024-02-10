@@ -1,0 +1,163 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2639
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fmodern\fcharset0 CourierNewPSMT;}
+{\colortbl;\red255\green255\blue255;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c100000\c100000\c100000;\cssrgb\c0\c0\c0;}
+\margl1440\margr1440\vieww18620\viewh9900\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs28 \cf0 \cb2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec3 Rename the old Android Studio project projectName_old.\
+Go to parent directory of where you want your project to be.\
+Clone project from GitHub (eg with 'git clone https://github.com/kari538/blackbox/')\
+Flutter run\
+\
+Copy important stuff from old project into new project:\
+-licenced fonts (if any)\
+-google settings\
+-mpesa key\
+-firebase key\
+-Basically everything mentioned in .gitignore and Android/.gitignore and ios/.gitignore...\
+\
+Commit and push.\
+--------------------------------------------------\
+\
+But if it still doesn't run:\
+\
+Build new Flutter project from scratch.\
+$ flutter run\
+$ git init\
+\
+\pard\pardeftab720\partightenfactor0
+\cf0 \cb2 \outl0\strokewidth0 Git - Manage Remotes - Copy from old project, which currently is:\
+origin | https://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@github.com/kari538/blackbox\
+\pard\pardeftab720\partightenfactor0
+\cf0 \cb2 \outl0\strokewidth0 \strokec3 \
+$ git fetch origin\
+$ git checkout -b \cb2 \outl0\strokewidth0 <new_branch>\cb2 \outl0\strokewidth0 \strokec3 \
+Commit and Push\
+\
+Now, you have a new branch with the example app. Merge that with the backed up branch master, accepting all master versions in case of a conflict:\
+\
+\pard\pardeftab720\partightenfactor0
+\cf0 \cb2 \outl0\strokewidth0 $ git merge --allow-unrelated-histories --strategy-option=theirs origin/master\
+\
+Try to run. If it runs:\
+\
+$ git checkout master\
+Git update (in Android Studio interface) - merge incoming\
+\
+\pard\pardeftab720\partightenfactor0
+\cf0 $ git merge --strategy-option=theirs origin/<new_branch>\
+or:\
+$ git merge --allow-unrelated-histories --strategy-option=theirs origin/<new_branch>\
+\
+But the second shouldn\'92t be needed. The first worked, after having removed all gradle files from git on PC and then rebuilt on Mac. Then again, Mac doesn\'92t use the gradle build\'85\
+\
+Anyway, to delete branches after successful merge:\
+\
+\pard\pardeftab720\partightenfactor0
+\cf0 $ git branch -d <new_branch>\
+\pard\pardeftab720\partightenfactor0
+\cf0 \cb2 \outl0\strokewidth0 \strokec3 \
+\pard\pardeftab720\partightenfactor0
+\cf0 \cb2 \outl0\strokewidth0 (This deteled the local <new_branch>)\
+If this branch is default, change the default branch in remote. (Settings - General - Default branch)\
+\
+$ git push origin --delete <new_branch>\
+\
+(This deletes remote <new_branch>)\
+\pard\pardeftab720\partightenfactor0
+\cf0 \cb2 \outl0\strokewidth0 \strokec3 \
+\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\
+\pard\pardeftab720\partightenfactor0
+\cf0 \cb2 \outl0\strokewidth0 But if it STILL doesn't run, do it the long way:\
+\
+Build new Flutter project from scratch.\
+$ flutter run\
+$ git init\
+\pard\pardeftab720\partightenfactor0
+\cf0 \cb2 \outl0\strokewidth0 \strokec3 \
+Copy old pubspec.yaml into new project. flutter pub get\
+Copy old lib etc into new project.\
+Go to Firebase online and follow instructions to connect your app to it.\
+\
+Make launch icon for both Android and iOS with:\
+-flutter_launcher_icons: ^0.13.1 (See instructions in separate .txt file in blackbox/)\
+\
+and launch screen:\
+-flutter_native_splash: ^2.3.9\
+flutter pub get, flutter run\
+\
+$ git init\
+Git - Manage Remotes - Copy from old project, which currently is:\
+origin | https://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@github.com/kari538/blackbox\
+\
+Follow ChatGPT's instructions for how to make a new branch and merge it into the old GitHu repo:\
+\
+In old project:\
+$ git checkout -b old_project_branch\
+Commit and push\
+In new project:\
+$ git checkout -b new_project_branch\
+Commit and push\
+$ git fetch origin\
+$ git rebase -X ours old_project_branch\
+\
+This will merge the old project with the new project while chosing the new project version ("ours", i.e. current branch) for every conflict, but the commit history for the old project will now be the commit history of the new project, so that it can be merged back into master.\
+\
+$ git checkout master\
+$ git merge --allow-unrelated-histories --strategy-option=theirs new_project_branch\
+...\
+$ git merge --allow-unrelated-histories --strategy-option=theirs new_project_after_failed_rebuild\
+\
+I had to do that several times, coz old gradle.build files kept coming back... Long story short:\
+\
+I now have the entire commit history from master in my new_new_branch. This new_new_branch is functional, and I have put my build.gradle files in .gitignore. The master branch is not functional due to some gradle error, and the build.gradle files are NOT in .gitignore there... The two branches are merged, but if I checkout master, I still get the gradle error. When I checkout new_new_branch again, the error disappears. The histories are the same, except new_new_branch has 2 more commits after the merge commit.\
+\
+So I want to delete master and make new_new_branch the new default. Then, I'll rename the new_new_branch "master".\
+\
+$ git branch -d master\
+\
+(This deteled the local master)\
+Change the default branch to new_new_branch in remote. (Settings - General - Default branch)\
+\
+$ git push origin --delete master\
+\
+(This deletes remote master)\
+ChatGPT: Ensure that your local Git configuration reflects the new default branch. You can update your local configuration by running:\
+\
+$ git symbolic-ref HEAD refs/heads/new_new_branch\
+\
+(Dunno what this does really...)\
+Rename new_new_branch in remote to "master".\
+\
+$ git fetch origin\
+$ git branch --set-upstream-to=origin/master master\
+$ git checkout master\
+\
+When setting upstream to master, I got the confusing message that master did not exist... Confusing since the "fetch origin" replied that there was an origin/master master... but that's the remote. The local master did not exist. However, the next line "git checkout master" created a local master that tracked the remote origin/master, so all is good.\
+\
+When opening GitHub online again, it told me that new_new_branch had been renamed "master", and to update my local branch, I should run:\
+\
+git branch -m new_new_branch master\
+git fetch origin\
+git branch -u origin/master master\
+git remote set-head origin -a\
+\
+Anyway... guess I've already done that.\
+\
+Go to blackbox_old and fetch:\
+\
+AndroidManifest.xml settings\
+\
+------------------------------------------------------------------------------------\
+Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! \
+------------------------------------------------------------------------------------\
+IF FILES HAVE BEEN ADDED TO .gitignore SO AS TO NOT INTERFERE WITH NEW BUILDS AGAIN, BUT WERE ONCE PART OF THE GITHUB REMOTE REPO, THEY HAVE TO BE ACTIVELY REMOVED! OTHERWISE THEY WILL STAY IN REMOTE AND F* UP FUTURE REBUILDS. SEE SEPARATE INSTRUCTIONS FOR HOW TO REMOVE FROM GITHUB TRACKING.\
+------------------------------------------------------------------------------------\
+Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! Obs! \
+------------------------------------------------------------------------------------\
+\
+The point of all of this is that if protocols update again, so that I get gradle errors again, I should be able to just build a new "blackbox" flutter project in Android Studio and then merge it with GitHub master accepting remote version, without getting the gradle error back.\
+}
