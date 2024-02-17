@@ -74,7 +74,9 @@ class WelcomeScreen extends StatelessWidget {
                 // } catch (e) {
                 //   print('GoogleApiAvailability error: $e');
                 // }
-                await Future.delayed(Duration(milliseconds: 3000));
+
+                // Perhaps push Spinner screen here, while we wait?
+                // await Future.delayed(Duration(milliseconds: 3000));
                 await MyFirebase.myFutureFirebaseApp;
                 auth.User? loggedInUser = auth.FirebaseAuth.instance.currentUser;
                 if(loggedInUser == null) {

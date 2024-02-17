@@ -1,6 +1,5 @@
-import 'package:blackbox/screens/spinner_screen.dart';
+import 'delete_account_screen.dart';
 import 'package:blackbox/units/small_functions.dart';
-import 'package:blackbox/global.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 import 'package:blackbox/units/small_widgets.dart';
 import 'package:blackbox/online_button.dart';
@@ -33,6 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void dispose() {
     super.dispose();
+    print('Cancelling profileListener');
     if (profileListener != null) profileListener!.cancel();
   }
 
@@ -115,10 +115,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         if (newValue != null) {
                           showSpinner = true;
                           // print('Key is $key');
-                          MyFirebase.storeObject
-                              .collection(kCollectionUserInfo)
-                              .doc(myUid)
-                              .update({key: newValue});
+                          try {
+                            MyFirebase.storeObject
+                                .collection(kCollectionUserInfo)
+                                .doc(myUid)
+                                .update({key: newValue});
+                          } catch (e) {
+                            print('Error updating $key: $newValue in userinfo');
+                          }
                           if (key == kFieldScreenName) {
                             MyFirebase.authObject.currentUser!
                                 .updateDisplayName(newValue);
@@ -214,8 +218,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onPressed: () async {
                         print('Before change password');
                         // await MyFirebase.authObject.currentUser.updatePassword('111111');  //Ok, this works...
-                        await MyFirebase.authObject.sendPasswordResetEmail(
-                            email: MyFirebase.authObject.currentUser!.email!);
+                        try {
+                          await MyFirebase.authObject.sendPasswordResetEmail(
+                              email: MyFirebase.authObject.currentUser!.email!);
+                        } catch (e) {
+                          print('Error sending Password Reset email: \n$e');
+                        }
                         print('After change password');
                         setState(() {
                           editing[key] = false;
@@ -364,38 +372,63 @@ class DeleteAccountButton extends BlackboxPopupButton {
   final Function setProfileScreenState;
   final text = 'Delete';
   final String myUid = MyFirebase.authObject.currentUser!.uid;
+  final String? myEmail = MyFirebase.authObject.currentUser!.email;
 
   Widget build(BuildContext buttonContext) {
     return BlackboxPopupButton(
       text: text,
       onPressed: () async {
-        Navigator.popUntil(context, (route) => route.isFirst);
-        Navigator.push(context, PageRouteBuilder(
-              pageBuilder: (context, anim1, anim2) {
-                return SpinnerScreen();
-              },
-              transitionDuration: Duration(days: 0),
-            ));
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+          return DeleteAccountScreen(email: myEmail?? '');
+        }));
 
-        // Navigator.pop(context);
-        // setProfileScreenState(spinner: true);
-        // await Future.delayed(Duration(seconds: 1));
-        await MyFirebase.storeObject
-            .collection(kCollectionUserInfo)
-            .doc(myUid)
-            .delete();
-        await MyFirebase.authObject.currentUser!.delete();
-        // :.(
-
-        // Navigator.popUntil(context, (route) => route.isFirst);
-        // await Future.delayed(Duration(milliseconds: 400));
-
-        Navigator.pop(context);
-        BlackboxPopup(
-          context: GlobalVariable.navState.currentContext!,
-          title: 'Complete',
-          desc: 'Your blackbox account has been deleted',
-        ).show();
+//         Navigator.popUntil(context, (route) => route.isFirst);
+//         Navigator.push(context, PageRouteBuilder(
+//               pageBuilder: (context, anim1, anim2) {
+//                 return SpinnerScreen();
+//               },
+//               transitionDuration: Duration(days: 0),
+//             ));
+//
+//         // Navigator.pop(context);
+//         // setProfileScreenState(spinner: true);
+//         // await Future.delayed(Duration(seconds: 1));
+//         bool deleteSuccess = false;
+//         try {
+//           await MyFirebase.storeObject
+//               .collection(kCollectionUserInfo)
+//               .doc(myUid)
+//               .delete();
+//           await MyFirebase.authObject.currentUser!.delete();
+//           deleteSuccess = true;
+//           // :.(
+//         } catch (e) {
+//           print('Error deleting user: \n$e');
+//         }
+//
+//         // Navigator.popUntil(context, (route) => route.isFirst);
+//
+//         try {
+//           Navigator.pop(context);
+//         } catch (e) {
+//           // TODO
+//         }
+// //Popping the Spinner screen
+//         if (deleteSuccess) {
+//           BlackboxPopup(
+//             context: GlobalVariable.navState.currentContext!,
+//             title: 'Complete',
+//             desc: 'Your blackbox account has been deleted',
+//           ).show();
+//         } else {
+//           BlackboxPopup(
+//             context: GlobalVariable.navState.currentContext!,
+//             title: 'Error',
+//             desc: 'Something went wrong deleting '
+//                 'your blackbox account! Please contact support at '
+//                 'karolinahagegard@gmail.com.',
+//           ).show();
+//         }
       },
     );
   }

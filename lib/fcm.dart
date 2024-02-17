@@ -20,23 +20,33 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 // Future<String> token;
 
 // TODO: ***Notification sound!
+/// A logout event might occur while this is still initializing!
+/// Have to prepare for that, so as to not get 'permission-denied' errors:
 void initializeFcm(String token) async {
   print('Initializing Firebase Cloud Messaging...');
 
-  await MyFirebase.myFutureFirebaseApp;
+  try {
+    await MyFirebase.myFutureFirebaseApp;
+  } catch (e) {
+    print('Error initializing Firebase App: \n$e');
+  }
   FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
-  _firebaseMessaging.getInitialMessage().then((value) {
-    RemoteMessage? msg = value;
-    print('The message in .getInitialMessage() is ${msg != null ? 'title: ${msg.notification != null ? '${msg.notification!.title}' : ''} body: ${msg.notification != null ? '${msg.notification!.title}' : ''} data: ${msg.data}' : null}');
-    if(msg != null) openAction(msg);
-  });
+  try {
+    _firebaseMessaging.getInitialMessage().then((value) {
+      RemoteMessage? msg = value;
+      print('The message in .getInitialMessage() is ${msg != null ? 'title: ${msg.notification != null ? '${msg.notification!.title}' : ''} body: ${msg.notification != null ? '${msg.notification!.title}' : ''} data: ${msg.data}' : null}');
+      if(msg != null) openAction(msg);
+    });
+  } catch (e) {
+    print('Error in .getInitialMessage(): \n$e');
+  }
 
   if (MyFirebase.authObject.currentUser != null) {
     // Even if I'm not logged in yet, initializeFcm() will be triggered later,
     // if I log in, from userChangesListener() in my_firebase.dart
-    String myUid = MyFirebase.authObject.currentUser!.uid;
-    late DocumentSnapshot myUserInfo;
+    String? myUid = MyFirebase.authObject.currentUser?.uid;
+    DocumentSnapshot? myUserInfo;
 
     try {
       myUserInfo = await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).get();
@@ -46,9 +56,9 @@ void initializeFcm(String token) async {
 
     print('myUserInfo.data() in initializeFcm() is:');
     // printPrettyJson(myUserInfo.data());
-    myPrettyPrint(myUserInfo.data());
+    myPrettyPrint(myUserInfo?.data());
 
-    if (myUserInfo.data() != null) {
+    if (myUserInfo?.data() != null) {
       // I have an entry in the userinfo collection.
       // All users should have an entry there, but if they don't, one will be made
       // from LoginScreen() and initializeFcm() will be fired again.
@@ -61,14 +71,18 @@ void initializeFcm(String token) async {
       //   sound: true,
       // );
 
-      // An iOS thing... but can return a Future<NotificationSettings> on Android
-      _firebaseMessaging.requestPermission(
-        sound: true,
-        //The rest as default
-      );
+      try {
+        // An iOS thing... but can return a Future<NotificationSettings> on Android
+        _firebaseMessaging.requestPermission(
+          sound: true,
+          //The rest as default
+        );
 
-      // I have no idea what the below does!
-      _firebaseMessaging.setAutoInitEnabled(true);
+        // I have no idea what the below does!
+        _firebaseMessaging.setAutoInitEnabled(true);
+      } catch (e) {
+        print('Error in _firebaseMessaging.stuff...: \n$e');
+      }
 
       ///If a message comes with the construction (see Welcome Screen):
       ///                String localNotification = jsonEncode({
@@ -104,6 +118,7 @@ void initializeFcm(String token) async {
 
       // If a message comes in while app in foreground:
       FirebaseMessaging.onMessage.listen((remoteMsg) async {
+        // Will this give an error if I'm no longer logged in...?
         print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n'
             'onMessage');
         if (remoteMsg.notification != null) {
@@ -112,7 +127,11 @@ void initializeFcm(String token) async {
         }
 
         print('remoteMsg is:');
-        myPrettyPrint(castRemoteMessageToMap(remoteMsg));
+        try {
+          myPrettyPrint(castRemoteMessageToMap(remoteMsg));
+        } catch (e) {
+          print('Error in myPrettyPrint');
+        }
         // print('Or with built-in map cast:');
         // printPrettyJson(remoteMsg.data.cast());  //Only the data property...
         // print('remoteMsg.data is:');
@@ -234,62 +253,95 @@ void initializeFcm(String token) async {
       // token =  _firebaseMessaging.getToken();
       if (token == '') {
         // If called from main() or userChangesListener()
-        myGlobalToken = _firebaseMessaging.getToken();
-        _firebaseMessaging.onTokenRefresh.listen((newToken) {
-          initializeFcm(newToken);
-        });
+        if (MyFirebase.authObject.currentUser != null) {  // Still logged in check
+          try {
+            myGlobalToken = _firebaseMessaging.getToken();
+          } catch (e) {
+            print('Error getting firebase device token: \n$e');
+          }
+        }
+        // Moved this to later:
+        // _firebaseMessaging.onTokenRefresh.listen((newToken) {
+        //   // newToken can never be null
+        //   initializeFcm(newToken);
+        // });
       } else {
         // If called from token change
         myGlobalToken = Future(() => token);
       }
+      /// First print after 'cloud_firestore/permission-denied':
       print('My device token is ${await myGlobalToken}');
 
       // Save the initial token to the database:
-      await saveTokenToDatabase(await myGlobalToken);
+      if (MyFirebase.authObject.currentUser != null) {
+        try {
+          await saveTokenToDatabase(await myGlobalToken);
+        } catch (e) {
+          print('Error saving token to database: \n$e');
+        }
+      }
 
       print('After saveTokenToDatabase()');
 
       // If you haven't yet subscribed to the topics, do so:
-      DocumentSnapshot userSnap = await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).get();
-      Map<String, dynamic> userData = userSnap.data() as Map<String, dynamic>? ?? {};
-      if (!userData.containsKey(kFieldNotifications)) {
-        _firebaseMessaging.subscribeToTopic(kTopicGameHubSetup);
-        _firebaseMessaging.subscribeToTopic(kTopicPlayingSetup);
-        _firebaseMessaging.subscribeToTopic(kTopicAllAppUpdates);
-
-        MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).update({
-          kFieldNotifications: [
-            kTopicGameHubSetup,
-            kTopicPlayingSetup,
-            kTopicPlayingYourSetup,
-            kTopicAllAppUpdates,
-          ],
-        });
+      DocumentSnapshot? userSnap;
+      try {
+        userSnap = await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).get();
+      } catch (e) {
+        print('Error getting a userSnap: \n$e');
       }
-      print("myUid is: $myUid.");
-      if (myUid == '3lqh53p23sc93RgUBafdc4jtSYe2' || myUid == 'bVsFYm2KuTQH5G2bWOfKI45IBlS2') {
-        print("myUid == $myUid. Subscribing to Developer");
-        _firebaseMessaging.subscribeToTopic(kTopicDeveloper);
-        MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).update({
-          kFieldNotifications: FieldValue.arrayUnion([
-            kTopicDeveloper,
-          ]),
-        });
+      if (userSnap != null) {
+        Map<String, dynamic> userData = userSnap.data() as Map<String, dynamic>? ?? {};
+        if (!userData.containsKey(kFieldNotifications)) {
+          _firebaseMessaging.subscribeToTopic(kTopicGameHubSetup);
+          _firebaseMessaging.subscribeToTopic(kTopicPlayingSetup);
+          _firebaseMessaging.subscribeToTopic(kTopicAllAppUpdates);
+
+          try {
+            MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).update({
+              kFieldNotifications: [
+                kTopicGameHubSetup,
+                kTopicPlayingSetup,
+                kTopicPlayingYourSetup,
+                kTopicAllAppUpdates,
+              ],
+            });
+          } catch (e) {
+            print('Error updating notification topics in userinfo: \n$e');
+          }
+        }
+
+        // Subscribe Karolina to Developer topic:
+        print("myUid is: $myUid.");
+        if (myUid == '3lqh53p23sc93RgUBafdc4jtSYe2' || myUid == 'bVsFYm2KuTQH5G2bWOfKI45IBlS2') {
+          print("myUid == $myUid. Subscribing to Developer");
+          try {
+            _firebaseMessaging.subscribeToTopic(kTopicDeveloper);
+            MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).update({
+              kFieldNotifications: FieldValue.arrayUnion([
+                kTopicDeveloper,
+              ]),
+            });
+          } catch (e) {
+            print('Error subscribing Karolina to Developer topic: \n$e');
+          }
+        }
       }
 
       // Any time the token refreshes, store this in the database too:
-      print('Starting onTokenRefresh.listen()');
-      // FirebaseMessaging.instance.onTokenRefresh.listen(saveTokenToDatabase);
-      // _firebaseMessaging.onTokenRefresh.listen(saveTokenToDatabase);
-      // _firebaseMessaging.onTokenRefresh.listen((initializeFcm) {
-      _firebaseMessaging.onTokenRefresh.listen((event) {
-        print('An event has come in in onTokenRefresh.listen().'
-            '\nThe event is $event');
-        saveTokenToDatabase(event);
-        // I'm not sure how this could happen without a userChangesListener() event,
-        // which would still have fired initializeFcm() and consequently
-        // saveTokenToDatabase(), but hey... what do I know.
-      });
+      if (MyFirebase.authObject.currentUser != null) {
+        print('Starting onTokenRefresh.listen(). myUid is ${MyFirebase.authObject.currentUser?.uid}.');
+        // FirebaseMessaging.instance.onTokenRefresh.listen(saveTokenToDatabase);
+        // _firebaseMessaging.onTokenRefresh.listen(saveTokenToDatabase);
+        // _firebaseMessaging.onTokenRefresh.listen((initializeFcm) {
+        _firebaseMessaging.onTokenRefresh.listen((newToken) {
+          // newToken can never be null
+          print('An event has come in in onTokenRefresh.listen().'
+              '\nThe event is $newToken');
+          // saveTokenToDatabase(newToken); // This will happen below anyway:
+          initializeFcm(newToken);
+        });
+      }
     }
   }
 }
@@ -297,16 +349,16 @@ void initializeFcm(String token) async {
 Future<void> saveTokenToDatabase(String? sentToken) async {
   print('Running saveTokenToDatabase()');
 
-  String myUid = MyFirebase.authObject.currentUser!.uid;
+  String? myUid = MyFirebase.authObject.currentUser?.uid; // Might have logged out...
   print("My user ID in saveTokenToDatabase() is $myUid");
-  late DocumentSnapshot tokensSnapBefore;
-  late DocumentSnapshot tokensSnapAfter;
+  DocumentSnapshot? tokensSnapBefore;
+  DocumentSnapshot? tokensSnapAfter;
 
   if (myUid != null) {
     try {
       tokensSnapBefore = await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).get();
     } catch (e) {
-      print(e);
+      print('Error getting tokens snap: \n$e');
     }
 
     try {
@@ -314,17 +366,17 @@ Future<void> saveTokenToDatabase(String? sentToken) async {
         'tokens': FieldValue.arrayUnion([sentToken]),
       });
     } on Exception catch (e) {
-      print(e);
+      print('Error saving token to database in saveTokenToDatabase(): \n$e');
     }
 
     // Clean up invalid tokens:
     try {
       tokensSnapAfter = await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).get();
     } catch (e) {
-      print(e);
+      print('Error getting tokensSnapAfter: \n$e');
     }
-    Map<String, dynamic>? myUserDataBefore = tokensSnapBefore.data() as Map<String, dynamic>?;
-    Map<String, dynamic>? myUserDataAfter = tokensSnapAfter.data() as Map<String, dynamic>?;
+    Map<String, dynamic>? myUserDataBefore = tokensSnapBefore?.data() as Map<String, dynamic>?;
+    Map<String, dynamic>? myUserDataAfter = tokensSnapAfter?.data() as Map<String, dynamic>?;
     List<dynamic>? tokensBefore = [];
     List<dynamic>? tokensAfter = [];
 

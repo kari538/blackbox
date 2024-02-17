@@ -45,6 +45,19 @@ const String kSubFieldPing = 'Ping';
 const String kSubFieldPlayingDone = 'done';
 // const String kSubField = '';
 
+// Player moves:
+/// 'beam ##', '+atom (#,#)', '-atom (#,#)', '+markup (#,#)', '-markup (#,#)', 'finish'
+const String kFieldPlayerMoves = 'PlayerMoves';
+const String kPlayerMoveBeam = 'beam ';
+const String kPlayerMoveAddAtom = '+atom ';
+const String kPlayerMoveRemoveAtom = '-atom ';
+const String kPlayerMoveAddMarkup = '+markup ';
+const String kPlayerMoveRemoveMarkup = '-markup ';
+const String kPlayerMoveFillWithAtoms = 'fill_w_atoms';
+const String kPlayerMoveClearAllAtoms = 'clear_all_atoms';
+const String kPlayerMoveFillWithMarkup = 'fill_w_markup';
+const String kPlayerMoveClearAllMarkup = 'clear_all_markup';
+const String kPlayerMoveFinish = 'finish';
 
 const String kPassword = 'password';
 

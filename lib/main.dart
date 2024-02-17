@@ -23,12 +23,21 @@ import 'my_firebase.dart';
 void main() {
   print('Running main()');
   WidgetsFlutterBinding.ensureInitialized();
-  MyFirebase.myFutureFirebaseApp = Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    MyFirebase.myFutureFirebaseApp = Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    print('Error initializing Firebase app: \n$e');
+  }
   initializeFcm('');
   userChangesListener();
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler); //This seems to be working!
+  try {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    print('Error FirebaseMessaging.onBackgroundMessage(): \n$e');
+  }
+//This seems to be working!
   // Wakelock.enable();  // Prevents screen from sleeping for as long as main() is running.
   LocalNotifications.initiate();
 

@@ -7,7 +7,7 @@ import 'package:blackbox/play.dart';
 
 Future<List<dynamic>?> finalAnswerPress({required Play thisGame, required String? setupID, required Map<String, dynamic>? setupData, required bool answered, required Future<Timestamp?>? startedPlaying}) async {
   // TODO: ***Put heavy calculation in isolate so the below is not needed
-  await Future.delayed(Duration(milliseconds: 200));
+  await Future.delayed(Duration(milliseconds: 200));  // For the spinner to start
   print('Answered in finalAnswerPress() is $answered');
   print('thisGame.online in finalAnswerPress() is ${thisGame.online}');
 
@@ -15,12 +15,16 @@ Future<List<dynamic>?> finalAnswerPress({required Play thisGame, required String
   thisGame.misplacedAtoms = [];
   thisGame.missedAtoms = [];
   thisGame.atomScore = 0;
-  // First returned element will be the List 'edgeTileChildren' from fireAllBeams, the rest will be alternative games:
-  // Like this: return [senderGame.edgeTileChildren, senderGame, /*playerGame,*/ altGame];
+  // First returned element will be the List 'edgeTileChildren' from fireAllBeams.
+  // The second will be the game with the original setup.
+  // The rest will be alternative games.
+  // Like this: return [senderGame.edgeTileChildren, senderGame, altGame];
   List<dynamic>? alternativeSolutions = await thisGame.getScore();
 
   if (thisGame.online) {
-    await onlineButtonPress(thisGame, setupID, setupData, answered, startedPlaying); //The "await" here should guarantee that results are uploaded before the correct answer is given...
+    await onlineButtonPress(thisGame, setupID, setupData, answered, startedPlaying);
+    //The "await" here should guarantee that results are uploaded before the correct
+    // answer is given to the player...
   }
   return alternativeSolutions;
 }
@@ -30,6 +34,7 @@ Future<void> onlineButtonPress(Play thisGame, String? setupID, Map<String, dynam
    myPrettyPrint(setupData);
 
   //If I didn't already click Final Answer this round, and I don't already have an uploaded result from before:
+  // if (!answered && !(setupData?[kFieldResults]?.containsKey('${thisGame.playerUid}'))) {
   if (!answered && !(setupData!.containsKey(kFieldResults) && setupData[kFieldResults].containsKey('${thisGame.playerUid}'))) {
     // answered = true;
     // thisGame.getAtomScore();
@@ -45,23 +50,19 @@ Future<void> onlineButtonPress(Play thisGame, String? setupID, Map<String, dynam
       // sendPlayerAtoms.add(pAtom[1]);
     }
 
-    //It should wait so that results are uploaded before 'done' is turned true:
     //Will create the player ID key in 'result' if it's not there (which it isn't).
+    //It should wait so that results are uploaded before 'done' is turned true:
     await MyFirebase.storeObject.collection(kCollectionSetups).doc(setupID).update({
       '$kFieldResults.${thisGame.playerUid}': {
         'A': thisGame.atomScore,
         'B': thisGame.beamScore,
         'sentBeams': thisGame.sentBeams,
         'playerAtoms': sendPlayerAtoms,
+        '$kFieldPlayerMoves': thisGame.playerMoves,
         '$kSubFieldStartedPlaying': await startedPlaying, // Might be null (if player started playing before installing this version).
         '$kSubFieldFinishedPlaying': FieldValue.serverTimestamp(),
       }
     });
-
-    // thisGame.correctAtoms = [];
-    // thisGame.misplacedAtoms = [];
-    // thisGame.missedAtoms = [];
-    // thisGame.atomScore = 0;
   }
 
   // print('About to update done to true');

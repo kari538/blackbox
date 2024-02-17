@@ -15,9 +15,12 @@
 //TODO: *** If you're watching somebody play, and they go back without placing a beam so that the entry is deleted, your following-screen should pop.
 //TODO: *** If somebody removed their 'playing' tag and you click a notification to watch them play, there should be an info popup saying they stopped playing...
 //TODO: *** Increase tap target size for results and playing tags
-//TODO: Pop log in or register screen after having logged in the first time
 //TODO: After failed login, don't erase what's written! (might be sorted after last Play Store version)
-//TODO: *** Fix the Delete my Account bug!
+//TODO: When deleting account, some process triggered by the login event causes a firebase permission error when user becomes null.
+//TODO: Debug setup 341
+//TODO: *** Make step-by-step game review
+//TODO: Save offline games to disk
+//TODO: Do I REALLY need both a Results and a SentResults screen....??
 //TODO:
 //TODO:
 

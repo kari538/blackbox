@@ -20,7 +20,10 @@ void userChangesListener() async {
   await MyFirebase.myFutureFirebaseApp;
   MyFirebase.authObject.idTokenChanges().listen((user) async {
     print('Event in userChangesListener() is $user');
-    if (user != null) initializeFcm('');
+    if (user != null) {
+      print('Running initializeFcm from userChangesListener()');
+      initializeFcm('');
+    }
     // if (event != null) initializeFcm(await event.getIdToken());  // Not the same token!
   });
 }

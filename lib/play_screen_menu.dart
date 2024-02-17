@@ -64,13 +64,17 @@ class PlayScreenMenu extends StatelessWidget {
         }
       }
       return _menuEntries;
+
     }, onSelected: (dynamic value) async {
+      // Where all the action happens:
+
       print('$value');
 
       switch (value) {
         case selected.clearAtoms:
           {
             thisGame.playerAtoms = [];
+            thisGame.setPlayerMoves(clearAllAtoms: true);
             rebuildScreen!();
 
             if (thisGame.online){
@@ -90,6 +94,7 @@ class PlayScreenMenu extends StatelessWidget {
         case selected.clearMarkUp:
           {
             thisGame.markUpList = [];
+            thisGame.setPlayerMoves(clearAllMarkup: true);
             rebuildScreen!();
 
             if (thisGame.online){
@@ -113,6 +118,7 @@ class PlayScreenMenu extends StatelessWidget {
                 thisGame.playerAtoms.add(Atom(x, y));
               }
             }
+            thisGame.setPlayerMoves(fillWithAtoms: true);
 
             rebuildScreen!();
             if (thisGame.online) {
@@ -128,6 +134,7 @@ class PlayScreenMenu extends StatelessWidget {
                 thisGame.markUpList.add([x, y]);
               }
             }
+            thisGame.setPlayerMoves(fillWithMarkup: true);
             rebuildScreen!();
             if (thisGame.online) {
               uploadMarkup(thisGame, setup!);

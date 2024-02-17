@@ -1,3 +1,5 @@
+import 'package:blackbox/games_from_player_moves.dart';
+import 'package:blackbox/my_firebase.dart';
 import 'package:blackbox/units/small_functions.dart';
 import 'package:blackbox/screens/results_screen.dart';
 import 'package:intl/intl.dart';
@@ -30,9 +32,14 @@ class SentResultsScreen extends StatefulWidget {
 
 class _SentResultsScreenState extends State<SentResultsScreen> {
   _SentResultsScreenState(this.setupData, this.resultPlayerId);
+
+  // TODO: $$$ Should be true if there are player moves to review:
+  final bool playerMovesReview = true;
+  // final bool playerMovesReview = false;
+
   final Map<String, dynamic> setupData;
   final String? resultPlayerId;  //The ID associated with this result in the setup (whether name or code)
-  FirebaseFirestore firestoreObject = FirebaseFirestore.instance;
+  // FirebaseFirestore firestoreObject = FirebaseFirestore.instance;
   late Play thisGame;
   bool resultsReady = false;
   String errorMsg = '';
@@ -48,6 +55,7 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
   String finishedString = 'N/A';
   String timePlayedString = 'N/A';
   bool altSol = false;
+  /// First element is edgeTileChildren, other elements are Play objects:
   List<dynamic>? alternativeSolutions;
   List<dynamic>? multiDisplay;
   bool showSpinner = true;
@@ -103,6 +111,7 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
       int width = setupData['widthAndHeight'][0];
       int height = setupData['widthAndHeight'][1];
       thisGame = Play(numberOfAtoms: numberOfAtoms, heightOfPlayArea: height, widthOfPlayArea: width);
+      thisGame.playerUid = resultPlayerId;
 
       if (setupData.containsKey(kFieldShuffleA) && setupData.containsKey(kFieldShuffleB)) {
         thisGame.beamImageIndexA = [];
@@ -137,7 +146,7 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
         }
         print('Length of sent beams: ${(setupData['results']['${widget.resultPlayerId}']['sentBeams']).length}');
         for (int beam in setupData['results']['${widget.resultPlayerId}']['sentBeams']) {
-          var result = thisGame.getBeamResult(inSlot: beam);
+          var result = thisGame.sendBeam(inSlot: beam);
           // var result = thisGame.getBeamResult(beam: Beam(start: beam, widthOfPlayArea: width, heightOfPlayArea: height));
           thisGame.setEdgeTiles(inSlot: beam, beamResult: result);
         }
@@ -278,329 +287,304 @@ class _SentResultsScreenState extends State<SentResultsScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text('blackbox')),
-      body: ModalProgressHUD(
-        inAsyncCall: showSpinner,
-        child: Column(
-          // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          // crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                //Left info texts:
-                Expanded(
-                  child: Column(
+      body: SafeArea(
+        child: ModalProgressHUD(
+          inAsyncCall: showSpinner,
+          child: Column(
+            // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  //Left info texts:
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Text('online')
+                        InfoText('Setup no ${setupData['i']}'),
+                        InfoText('By ${gameHubProviderListening.getScreenName(setupData[kFieldSender])}'),
+                      ],
+                    ),
+                  ),
+                  //Right info texts:
+                  Column(
                     mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      // Text('online')
-                      InfoText('Setup no ${setupData['i']}'),
-                      InfoText('By ${gameHubProviderListening.getScreenName(setupData[kFieldSender])}'),
+                      InfoText('Started: $startedString'),
+                      InfoText('Finished: $finishedString'),
+                      InfoText('Time played: $timePlayedString'),
                     ],
                   ),
-                ),
-                //Right info texts:
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    InfoText('Started: $startedString'),
-                    InfoText('Finished: $finishedString'),
-                    InfoText('Time played: $timePlayedString'),
-                  ],
-                ),
-              ],
-            ),
-            // Align(
-            //   alignment: Alignment.centerLeft,
-            //   child: Column(
-            //     crossAxisAlignment: CrossAxisAlignment.start,
-            //     children: [
-            //       InfoText('Setup no ${widget.setupData['i']}'),
-            //       InfoText('By ${Provider.of<GameHubUpdates>(context).getScreenName(widget.setupData[kFieldSender])}'),
-            //     ],
-            //   ),
-            // ),
-            Expanded(
-              // flex: 4,
-              flex: altSol
-                  ? 3
-                  : multiDisplay != null
-                  ? 3
-                  : 4,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Text(
-                          // resultPlayerScreenName == 'Me'
-                          //     ? 'My score'
-                          //     : '$resultPlayerScreenName\'s score',
-                          // textAlign: TextAlign.center,
-                          // style: TextStyle(fontSize: 35),
-                          multiDisplay == null
-                              // ? 'Your score'
-                              ? resultPlayerScreenName == 'Me'
-                              ? 'My score'
-                              : '$resultPlayerScreenName\'s score'
-                              : 'Alternative\nsolutions',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 35),
-                        ),
-                        multiDisplay == null ? Center(
-                          child: Container(
-//                        color: Colors.blue,
-                            width: 200,
-                            child: Row(
-                              children: <Widget>[
-                                Expanded(
+                ],
+              ),
+              Expanded(
+                // flex: 4,
+                flex: altSol
+                    ? 3
+                    : multiDisplay != null
+                    ? 3
+                    : 4,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Text(
+                            // resultPlayerScreenName == 'Me'
+                            //     ? 'My score'
+                            //     : '$resultPlayerScreenName\'s score',
+                            // textAlign: TextAlign.center,
+                            // style: TextStyle(fontSize: 35),
+                            multiDisplay == null
+                                // ? 'Your score'
+                                ? resultPlayerScreenName == 'Me'
+                                ? 'My score'
+                                : '$resultPlayerScreenName\'s score'
+                                : 'Alternative\nsolutions',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 35),
+                          ),
+                          multiDisplay == null ? Center(
+                            child: Container(
+        //                        color: Colors.blue,
+                              width: 200,
+                              child: Row(
+                                children: <Widget>[
+                                  Expanded(
+                                      flex: 2,
+                                      child: Text(
+                                        'beam score:',
+                                        textAlign: TextAlign.right,
+                                      )),
+                                  Expanded(
+                                    flex: 1,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(right: 26.0),
+                                      child: Text(
+                                        resultsReady ? '${thisGame.beamScore}' : '...',
+                                        textAlign: TextAlign.right,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ) : SizedBox(),
+                          multiDisplay == null ? Center(
+                            child: Container(
+        //                        color: Colors.blue,
+                              width: 200,
+                              child: Row(
+                                children: <Widget>[
+                                  Expanded(
                                     flex: 2,
                                     child: Text(
-                                      'beam score:',
-                                      textAlign: TextAlign.right,
-                                    )),
-                                Expanded(
-                                  flex: 1,
-                                  child: Padding(
-                                    padding: EdgeInsets.only(right: 26.0),
-                                    child: Text(
-                                      resultsReady ? '${thisGame.beamScore}' : '...',
+                                      'atom penalty:',
                                       textAlign: TextAlign.right,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ) : SizedBox(),
-                        multiDisplay == null ? Center(
-                          child: Container(
-//                        color: Colors.blue,
-                            width: 200,
-                            child: Row(
-                              children: <Widget>[
-                                Expanded(
-                                  flex: 2,
-                                  child: Text(
-                                    'atom penalty:',
-                                    textAlign: TextAlign.right,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Padding(
-                                    padding: EdgeInsets.only(right: 26.0),
-                                    child: Text(
-                                        resultsReady ? '${thisGame.atomScore} ' : '...',
-                                        textAlign: TextAlign.right,
+                                  Expanded(
+                                    child: Padding(
+                                      padding: EdgeInsets.only(right: 26.0),
+                                      child: Text(
+                                          resultsReady ? '${thisGame.atomScore} ' : '...',
+                                          textAlign: TextAlign.right,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ) : SizedBox(),
-                        multiDisplay == null ? Center(
-                          child: Container(
-//                        color: Colors.blue,
-                            width: 200,
-                            child: Row(
-                              children: <Widget>[
-                                Expanded(
-                                  flex: 2,
-                                  child: Text(
-                                    'total:', //${(thisGame.beamScore + thisGame.atomScore) < 10 ? ' ' : ''}
-                                    textAlign: TextAlign.right,
-                                    style: TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Padding(
-                                    padding: EdgeInsets.only(right: 26.0),
+                          ) : SizedBox(),
+                          multiDisplay == null ? Center(
+                            child: Container(
+        //                        color: Colors.blue,
+                              width: 200,
+                              child: Row(
+                                children: <Widget>[
+                                  Expanded(
+                                    flex: 2,
                                     child: Text(
-                                      // '${thisGame.beamScore + thisGame.atomScore}',
-                                      '${totalScore ?? '...'}',
+                                      'total:', //${(thisGame.beamScore + thisGame.atomScore) < 10 ? ' ' : ''}
                                       textAlign: TextAlign.right,
                                       style: TextStyle(fontWeight: FontWeight.bold),
                                     ),
                                   ),
-                                ),
-                              ],
+                                  Expanded(
+                                    child: Padding(
+                                      padding: EdgeInsets.only(right: 26.0),
+                                      child: Text(
+                                        // '${thisGame.beamScore + thisGame.atomScore}',
+                                        '${totalScore ?? '...'}',
+                                        textAlign: TextAlign.right,
+                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ) : SizedBox(),
+                        ],
+                      ),
+                      altSol ? SizedBox(height: 30) : SizedBox(),
+                      altSol
+                          ? Text(
+                        'Multiple solutions exist!',
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blue),
+                      )
+                          : SizedBox(),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 6,
+                child: Column(
+                  children: <Widget>[
+                    multiDisplay == null ? SizedBox(
+                        child: resultsReady ? playerAtoms ? Text('Answer:') : FittedBox(
+                            fit: BoxFit.contain, child: Text('Player atom info not available. Beams played:')) : null,
+                        height: 30) : SizedBox(height: 30),
+                    // multiDisplay == null ? SizedBox(child: Text('The correct answer:'), height: 30) : SizedBox(height: 30),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8.0, top: 8.0, right: 8.0, bottom: 20),
+                        child: awaitingData
+                            ? Center(child: CircularProgressIndicator())
+                            : resultsReady
+                            ? AspectRatio(
+                                aspectRatio: (thisGame.widthOfPlayArea + 2) / (thisGame.heightOfPlayArea + 2),
+                                  child: Container(
+                                    child: BoardGrid(
+                                playWidth: thisGame.widthOfPlayArea,
+                                playHeight: thisGame.heightOfPlayArea,
+                                getEdgeTiles: getEdges,
+                                getMiddleTiles: getMiddleElements,
                             ),
                           ),
+                        )
+                            : SizedBox(child: Text('$errorMsg', style: TextStyle(color: Colors.red), textAlign: TextAlign.center)),
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: altSol == !playerMovesReview ? MainAxisAlignment.center : MainAxisAlignment.spaceEvenly,
+                      children: [
+                        altSol ?
+                        Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: MyRaisedButton(
+                              // child: ElevatedButton(
+                              child: Text('View other solutions'),
+                              onPressed: () async {
+                                int? result = 0;  // The game to show when ResultScreen pops
+                                int gameNo = 1; // The game currently being displayed
+                                // int i = 0;
+                                Play displayGame;
+                                // displayGame.edgeTileChildren = alternativeSolutions[0];
+                                // Play displayGame = Play(numberOfAtoms: thisGame.numberOfAtoms, widthOfPlayArea: thisGame.widthOfPlayArea, heightOfPlayArea: thisGame.heightOfPlayArea);
+                                // displayGame.atoms = thisGame.atoms;
+                                // displayGame.showAtomSetting= true;  // Not working... Atoms don't show up
+                                // displayGame.fireAllBeams();
+                                // Play.fireAllBeams(displayGame);  // This is only done once...
+                                do {
+                                  // uniqueGame.atoms = allUniqueSetups[gameNo];
+                                  // displayGame.correctAtoms = alternativeSolutions[gameNo];
+                                  //
+                                  // for (Atom atom in alternativeSolutions[gameNo]) {
+                                  //   displayGame.correctAtoms.add(atom.position.toList());
+                                  // }
+                                  displayGame = alternativeSolutions![gameNo];
+                                  displayGame.edgeTileChildren = alternativeSolutions![0];
+                                  print('alternativeSolutions[$gameNo] is ${alternativeSolutions![gameNo]}');
+                                  // Returns null if "Pop" is pressed:
+                                  result = await Navigator.push(context, PageRouteBuilder(pageBuilder: (context, anim1, anim2) {
+                                    return ResultsScreen(thisGame: displayGame, setupData: {}, multiDisplay: [gameNo, alternativeSolutions!.length-1]);
+                                  }));
+                                  if (result != null && gameNo + result > 0 && gameNo + result <= alternativeSolutions!.length-1) gameNo += result;
+                                  // displayGame.correctAtoms = [];
+                                  // i++;
+                                } while (result != null /*&& i < 100*/);
+        
+                              },
+                            )
                         ) : SizedBox(),
+                        playerMovesReview ?
+                        Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: MyRaisedButton(
+                              // child: ElevatedButton(
+                              child: Text('Review moves'),
+                              onPressed: () async {
+                                int? result = 0;
+                                int moveNo = 0;
+                                // int i = 0;
+                                // Play displayGame;
+                                // Get player moves from results tag:
+                                thisGame.playerMoves = setupData[kFieldResults]![widget.resultPlayerId]![kFieldPlayerMoves] ?? [];
+                                // Overly careful - I actually shouldn't be here if there weren't any player moves...
+                                print('thisGame.playerMoves in Review moves button is:');
+                                myPrettyPrint(thisGame.playerMoves);
+                                // print('thisGame.playerUid in Review moves button is ${thisGame.playerUid}');
+                                // Play reviewGame;
+                                Play reviewGame = Play(numberOfAtoms: thisGame.numberOfAtoms, widthOfPlayArea: thisGame.widthOfPlayArea, heightOfPlayArea: thisGame.heightOfPlayArea);
+                                reviewGame.playerUid = thisGame.playerUid;
+                                List<Play?> moveGames = [];
+                                moveGames = gamesFromPlayerMoves(thisGame: thisGame);
+                                // print('moveGames is $moveGames');
+                                print('moveGames.length is ${moveGames.length}');
+                                print('thisGame.playerMoves.length is ${thisGame.playerMoves.length}');
+                                do {
+                                  // displayGame = alternativeSolutions![gameNo];
+                                  // displayGame.edgeTileChildren = alternativeSolutions![0];
+                                  // print('alternativeSolutions[$gameNo] is ${alternativeSolutions![gameNo]}');
+                                  // Returns null if "Pop" is pressed:
+                                  // result = await Navigator.push(context, PageRouteBuilder(pageBuilder: (context, anim1, anim2) {
+                                  //   return ResultsScreen(thisGame: displayGame, setupData: {}, multiDisplay: [gameNo, alternativeSolutions!.length-1]);
+                                  // }));
+                                  // TODO: $$$ Step through the moves and present the results, somehow...
 
-//                       Center(
-//                         child: Container(
-//                              // color: Colors.blue,
-//                           width: 200,
-//                           child: Row(
-//                             children: <Widget>[
-//                               Expanded(
-//                                   flex: 2,
-//                                   child: Text(
-//                                     'beam score:',
-//                                     textAlign: TextAlign.right,
-//                                   )),
-//                               Expanded(
-//                                   flex: 1,
-//                                   child: Padding(
-//                                     padding: EdgeInsets.only(right: 26.0),
-//                                     child: Text(
-// //                                  resultsReady ? '${thisGame.beamScore}' : '?', //no!
-//                                       '${beamScore ?? '?'}',
-//                                       textAlign: TextAlign.right,
-//                                     ),
-//                                   )),
-//                             ],
-//                           ),
-//                         ),
-//                       ),
-//                       Center(
-//                         child: Container(
-// //                        color: Colors.blue,
-//                           width: 200,
-//                           child: Row(
-//                             children: <Widget>[
-//                               Expanded(
-//                                 flex: 2,
-//                                 child: Text(
-//                                   'atom penalty:',
-//                                   textAlign: TextAlign.right,
-//                                 ),
-//                               ),
-//                               Expanded(
-//                                 child: Padding(
-//                                   padding: EdgeInsets.only(right: 26.0),
-// //                              child: Text(resultsReady ? '${thisGame.atomScore}' : '?', textAlign: TextAlign.right),  //no!
-//                                   child: Text('${atomScore ?? '?'}', textAlign: TextAlign.right),  //no!
-//
-//                                 ),
-//                               ),
-//                             ],
-//                           ),
-//                         ),
-//                       ),
-//                       Center(
-//                         child: Container(
-// //                        color: Colors.blue,
-//                           width: 200,
-//                           child: Row(
-//                             children: <Widget>[
-//                               Expanded(
-//                                 flex: 2,
-//                                 child: Text(
-//                                   'total:', //${(thisGame.beamScore + thisGame.atomScore) < 10 ? ' ' : ''}
-//                                   textAlign: TextAlign.right,
-//                                   style: TextStyle(fontWeight: FontWeight.bold),
-//                                 ),
-//                               ),
-//                               Expanded(
-//                                 child: Padding(
-//                                   padding: EdgeInsets.only(right: 26.0),
-//                                   child: Text(
-// //                                  resultsReady ? '${thisGame.beamScore + thisGame.atomScore}' : '?',
-// //                                  resultsReady ? '$totalScore' : '?',
-// //                                totalScore == null ? '?' : totalScore.toString(),
-//                                     '${totalScore ?? '?'}',
-//                                     textAlign: TextAlign.right,
-//                                     style: TextStyle(fontWeight: FontWeight.bold),
-//                                   ),
-//                                 ),
-//                               ),
-//                             ],
-//                           ),
-//                         ),
-//                       ),
+
+                                  // TODO: $$$ Remember to download old playerMoves every time you resume playing
+
+                                  reviewGame = moveGames[moveNo] ?? Play(numberOfAtoms: thisGame.numberOfAtoms, widthOfPlayArea: thisGame.widthOfPlayArea, heightOfPlayArea: thisGame.heightOfPlayArea);
+                                  print('Before pushing reviewGame, moveNo is $moveNo');
+                                  print('moveGames.length is ${moveGames.length} and moveGames[$moveNo] is ${moveGames[moveNo]}');
+                                  print('playerAtoms in reviewGame is ${reviewGame.playerAtoms}');
+                                  print('correctAtoms in reviewGame is ${reviewGame.correctAtoms}');
+                                  print('unfoundAtoms in reviewGame is ${reviewGame.unfoundAtoms}');
+                                  print('The move for moveNo $moveNo is ${moveNo-1 < thisGame.playerMoves.length && moveNo-1 >= 0 ? thisGame.playerMoves[moveNo-1] : 'out of range'}');
+                                  // Returns null if "Pop" is pressed:
+                                  result = await Navigator.push(context, PageRouteBuilder(pageBuilder: (context, anim1, anim2) {
+                                    return ResultsScreen(thisGame: reviewGame, setupData: {}, playerMovesReview: true, multiDisplay: [moveNo, moveGames.length-1],);
+                                  }));
+                                  if (result != null && moveNo + result >= 0 && moveNo + result < moveGames.length) moveNo += result;
+                                  // print('thisGame.playerMoves.length is ${thisGame.playerMoves.length}');
+                                  // print('moveGames.length is ${moveGames.length}');
+                                  print('result is $result');
+                                  print('moveNo is $moveNo');
+                                  // displayGame.correctAtoms = [];
+                                  // i++;
+                                } while (result != null /*&& i < 100*/);
+
+                              },
+                            )
+                        ) : SizedBox(),
                       ],
                     ),
-                    altSol ? SizedBox(height: 30) : SizedBox(),
-                    altSol
-                        ? Text(
-                      'Multiple solutions exist!',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blue),
-                    )
-                        : SizedBox(),
                   ],
                 ),
               ),
-            ),
-            Expanded(
-              flex: 6,
-              child: Column(
-                children: <Widget>[
-                  multiDisplay == null ? SizedBox(
-                      child: resultsReady ? playerAtoms ? Text('Answer:') : FittedBox(
-                          fit: BoxFit.contain, child: Text('Player atom info not available. Beams played:')) : null,
-                      height: 30) : SizedBox(height: 30),
-                  // multiDisplay == null ? SizedBox(child: Text('The correct answer:'), height: 30) : SizedBox(height: 30),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 8.0, top: 8.0, right: 8.0, bottom: 20),
-                      child: awaitingData
-                          ? Center(child: CircularProgressIndicator())
-                          : resultsReady
-                          ? AspectRatio(
-                              aspectRatio: (thisGame.widthOfPlayArea + 2) / (thisGame.heightOfPlayArea + 2),
-                                child: Container(
-                                  child: BoardGrid(
-                              playWidth: thisGame.widthOfPlayArea,
-                              playHeight: thisGame.heightOfPlayArea,
-                              getEdgeTiles: getEdges,
-                              getMiddleTiles: getMiddleElements,
-                          ),
-                        ),
-                      )
-                          : SizedBox(child: Text('$errorMsg', style: TextStyle(color: Colors.red), textAlign: TextAlign.center)),
-                    ),
-                  ),
-                  altSol ?
-                  Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: ElevatedButton(
-                        child: Text('View other solutions'),
-                        onPressed: () async {
-                          int? result = 0;
-                          int gameNo = 1;
-                          // int i = 0;
-                          Play displayGame;
-                          // displayGame.edgeTileChildren = alternativeSolutions[0];
-                          // Play displayGame = Play(numberOfAtoms: thisGame.numberOfAtoms, widthOfPlayArea: thisGame.widthOfPlayArea, heightOfPlayArea: thisGame.heightOfPlayArea);
-                          // displayGame.atoms = thisGame.atoms;
-                          // displayGame.showAtomSetting= true;  // Not working... Atoms don't show up
-                          // displayGame.fireAllBeams();
-                          // Play.fireAllBeams(displayGame);  // This is only done once...
-                          do {
-                            // uniqueGame.atoms = allUniqueSetups[gameNo];
-                            // displayGame.correctAtoms = alternativeSolutions[gameNo];
-                            //
-                            // for (Atom atom in alternativeSolutions[gameNo]) {
-                            //   displayGame.correctAtoms.add(atom.position.toList());
-                            // }
-                            displayGame = alternativeSolutions![gameNo];
-                            displayGame.edgeTileChildren = alternativeSolutions![0];
-                            print('alternativeSolutions[$gameNo] is ${alternativeSolutions![gameNo]}');
-                            // Returns null if "Pop" is pressed:
-                            result = await Navigator.push(context, PageRouteBuilder(pageBuilder: (context, anim1, anim2) {
-                              return ResultsScreen(thisGame: displayGame, setupData: {}, multiDisplay: [gameNo, alternativeSolutions!.length-1]);
-                            }));
-                            if (result != null && gameNo + result > 0 && gameNo + result <= alternativeSolutions!.length-1) gameNo += result;
-                            // displayGame.correctAtoms = [];
-                            // i++;
-                          } while (result != null /*&& i < 100*/);
-
-                        },
-                      )
-                  ) : SizedBox(),
-
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
