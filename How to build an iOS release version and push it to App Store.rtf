@@ -235,10 +235,8 @@ I changed trust settings to \'93Default\'94 again, and did $ flutter build ios -
 \f2 \uc0\u55358 \u56596 
 \f0  The rain dance, indeed\'85\'85.\
 \
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
-\cf0 \
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
-\cf0 7. $ open ios/Runner.xcworkspace\
+\
+7. $ open ios/Runner.xcworkspace\
 In the top row of the main frame, where it probably says the name of your current simulator, click this name and choose \'93Any iOS Device (arm62)\'94.\
 In top menu:\
 Product - Build (not \'93Build for\'94)\
@@ -255,8 +253,7 @@ and\
 \
 Before realizing that BoringSSL-GRPC is a dependency that will be updated with the next pub upgrade, I accidentally clicked on it and manually changed:\
 \
-\pard\pardeftab720\partightenfactor0
-\cf0 Targets: BoringSSL-GRPC - Build Settings - Basic, Combined - Deployment - iOS Deployment Target to iOS 12.0.\
+Targets: BoringSSL-GRPC - Build Settings - Basic, Combined - Deployment - iOS Deployment Target to iOS 12.0.\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 \cf0 \
 Now, I can\'92t change it back down to 9.0 as it was before. Only to 11\'85 which is within the range. Anyway!\
@@ -291,6 +288,11 @@ Next time:\
 \
 SDK version issue. This app was built with the iOS 16.2 SDK. Starting April 29, 2024, all iOS and iPadOS apps must be built with the iOS 17 SDK or later, included in Xcode 15 or later, in order to be uploaded to App Store Connect or submitted for distribution.\'94\
 \
+MacOS 12.7.3 Monterey\
+\
+Xcode versions and compatibility:\
+\
+https://developer.apple.com/support/xcode/\
 \
 \
 }

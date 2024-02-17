@@ -65,7 +65,7 @@ class WelcomeScreen extends StatelessWidget {
               borderColor: Colors.greenAccent,
 //              onPressed: null,
               onPressed: () async {
-                CircularProgressIndicator();
+                // CircularProgressIndicator();
                 // GooglePlayServicesAvailability availability = GooglePlayServicesAvailability.unknown;
                 // try {
                 //   availability = await GoogleApiAvailability.instance.checkGooglePlayServicesAvailability();
@@ -74,6 +74,7 @@ class WelcomeScreen extends StatelessWidget {
                 // } catch (e) {
                 //   print('GoogleApiAvailability error: $e');
                 // }
+                await Future.delayed(Duration(milliseconds: 3000));
                 await MyFirebase.myFutureFirebaseApp;
                 auth.User? loggedInUser = auth.FirebaseAuth.instance.currentUser;
                 if(loggedInUser == null) {

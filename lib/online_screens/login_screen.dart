@@ -1,9 +1,7 @@
-import 'package:blackbox/route_names.dart';
 import 'package:blackbox/fcm.dart';
 import 'package:blackbox/my_firebase_labels.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blackbox/constants.dart';
-import 'package:blackbox/online_screens/game_hub_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';import 'package:blackbox/online_button.dart';
@@ -11,18 +9,21 @@ import 'package:blackbox/units/blackbox_popup.dart';
 import 'package:blackbox/my_firebase.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({this.withPop = false});
+  const LoginScreen();
+  // const LoginScreen({this.withPop = false});
 
-  final bool withPop;
+  // final bool withPop;
 
   @override
-  _LoginScreenState createState() => _LoginScreenState(withPop);
+  _LoginScreenState createState() => _LoginScreenState();
+  // _LoginScreenState createState() => _LoginScreenState(withPop);
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  _LoginScreenState(this.withPop);
+  _LoginScreenState();
+  // _LoginScreenState(this.withPop);
 
-  final bool withPop;
+  // final bool withPop;
   bool showSpinner = false;
   String email = '';
   String password = '';
@@ -51,11 +52,14 @@ class _LoginScreenState extends State<LoginScreen> {
         desc: '$e',
       ).show();
     }
+    print('loginSuccess is $loginSuccess');
     print('loginResponse is $loginResponse');
     print('Current user in LoginScreen is ${MyFirebase.authObject.currentUser}');
 
     // If the login was successful:
-    if (loginSuccess && MyFirebase.authObject.currentUser != null) {
+    if (loginSuccess) {
+      assert (MyFirebase.authObject.currentUser != null, ''
+          'loginSuccess is true but currentUser is null!');
     // if (MyFirebase.authObject.currentUser != null) { // If from Change User, the login might have been unsuccessful even if there is a currentUser
       _myUid = MyFirebase.authObject.currentUser!.uid;
       _myScreenName = MyFirebase.authObject.currentUser!.displayName;
@@ -104,14 +108,8 @@ class _LoginScreenState extends State<LoginScreen> {
       // Now, I should have an entry in userinfo, and both a screenName and
       // a display name if either existed before
 
-      if (withPop) {
-        Navigator.pop(context);
-      } else {
-        Navigator.of(context).pushReplacement(MaterialPageRoute(settings: RouteSettings(name: routeGameHub), builder: (context){
-          return GameHubScreen();
-          },
-        ));
-      }
+      Navigator.pop(context, true);
+
     }
 
     setState(() {
@@ -121,7 +119,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print("Building LoginScreen with withPop as $withPop");
+    print("Building LoginScreen");
+    // print("Building LoginScreen with withPop as $withPop");
     return Scaffold(
       appBar: AppBar(
         title: GestureDetector(
@@ -143,9 +142,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 // mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  // SizedBox(
-                  //   height: 48.0,
-                  // ),
                   TextField(
                     onChanged: (value) {
                       setState(() {
@@ -153,19 +149,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       });
                     },
                     autofocus: true,
-//                decoration: kTextFieldDecoration.copyWith(
                     decoration: InputDecoration(
                       hintText: 'Enter your email',
                     ),
                     textAlign: TextAlign.center,
                     keyboardType: TextInputType.emailAddress,
-//                style: TextStyle(color: Colors.black),
                   ),
                   SizedBox(
                     height: 8.0,
                   ),
                   TextField(
-//                decoration: kTextFieldDecoration.copyWith(
                     decoration: InputDecoration(
                       hintText: 'Enter your password',
                     ),
@@ -179,7 +172,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                     textAlign: TextAlign.center,
                     obscureText: true,
-//                style: TextStyle(color: Colors.black),
                   ),
                   SizedBox(
                     height: 24.0,
@@ -202,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         context: context,
                         title: 'Reset password?',
                         desc: 'Click "Reset" to send an email with a'
-                            ' reset link to the email address you just typed on this screen',
+                            ' reset link to the email address you provided',
                         buttons: [
                           BlackboxPopupButton(
                               text: 'Cancel',
@@ -230,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 context: context,
                                 title: 'Email sent',
                                 desc: 'If the email address was correct'
-                                    ' and registered with us, and your phone is online,'
+                                    ' and registered with us, and you are online,'
                                     ' you should receive a Reset Password email shortly.')
                             .show();
                     },

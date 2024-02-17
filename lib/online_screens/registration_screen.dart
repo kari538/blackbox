@@ -1,4 +1,5 @@
 import 'package:blackbox/route_names.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 // import 'package:blackbox/fcm.dart';
 import 'package:blackbox/my_firebase.dart';
@@ -9,24 +10,28 @@ import 'package:blackbox/units/blackbox_popup.dart';
 import 'game_hub_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
-  const RegistrationScreen({this.withPop = false});
+  const RegistrationScreen();
+  // const RegistrationScreen({this.withPop = false});
 
-  final bool withPop;
+  // final bool withPop;
 
   @override
-  _RegistrationScreenState createState() => _RegistrationScreenState(withPop);
+  _RegistrationScreenState createState() => _RegistrationScreenState();
+  // _RegistrationScreenState createState() => _RegistrationScreenState(withPop);
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
-  _RegistrationScreenState(this.withPop);
+  _RegistrationScreenState();
+  // _RegistrationScreenState(this.withPop);
 
-  final bool withPop;
+  // final bool withPop;
   bool showSpinner = false;
   String? email;
   String? screenName;
   String? password1;
   String password2 = '';
   FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  bool? loginSuccess;
 
   Future registerPress() async {
 //  print(email);
@@ -34,45 +39,57 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     setState(() {
       showSpinner = true;
     });
+    UserCredential? registerResponse;
     try {
-      var user = await MyFirebase.authObject.createUserWithEmailAndPassword(email: email!, password: password1!);
-      if (user != null) {
-        MyFirebase.authObject.currentUser!.updateDisplayName(screenName);
-        String myUid = MyFirebase.authObject.currentUser!.uid;
-        if (screenName == null || screenName == '') screenName = 'Anonymous';
-//                            database.collection('userinfo').add({
-//                             database.collection('userinfo').doc(myUid).set({
-        MyFirebase.storeObject.collection('userinfo').doc(myUid).set({
-          'email': email,
-          'screenName': screenName,
-          kFieldNotifications: [
-            kTopicGameHubSetup,
-            kTopicPlayingSetup,
-            kTopicPlayingYourSetup,
-            kTopicAllAppUpdates,
-          ],
-        });
-        _firebaseMessaging.subscribeToTopic(kTopicGameHubSetup);
-        _firebaseMessaging.subscribeToTopic(kTopicPlayingSetup);
-        _firebaseMessaging.subscribeToTopic(kTopicAllAppUpdates);
-        // initializeFirebaseCloudMessaging();
-        if (withPop) {
-          Navigator.pop(context);
-        } else {
-          Navigator.of(context).pushReplacement(MaterialPageRoute(settings: RouteSettings(name: routeGameHub), builder: (context){
-                    return GameHubScreen();
-            },
-          ));
-        }
-      }
+      registerResponse = await MyFirebase.authObject.createUserWithEmailAndPassword(email: email!, password: password1!);
+      loginSuccess = true;
     } catch (e) {
       print('Error caught authenticating! e is: $e');
+      loginSuccess = false;
       BlackboxPopup(
         context: context,
         title: "Registration Error",
         desc: '$e',
       ).show();
     }
+    if (loginSuccess == true) {
+    assert (registerResponse != null
+        && registerResponse.user != null
+        && MyFirebase.authObject.currentUser != null, ''
+        'failed assertion: This is weird...');
+    // if (registerResponse.user != null) {
+      MyFirebase.authObject.currentUser!.updateDisplayName(screenName);
+      String myUid = MyFirebase.authObject.currentUser!.uid;
+      if (screenName == null || screenName == '') screenName = 'Anonymous';
+//                            database.collection('userinfo').add({
+//                             database.collection('userinfo').doc(myUid).set({
+      MyFirebase.storeObject.collection('userinfo').doc(myUid).set({
+        'email': email,
+        'screenName': screenName,
+        kFieldNotifications: [
+          kTopicGameHubSetup,
+          kTopicPlayingSetup,
+          kTopicPlayingYourSetup,
+          kTopicAllAppUpdates,
+        ],
+      });
+      _firebaseMessaging.subscribeToTopic(kTopicGameHubSetup);
+      _firebaseMessaging.subscribeToTopic(kTopicPlayingSetup);
+      _firebaseMessaging.subscribeToTopic(kTopicAllAppUpdates);
+      // initializeFirebaseCloudMessaging();
+
+      Navigator.pop(context, true);
+
+      // if (withPop) {
+      //   Navigator.pop(context);
+      // } else {
+      //   Navigator.of(context).pushReplacement(MaterialPageRoute(settings: RouteSettings(name: routeGameHub), builder: (context){
+      //     return GameHubScreen();
+      //   },
+      //   ));
+      // }
+    }
+
     setState(() {
       showSpinner = false;
     });
@@ -80,7 +97,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print("Building RegistrationScreen with withPop as $withPop");
+    print("Building RegistrationScreen");
+    // print("Building RegistrationScreen with withPop as $withPop");
     return Scaffold(
       appBar: AppBar(title: Text('register')),
       body: ModalProgressHUD(

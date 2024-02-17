@@ -258,198 +258,242 @@ class _GameHubScreenState extends State<GameHubScreen> {
     // providerListening = Provider.of<GameHubUpdates>(context);
 
     print('Building game hub screen');
-    return Scaffold(
-      appBar: AppBar(
-        title: GestureDetector(
-            child: Text('the game hub'),
-//              child: Text('${Provider.of<GameHubUpdates>(context).providerUserIdMap.values}'),
-            onTap: () async {
-              setState(() {
-                print('Setting game hub state');
-              });
-              tempFirebaseOperations();
-              print("Setting game hub state");
-              setState(() {});
-            }),
-        actions: [GameHubMenu(context)],
-      ),
-      body: Column(
-        children: <Widget>[
-          Expanded(
-            child: ListEquality().equals(gameList, [])
-                ? Center(child: CircularProgressIndicator())
-                : ListView.builder(
-              reverse: true,
-              itemCount: gameList.length,
-              itemBuilder: (context, index) {
-                return gameList[index];
-              },
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: GestureDetector(
+              child: Text('the game hub'),
+      //              child: Text('${Provider.of<GameHubUpdates>(context).providerUserIdMap.values}'),
+              onTap: () async {
+                setState(() {
+                  print('Setting game hub state');
+                });
+                tempFirebaseOperations(); //Keep this uncommented to avoid lint
+                print("Setting game hub state");
+                setState(() {});
+              }),
+          actions: [GameHubMenu(context)],
+        ),
+        body: Column(
+          children: <Widget>[
+            Expanded(
+              child: ListEquality().equals(gameList, [])
+                  ? Center(child: CircularProgressIndicator())
+                  : ListView.builder(
+                reverse: true,
+                itemCount: gameList.length,
+                itemBuilder: (context, index) {
+                  return gameList[index];
+                },
 
-              // return ListView(
-              //   reverse: true,
-              //   children: <Widget>[
-              //     Column(
-              //       children: gameList,
-              //     ),
-              //   ],
-              // );
-              // },
+                // return ListView(
+                //   reverse: true,
+                //   children: <Widget>[
+                //     Column(
+                //       children: gameList,
+                //     ),
+                //   ],
+                // );
+                // },
+              ),
             ),
-          ),
-//           Expanded(
-//             child: StreamBuilder<QuerySnapshot>(
-//               //Every time something happens in the 'setups' collection, every list item created by this Stream will be rebuilt
-//               stream: MyFirebase.storeObject.collection('setups').orderBy('timestamp', descending: true).snapshots(),
-//               builder: (context, setupsSnapshot) {
-//                 print('New snapshot in game hub StreamBuilder');
-//                 if (setupsSnapshot.hasData) {  //I think I can remove this... because a snapshot in a stream (a QuerySnapshot) ALWAYS has data...?
-// //                  print('The first document ID is ${setupsSnapshot.data.docs[0].id}');
-//                   gameList = [];
-//                   int i = 0;
-//                   int j = 0;
-//                   for (DocumentSnapshot setup in setupsSnapshot.data.docs) {
-//                     i = setup.data()['i'];
-//                     j++;
-//                     // j = i;
-//                     //Temporary code for adding 'timestamp' field where missing:
-// //                    print('timestamp is ${setup.data()['timestamp'].toDate()}');
-// //                    print(i);
-// //                    //January 1, 2001 at 12:00:00 AM UTC+3
-// //                    if (setup.data()['timestamp'] == null) {
-// //                      print(i);
-// //                      print(DateTime(2001));
-// //
-// //                      //Adds a new field to the document, but overwrites any old field with the same name (key), i.e. 'results':
-// //                      firestoreObject.collection('setups').doc(setup.id).set({
-// //                        'timestamp': DateTime(2001),
-// //
-// //                      }, merge: true);
-// //                    }
-// //                  if(setup.data()['sender'] == 'marshallmusyimi@gmail.com') {
-// //                    print('Sender: ${setup.data()['sender']}, timestamp: ${setup.data()['timestamp'].toDate()}');
-// //                  }
-// //                  print('Sender: ${setup.data()['sender']}, timestamp: ${setup.data()['timestamp'].toDate()}');
-// //                    if(setup.data()['timestamp'])
-//                     gameList.add(GestureDetector(
-//                       child: GameEntry(
-//                         setup: setup,
-//                         i: i ?? gameList.length,
-//                         parentContext: context,
-//                         setParentState: (){
-//                           setState(() {});
-//                         },
-//                       ),
-//                       onTap: () async {
-//                         ///Run this to delete results by clicking:
-// //                        del++;
-// //                        print('Delete all results for entry no. $i?');
-// //                        if(del==2){
-// //                          firestoreObject.collection('setups').doc(setup.id).updateData(
-// //                              {'results': FieldValue.delete()}
-// //                          ).whenComplete(() {
-// //                            print('Field deleted');
-// //                          });
-// //                          del=0;
-// //                        }
-//                         ///Run this to change sender from email to playerId by clicking:
-// //                        QuerySnapshot userInfos = await firestoreObject.collection('userinfo').get();  //No stream needed, coz the document no is not supposed to change
-// //                        String senderId;
-// //                        for(var user in userInfos.docs) {
-// //                          if(setup.data()['sender']== user['email']){
-// //                            senderId = user.id;
-// //                            print('senderId is $senderId');
-// //                          }
-// //
-// //                        }
-// //                          firestoreObject.collection('setups'
-// //                              ).doc(setup.id).updateData(
-// //                              {'sender': senderId}
-// //                          ).whenComplete(() {
-// //                            print('Field deleted');
-// //                          });
-// //                          del=0;
-//                         ///---------
-//
-//                         Play thisGame = Play(
-//                             numberOfAtoms: (setup.data()['atoms'].length / 2).toInt(),
-//                             heightOfPlayArea: setup.data()['widthAndHeight'][1],
-//                             widthOfPlayArea: setup.data()['widthAndHeight'][0]);
-//                         thisGame.setupData = setup.data();
-//                         thisGame.online = true;
-//                         thisGame.playerId = myUid;
-//                         // thisGame.playerId = await futurePlayerId;
-//                         Navigator.push(context, MaterialPageRoute(builder: (context) {
-//                           return PlayScreen(thisGame: thisGame, setup: setup);
-//                         }));
-//                       },
-//                     ));
-//                   }
-//                 } else {
-//                   return Center(
-//                     child: CircularProgressIndicator(),
-//                   );
-//                 }
-//                 return ListView.builder(
-//                   reverse: true,
-//                   itemCount: gameList.length,
-//                   itemBuilder: (context, index) {
-//                     return gameList[index];
-//                   },
-//                 );
-//                 // return ListView(
-//                 //   reverse: true,
-//                 //   children: <Widget>[
-//                 //     Column(
-//                 //       children: gameList,
-//                 //     ),
-//                 //   ],
-//                 // );
-//               },
-//             ),
-//           ),
-          MaterialButton(
-            child: Container(
-              height: 40,
-              width: double.infinity,
-              child: Center(child: Text('Add', style: Theme.of(context).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold))),
-              // child: FlatButton(
-              //   child: Text('Add', style: Theme.of(context).textTheme.bodyText2!.copyWith(fontWeight: FontWeight.bold)),
-              //   // child: Text('Add', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              //   onPressed: (){
-              //     Navigator.push(context, MaterialPageRoute(builder: (context) {
-              //       return ChooseBoardScreen();
-              //     }));
-              //   },
-              //   minWidth: double.infinity,
-              // ),),
+      //           Expanded(
+      //             child: StreamBuilder<QuerySnapshot>(
+      //               //Every time something happens in the 'setups' collection, every list item created by this Stream will be rebuilt
+      //               stream: MyFirebase.storeObject.collection('setups').orderBy('timestamp', descending: true).snapshots(),
+      //               builder: (context, setupsSnapshot) {
+      //                 print('New snapshot in game hub StreamBuilder');
+      //                 if (setupsSnapshot.hasData) {  //I think I can remove this... because a snapshot in a stream (a QuerySnapshot) ALWAYS has data...?
+      // //                  print('The first document ID is ${setupsSnapshot.data.docs[0].id}');
+      //                   gameList = [];
+      //                   int i = 0;
+      //                   int j = 0;
+      //                   for (DocumentSnapshot setup in setupsSnapshot.data.docs) {
+      //                     i = setup.data()['i'];
+      //                     j++;
+      //                     // j = i;
+      //                     //Temporary code for adding 'timestamp' field where missing:
+      // //                    print('timestamp is ${setup.data()['timestamp'].toDate()}');
+      // //                    print(i);
+      // //                    //January 1, 2001 at 12:00:00 AM UTC+3
+      // //                    if (setup.data()['timestamp'] == null) {
+      // //                      print(i);
+      // //                      print(DateTime(2001));
+      // //
+      // //                      //Adds a new field to the document, but overwrites any old field with the same name (key), i.e. 'results':
+      // //                      firestoreObject.collection('setups').doc(setup.id).set({
+      // //                        'timestamp': DateTime(2001),
+      // //
+      // //                      }, merge: true);
+      // //                    }
+      // //                  if(setup.data()['sender'] == 'marshallmusyimi@gmail.com') {
+      // //                    print('Sender: ${setup.data()['sender']}, timestamp: ${setup.data()['timestamp'].toDate()}');
+      // //                  }
+      // //                  print('Sender: ${setup.data()['sender']}, timestamp: ${setup.data()['timestamp'].toDate()}');
+      // //                    if(setup.data()['timestamp'])
+      //                     gameList.add(GestureDetector(
+      //                       child: GameEntry(
+      //                         setup: setup,
+      //                         i: i ?? gameList.length,
+      //                         parentContext: context,
+      //                         setParentState: (){
+      //                           setState(() {});
+      //                         },
+      //                       ),
+      //                       onTap: () async {
+      //                         ///Run this to delete results by clicking:
+      // //                        del++;
+      // //                        print('Delete all results for entry no. $i?');
+      // //                        if(del==2){
+      // //                          firestoreObject.collection('setups').doc(setup.id).updateData(
+      // //                              {'results': FieldValue.delete()}
+      // //                          ).whenComplete(() {
+      // //                            print('Field deleted');
+      // //                          });
+      // //                          del=0;
+      // //                        }
+      //                         ///Run this to change sender from email to playerId by clicking:
+      // //                        QuerySnapshot userInfos = await firestoreObject.collection('userinfo').get();  //No stream needed, coz the document no is not supposed to change
+      // //                        String senderId;
+      // //                        for(var user in userInfos.docs) {
+      // //                          if(setup.data()['sender']== user['email']){
+      // //                            senderId = user.id;
+      // //                            print('senderId is $senderId');
+      // //                          }
+      // //
+      // //                        }
+      // //                          firestoreObject.collection('setups'
+      // //                              ).doc(setup.id).updateData(
+      // //                              {'sender': senderId}
+      // //                          ).whenComplete(() {
+      // //                            print('Field deleted');
+      // //                          });
+      // //                          del=0;
+      //                         ///---------
+      //
+      //                         Play thisGame = Play(
+      //                             numberOfAtoms: (setup.data()['atoms'].length / 2).toInt(),
+      //                             heightOfPlayArea: setup.data()['widthAndHeight'][1],
+      //                             widthOfPlayArea: setup.data()['widthAndHeight'][0]);
+      //                         thisGame.setupData = setup.data();
+      //                         thisGame.online = true;
+      //                         thisGame.playerId = myUid;
+      //                         // thisGame.playerId = await futurePlayerId;
+      //                         Navigator.push(context, MaterialPageRoute(builder: (context) {
+      //                           return PlayScreen(thisGame: thisGame, setup: setup);
+      //                         }));
+      //                       },
+      //                     ));
+      //                   }
+      //                 } else {
+      //                   return Center(
+      //                     child: CircularProgressIndicator(),
+      //                   );
+      //                 }
+      //                 return ListView.builder(
+      //                   reverse: true,
+      //                   itemCount: gameList.length,
+      //                   itemBuilder: (context, index) {
+      //                     return gameList[index];
+      //                   },
+      //                 );
+      //                 // return ListView(
+      //                 //   reverse: true,
+      //                 //   children: <Widget>[
+      //                 //     Column(
+      //                 //       children: gameList,
+      //                 //     ),
+      //                 //   ],
+      //                 // );
+      //               },
+      //             ),
+      //           ),
+      //           TextButton(
+      //             child: Container(
+      //               height: 40,
+      //               width: double.infinity,
+      //               child: Center(child: Text('Add', style: Theme.of(context).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold))),
+      //               // child: FlatButton(
+      //               //   child: Text('Add', style: Theme.of(context).textTheme.bodyText2!.copyWith(fontWeight: FontWeight.bold)),
+      //               //   // child: Text('Add', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      //               //   onPressed: (){
+      //               //     Navigator.push(context, MaterialPageRoute(builder: (context) {
+      //               //       return ChooseBoardScreen();
+      //               //     }));
+      //               //   },
+      //               //   minWidth: double.infinity,
+      //               // ),),
+      //             ),
+      //             onPressed: () {
+      //               Navigator.push(context, MaterialPageRoute(builder: (context) {
+      //                 return ChooseBoardScreen();
+      //               }));
+      //             },
+      //             // BottomAppBar(
+      //             // materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      //             // shape: RoundedRectangleBorder(),
+      //             // padding: EdgeInsets.all(0),
+      //             // color: Colors.pink.shade600,
+      //             // elevation: 0,
+      // //             child: GestureDetector(
+      // //               child: Container(
+      // // //              child: Center(child: Text('Add', style: TextStyle(color: kBoardColor, fontWeight: FontWeight.bold))),
+      // //                 child: Center(child: Text('Add', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+      // // //              height: 50,
+      // //                 height: 40,
+      // //                 width: double.infinity,
+      // //               ),
+      // //               onTap: (){
+      // //                 Navigator.push(context, MaterialPageRoute(builder: (context) {
+      // //                   return ChooseBoardScreen();
+      // //                 }));
+      // //               },
+      // //             ),
+      //           ),
+            MaterialButton(
+              child: Container(
+                height: 40,
+                width: double.infinity,
+                child: Center(child: Text('Add', style: Theme.of(context).textTheme.bodyMedium!.copyWith(fontWeight: FontWeight.bold))),
+                // child: FlatButton(
+                //   child: Text('Add', style: Theme.of(context).textTheme.bodyText2!.copyWith(fontWeight: FontWeight.bold)),
+                //   // child: Text('Add', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                //   onPressed: (){
+                //     Navigator.push(context, MaterialPageRoute(builder: (context) {
+                //       return ChooseBoardScreen();
+                //     }));
+                //   },
+                //   minWidth: double.infinity,
+                // ),),
+              ),
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return ChooseBoardScreen();
+                }));
+              },
+              // BottomAppBar(
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(),
+              padding: EdgeInsets.all(0),
+              color: Colors.pink.shade600,
+              elevation: 0,
+      //             child: GestureDetector(
+      //               child: Container(
+      // //              child: Center(child: Text('Add', style: TextStyle(color: kBoardColor, fontWeight: FontWeight.bold))),
+      //                 child: Center(child: Text('Add', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+      // //              height: 50,
+      //                 height: 40,
+      //                 width: double.infinity,
+      //               ),
+      //               onTap: (){
+      //                 Navigator.push(context, MaterialPageRoute(builder: (context) {
+      //                   return ChooseBoardScreen();
+      //                 }));
+      //               },
+      //             ),
             ),
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) {
-                return ChooseBoardScreen();
-              }));
-            },
-            // BottomAppBar(
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            shape: RoundedRectangleBorder(),
-            padding: EdgeInsets.all(0),
-            color: Colors.pink.shade600,
-            elevation: 0,
-//             child: GestureDetector(
-//               child: Container(
-// //              child: Center(child: Text('Add', style: TextStyle(color: kBoardColor, fontWeight: FontWeight.bold))),
-//                 child: Center(child: Text('Add', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-// //              height: 50,
-//                 height: 40,
-//                 width: double.infinity,
-//               ),
-//               onTap: (){
-//                 Navigator.push(context, MaterialPageRoute(builder: (context) {
-//                   return ChooseBoardScreen();
-//                 }));
-//               },
-//             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

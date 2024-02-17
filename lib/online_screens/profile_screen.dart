@@ -1,6 +1,8 @@
+import 'package:blackbox/screens/spinner_screen.dart';
 import 'package:blackbox/units/small_functions.dart';
 import 'package:blackbox/global.dart';
-import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';import 'package:blackbox/units/small_widgets.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
+import 'package:blackbox/units/small_widgets.dart';
 import 'package:blackbox/online_button.dart';
 import 'package:blackbox/units/blackbox_popup.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -46,7 +48,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, TextEditingController> controller = {};
 
   void profileChangeStream() {
-    profileListener = MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).snapshots().listen((event) {
+    profileListener = MyFirebase.storeObject
+        .collection(kCollectionUserInfo)
+        .doc(myUid)
+        .snapshots()
+        .listen((event) {
       myProfileData = event.data();
       print('myProfileData is');
       myPrettyPrint(myProfileData);
@@ -54,7 +60,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (myProfileData != null) {
         for (String field in profileTextFields) {
           controller.addAll({
-            field: TextEditingController(text: myProfileData![field].toString()),
+            field:
+                TextEditingController(text: myProfileData![field].toString()),
           });
         }
         print('controller map keys are ${controller.keys}');
@@ -79,42 +86,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String? newValue;
     return (editing[key] ?? false)
         ? Column(
-      children: [
-        TextField(
-          onChanged: (value) {
-            newValue = value;
-          },
-          decoration: InputDecoration(),
-          controller: controller[key],
-          autofocus: true,
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            MyRaisedButton(
-                child: Text('Cancel'),
-                onPressed: () {
-                  setState(() {
+            children: [
+              TextField(
+                onChanged: (value) {
+                  newValue = value;
+                },
+                decoration: InputDecoration(),
+                controller: controller[key],
+                autofocus: true,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  MyRaisedButton(
+                      child: Text('Cancel'),
+                      onPressed: () {
+                        setState(() {
                           newValue = null;
                           editing[key] = false;
-                          controller[key]!.text = myProfileData![key].toString(); //Needed for zoom
+                          controller[key]!.text =
+                              myProfileData![key].toString(); //Needed for zoom
                         });
-                }),
-            MyRaisedButton(
-                child: Text('Save Changes'),
-                onPressed: () async {
+                      }),
+                  MyRaisedButton(
+                      child: Text('Save Changes'),
+                      onPressed: () async {
                         print('newValue is $newValue');
                         if (newValue != null) {
                           showSpinner = true;
                           // print('Key is $key');
-                          MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).update({key: newValue});
+                          MyFirebase.storeObject
+                              .collection(kCollectionUserInfo)
+                              .doc(myUid)
+                              .update({key: newValue});
                           if (key == kFieldScreenName) {
-                            MyFirebase.authObject.currentUser!.updateDisplayName(newValue);
+                            MyFirebase.authObject.currentUser!
+                                .updateDisplayName(newValue);
                             if (newValue == '' || newValue == 'Anonymous') {
                               setState(() {
                                 editing[key] = false;
                               });
-                              await Future.delayed(Duration(milliseconds: 200)); // To give keyboard time to pop
+                              await Future.delayed(Duration(
+                                  milliseconds:
+                                      200)); // To give keyboard time to pop
                               BlackboxPopup(
                                       context: context,
                                       title: 'Information',
@@ -125,46 +139,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           }
                           newValue = null;
                         }
-                  setState(() {
-                    editing[key] = false;
-                  });
-                }),
-          ],
-        ),
-      ],
-    )
-        : Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-            child: GestureDetector(
-              child: Text(
-                '${myProfileData != null ? myProfileData![key] : ''}',
-                style: TextStyle(color: Colors.blueGrey.shade100),
+                        setState(() {
+                          editing[key] = false;
+                        });
+                      }),
+                ],
               ),
-              onTap: () {
-                tappedEdit(key: key);
-              },
-            )),
-        GestureDetector(
-          child: Icon(Icons.edit),
-          onTap: () {
-            tappedEdit(key: key);
-          },
-        ),
-      ],
-    );
+            ],
+          )
+        : Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                  child: GestureDetector(
+                child: Text(
+                  '${myProfileData != null ? myProfileData![key] : ''}',
+                  style: TextStyle(color: Colors.blueGrey.shade100),
+                ),
+                onTap: () {
+                  tappedEdit(key: key);
+                },
+              )),
+              GestureDetector(
+                child: Icon(Icons.edit),
+                onTap: () {
+                  tappedEdit(key: key);
+                },
+              ),
+            ],
+          );
   }
 
   Widget authUserField(String key) {
     print('Building authUserField');
     return (editing[key] ?? false)
         ? Column(
-      children: [
-        Center(
+            children: [
+              Center(
                 child: SelectableLinkify(
-                  text: 'Click "Change ${capitalizeFirst(key)}" and an email will be sent to your registered email address with '
+                  text:
+                      'Click "Change ${capitalizeFirst(key)}" and an email will be sent to your registered email address with '
                       'instructions on how to change your ${key.toLowerCase()}.\n\n'
                       'If you don\'t have access to your blackbox email address or if you have forgotten it, '
                       'contact support at karolinahagegard@gmail.com and we shall sort you out! 😉\n',
@@ -179,27 +194,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // child: Text('Click "Change ${capitalizeFirst(key)}" and an email will be sent to your registered email address with '
                 //     'instructions on how to change your ${key.toLowerCase()}.\n\n'
                 //     'If you don\'t have access to your blackbox email address or if you have forgotten it, '
-          //     'contact support at karolinahagegard@gmail.com and we shall sort you out! 😉\n'
-          // ),
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            MyRaisedButton(
-                child: Text('Cancel'),
-                onPressed: () {
-                  setState(() {
+                //     'contact support at karolinahagegard@gmail.com and we shall sort you out! 😉\n'
+                // ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  MyRaisedButton(
+                      child: Text('Cancel'),
+                      onPressed: () {
+                        setState(() {
                           editing[key] = false;
-                          controller[key]!.text = myProfileData![key].toString(); //Needed for zoom
+                          controller[key]!.text =
+                              myProfileData![key].toString(); //Needed for zoom
                         });
-                }),
-            MyRaisedButton(
-                child: Text('Change ${capitalizeFirst(key)}'),
-                onPressed: () async {
-                  print('Before change password');
-                  // await MyFirebase.authObject.currentUser.updatePassword('111111');  //Ok, this works...
-                  await MyFirebase.authObject.sendPasswordResetEmail(email: MyFirebase.authObject.currentUser!.email!);
-                  print('After change password');
+                      }),
+                  MyRaisedButton(
+                      child: Text('Change ${capitalizeFirst(key)}'),
+                      onPressed: () async {
+                        print('Before change password');
+                        // await MyFirebase.authObject.currentUser.updatePassword('111111');  //Ok, this works...
+                        await MyFirebase.authObject.sendPasswordResetEmail(
+                            email: MyFirebase.authObject.currentUser!.email!);
+                        print('After change password');
                         setState(() {
                           editing[key] = false;
                           // zoomChanged = false;
@@ -248,7 +265,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     print('Building ${widget.runtimeType}...');
-    GameHubUpdates gameHubProviderListening = Provider.of<GameHubUpdates>(context, listen: true);
+    GameHubUpdates gameHubProviderListening =
+        Provider.of<GameHubUpdates>(context, listen: true);
     return Scaffold(
       appBar: AppBar(
         title: Text('my profile'),
@@ -257,7 +275,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: ModalProgressHUD(
         inAsyncCall: showSpinner,
         child: Padding(
-          padding: const EdgeInsets.only(left: _outerPadding, top: _outerPadding, right: _outerPadding),
+          padding: const EdgeInsets.only(
+              left: _outerPadding, top: _outerPadding, right: _outerPadding),
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -316,12 +335,13 @@ class HeadlineText extends StatelessWidget {
   }
 }
 
-Future deleteAccount(BuildContext context, Function setProfileScreenState) async {
+Future deleteAccount(
+    BuildContext context, Function setProfileScreenState) async {
   BlackboxPopup(
     context: context,
     title: 'Are you sure you want to delete your blackbox account?',
     desc: 'This action can not be undone.'
-        '\n\nYou will no longer be able to play online (unless with another account).'
+        '\n\nYou will no longer be able to play online, but you can still play offline.'
         '\n\nYour setups and results in the game hub will still be there, but with'
         ' an anonymous screen name.'
         '\n\nYou can always make a new blackbox account later.',
@@ -335,7 +355,9 @@ Future deleteAccount(BuildContext context, Function setProfileScreenState) async
 // class DeleteAccountButton extends StatelessWidget {
 class DeleteAccountButton extends BlackboxPopupButton {
   // DeleteAccountButton(this.context, this.setProfileScreenState);
-  DeleteAccountButton(this.context, this.setProfileScreenState) : super(text: "text", onPressed: (){});
+  DeleteAccountButton(this.context, this.setProfileScreenState)
+      : super(text: "text", onPressed: () {});
+
   // DeleteAccountButton(this.context, this.setProfileScreenState);
 
   final BuildContext context;
@@ -347,15 +369,28 @@ class DeleteAccountButton extends BlackboxPopupButton {
     return BlackboxPopupButton(
       text: text,
       onPressed: () async {
-        Navigator.pop(context);
-        setProfileScreenState(spinner: true);
+        Navigator.popUntil(context, (route) => route.isFirst);
+        Navigator.push(context, PageRouteBuilder(
+              pageBuilder: (context, anim1, anim2) {
+                return SpinnerScreen();
+              },
+              transitionDuration: Duration(days: 0),
+            ));
+
+        // Navigator.pop(context);
+        // setProfileScreenState(spinner: true);
         // await Future.delayed(Duration(seconds: 1));
-        await MyFirebase.storeObject.collection(kCollectionUserInfo).doc(myUid).delete();
+        await MyFirebase.storeObject
+            .collection(kCollectionUserInfo)
+            .doc(myUid)
+            .delete();
         await MyFirebase.authObject.currentUser!.delete();
         // :.(
 
-        Navigator.popUntil(context, (route) => route.isFirst);
+        // Navigator.popUntil(context, (route) => route.isFirst);
+        // await Future.delayed(Duration(milliseconds: 400));
 
+        Navigator.pop(context);
         BlackboxPopup(
           context: GlobalVariable.navState.currentContext!,
           title: 'Complete',
