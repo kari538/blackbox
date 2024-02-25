@@ -74,7 +74,6 @@ class Play {
   int beamScore = 0;
   int atomScore = 0;
   List<int> sentBeams = [];
-  /// Why is this nullable and not just []?:
   List<Widget?> edgeTileChildren = [];
   List<int?>? beamImageIndexA;
   List<int?>? beamImageIndexB;
@@ -155,6 +154,7 @@ class Play {
                     .equals(searchPosition, beam.projectedPosition.toList())) {
                   result = 'hit';
                   // print('result is hit');
+                  setEdgeTiles(inSlot: inSlot, beamResult: result);
                   return result;
                   //If the atom that the probe found is NOT in the projected position:
                 } else {
@@ -169,12 +169,14 @@ class Play {
                       if (ListEquality().equals(beam.projectedPosition.toList(),
                           atom.position.toList())) {
                         result = 'hit';
+                        setEdgeTiles(inSlot: inSlot, beamResult: result);
                         return result;
                       }
                     }
                     //There is no atom in the projected position and the beam is still in its starting position:
                     result = 'reflection';
                     // print('result is reflection');
+                    setEdgeTiles(inSlot: inSlot, beamResult: result);
                     return result;
                   }
                   //change direction
@@ -214,6 +216,7 @@ class Play {
           widthOfPlayArea: widthOfPlayArea);
       if (result == beam.start) result = 'reflection';
       // print('result is $result');
+      setEdgeTiles(inSlot: inSlot, beamResult: result);
       return result;
     }
 
@@ -222,6 +225,7 @@ class Play {
     // print('beamsAndResults is $beamsAndResults');
     beamsAndResults.add([inSlot, result]);
     // print('beamsAndResults is $beamsAndResults');
+    setEdgeTiles(inSlot: inSlot, beamResult: result);
     return result;
   }
 
@@ -247,13 +251,13 @@ class Play {
         int index = beamImageIndexA![beamCount]!;
         // If the sender has sent a beam which the receiver doesn't have:
         if (index >= beamImagesA.length) {
-          edgeTileChildren![inSlot! - 1] =
+          edgeTileChildren[inSlot! - 1] =
               Image(image: AssetImage('images/beams/beam_doesnt_exist.png'));
-          edgeTileChildren![beamResult - 1] =
+          edgeTileChildren[beamResult - 1] =
               Image(image: AssetImage('images/beams/beam_doesnt_exist.png'));
         } else {
-          edgeTileChildren![inSlot! - 1] = beamImagesA[index];
-          edgeTileChildren![beamResult - 1] = beamImagesA[index];
+          edgeTileChildren[inSlot! - 1] = beamImagesA[index];
+          edgeTileChildren[beamResult - 1] = beamImagesA[index];
           // edgeTileChildren[inSlot - 1] = beamImagesA[beamCount];
           // edgeTileChildren[beamResult - 1] = beamImagesA[beamCount];
         }
@@ -263,13 +267,13 @@ class Play {
 
         // If the sender has sent a beam which the receiver doesn't have:
         if (index >= beamImagesB.length) {
-          edgeTileChildren![inSlot! - 1] =
+          edgeTileChildren[inSlot! - 1] =
               Image(image: AssetImage('images/beams/beam_doesnt_exist.png'));
-          edgeTileChildren![beamResult - 1] =
+          edgeTileChildren[beamResult - 1] =
               Image(image: AssetImage('images/beams/beam_doesnt_exist.png'));
         } else {
-          edgeTileChildren![inSlot! - 1] = beamImagesB[index];
-          edgeTileChildren![beamResult - 1] = beamImagesB[index];
+          edgeTileChildren[inSlot! - 1] = beamImagesB[index];
+          edgeTileChildren[beamResult - 1] = beamImagesB[index];
           // edgeTileChildren[inSlot - 1] = beamImagesB[beamCount - beamImagesA.length];
           // edgeTileChildren[beamResult - 1] = beamImagesB[beamCount - beamImagesA.length];
         }
@@ -341,7 +345,6 @@ class Play {
     } else if (removedMarkup != null) {
       move = {kPlayerMoveRemoveMarkup: removedMarkup.toList()};
       // move = kPlayerMoveRemoveMarkup + '${removedMarkup.toList()}';
-      // TODO: $$$ Call the below from somewhere:
     } else if (fillWithAtoms != null) {
       move = kPlayerMoveFillWithAtoms;
       // move = kPlayerMoveFillWithAtoms;
@@ -383,6 +386,9 @@ class Play {
     return _onlineMoves;
   }
 
+  /// Gives values to correctAtoms, misplacedAtoms, missedAtoms and 
+  /// atomScore = misplacedAtoms.length * 5, by simply comparing player's
+  /// answer with setup.
   void rawAtomScore() {
     correctAtoms = [];
     misplacedAtoms = [];
@@ -427,7 +433,7 @@ class Play {
     atomScore = misplacedAtoms.length * 5;
   }
 
-  /// If exact alternative solution found:
+  /// If exact alternative solution is found:
   /// print('Returning senderGame and playerGame which are equivalent.');
   ///
   /// return [senderGame.edgeTileChildren, senderGame, playerGame];
@@ -446,6 +452,9 @@ class Play {
     beamsAndResults = [];
     rawAtomScore();
     // bool equalSol = false;
+    
+    // If raw atom score is 0, look no further! Everybody happy.
+    // But if it's higher:
     if (atomScore > 0) {
       // Check if the player's provided answer is an alternative solution
       Play senderGame;
@@ -456,18 +465,24 @@ class Play {
           widthOfPlayArea: widthOfPlayArea,
           heightOfPlayArea: heightOfPlayArea);
       senderGame.atoms = atoms;
+      senderGame.beamImagesA = senderGame.beamImagesA;
+      senderGame.beamImagesB = senderGame.beamImagesB;
+      senderGame.beamImageIndexA = beamImageIndexA;
+      senderGame.beamImageIndexB = beamImageIndexB;
       playerGame = Play(
           numberOfAtoms: numberOfAtoms,
           widthOfPlayArea: widthOfPlayArea,
           heightOfPlayArea: heightOfPlayArea);
       playerGame.atoms = playerAtoms;
+      playerGame.beamImageIndexA = beamImageIndexA;
+      playerGame.beamImageIndexB = beamImageIndexB;
       // print('senderGame atoms are ${senderGame.atoms}');
 
       // print('Before running areSolutionsEquivalent(), senderGame.missedAtoms is: length ${senderGame.missedAtoms.length},  ${senderGame.missedAtoms}');
       print(
           'Before running areSolutionsEquivalent(), senderGame.beamsAndResults is: length ${senderGame.beamsAndResults.length},  ${senderGame.beamsAndResults}');
       bool solutionsEquivalent = areSolutionsEquivalent(senderGame, playerGame);
-      print('Original solutions are equivalent? $solutionsEquivalent!');
+      print('Original player solution is equivalent? $solutionsEquivalent!');
       // print('After running areSolutionsEquivalent(), senderGame.missedAtoms is: length ${senderGame.missedAtoms.length}, ${senderGame.missedAtoms}');
       print(
           'After running areSolutionsEquivalent(), senderGame.beamsAndResults is: length ${senderGame.beamsAndResults.length}, ${senderGame.beamsAndResults}');
@@ -479,9 +494,10 @@ class Play {
         print(
             'Before running senderGame.setEdgeTiles(), senderGame.sentBeams is ${senderGame.sentBeams}');
 
-        for (List<dynamic> bnr in senderGame.beamsAndResults) {
-          senderGame.setEdgeTiles(inSlot: bnr[0], beamResult: bnr[1]);
-        }
+        // TODO: (Will try to comment this out, since I put setEdgeTiles inside sendBeam:)
+        // for (List<dynamic> bnr in senderGame.beamsAndResults) {
+        //   senderGame.setEdgeTiles(inSlot: bnr[0], beamResult: bnr[1]);
+        // }
         print(
             'After running senderGame.setEdgeTiles(), senderGame.sentBeams is ${senderGame.sentBeams}');
         // print('Before returning, edgeTileChildren is ${senderGame.edgeTileChildren}');
@@ -492,6 +508,9 @@ class Play {
       }
 
       senderGame.beamsAndResults = [];
+      // Not sure what this does with edgeTileChildren:
+      // edgeTileChildren =
+      //   List<Widget?>.filled((heightOfPlayArea + widthOfPlayArea) * 2, null);
       print('Solutions were not exactly equivalent');
 
       // If there was no alternative solution that's exactly correct, there might be one that's more correct than the raw score.
@@ -709,7 +728,8 @@ class Play {
     // return tempGame.beamsAndResults;
   }
 
-  ///----------------------------------------------------------
+  /// Fires all beams for both games. Returns true if beam results are identical,
+  /// otherwise returns false.
   static bool areSolutionsEquivalent(Play _game1, Play _game2) {
     print('Running areSolutionsEquivalent()');
     _game1.beamsAndResults = [];

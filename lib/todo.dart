@@ -20,7 +20,8 @@
 //TODO: Debug setup 341
 //TODO: *** Make step-by-step game review
 //TODO: Save offline games to disk
-//TODO: Do I REALLY need both a Results and a SentResults screen....??
+//TODO: (Do I REALLY need both a Results and a SentResults screen....??)
+//TODO: Other solutions should have the same shuffle for edgeTileChildren as thisGame.
 //TODO:
 //TODO:
 

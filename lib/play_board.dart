@@ -107,7 +107,7 @@ class _PlayBoardState extends State<PlayBoard> {
                 // dynamic result = thisGame.getBeamResult(
                 //   beam: Beam(start: slotNo, widthOfPlayArea: thisGame.widthOfPlayArea, heightOfPlayArea: thisGame.heightOfPlayArea),
                 // );
-                thisGame.setEdgeTiles(inSlot: slotNo, beamResult: result);
+                // thisGame.setEdgeTiles(inSlot: slotNo, beamResult: result);
                 thisGame.setPlayerMoves(beam: slotNo, setup: setup);
                 setState(() {});
                 refreshParent();

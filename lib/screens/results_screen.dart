@@ -243,276 +243,278 @@ class ResultsScreen extends StatelessWidget {
                 PlayScreenMenu(thisGame, entries: [4])
               ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            thisGame.online
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      //Left info texts:
-                      Expanded(
-                        child: Column(
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              thisGame.online
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        //Left info texts:
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Text('online')
+                              InfoText('Setup no ${setupData['i']}'),
+                              InfoText(
+                                  'By ${Provider.of<GameHubUpdates>(context).getScreenName(setupData[kFieldSender])}'),
+                            ],
+                          ),
+                        ),
+                        //Right info texts:
+                        Column(
                           mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            // Text('online')
-                            InfoText('Setup no ${setupData['i']}'),
-                            InfoText(
-                                'By ${Provider.of<GameHubUpdates>(context).getScreenName(setupData[kFieldSender])}'),
+                            InfoText('Started: $startedString'),
+                            InfoText('Finished: $finishedString'),
+                            InfoText('Time played: $timePlayedString'),
                           ],
                         ),
-                      ),
-                      //Right info texts:
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          InfoText('Started: $startedString'),
-                          InfoText('Finished: $finishedString'),
-                          InfoText('Time played: $timePlayedString'),
-                        ],
-                      ),
 
-                      // thisGame.online ? Column(
-                      //   children: [
-                      //     Row(
-                      //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      //       children: [
-                      //         // Text('online')
-                      //         InfoText('Setup no ${setupData['i']}'),
-                      //         // InfoText('Started: ${setupData[kFieldPlaying][playingId][kSubFieldStartedPlaying] != null ? setupData[kFieldPlaying][playingId][kSubFieldStartedPlaying].toDate() : 'N/A'}'),
-                      //       ],
-                      //     ),
-                      //     Row(
-                      //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      //       children: [
-                      //         InfoText('By ${Provider.of<GameHubUpdates>(context).getScreenName(setupData[kFieldSender])}'),
-                      //         // InfoText('Last move: ${setupData[kFieldPlaying][playingId][kSubFieldLatestMove] != null ? setupData[kFieldPlaying][playingId][kSubFieldLatestMove].toDate() : 'N/A'}'),
-                      //       ],
-                      //     ),
-                    ],
-                  )
-                : SizedBox(/*child: Text('offline')*/),
-            Expanded(
-              // flex: altSol ? testing != null ? 2 : 3 : 4,
-              flex: altSol
-                  ? 3
-                  : multiDisplay != null
-                      ? 3
-                      : 4,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Text(
+                        // thisGame.online ? Column(
+                        //   children: [
+                        //     Row(
+                        //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        //       children: [
+                        //         // Text('online')
+                        //         InfoText('Setup no ${setupData['i']}'),
+                        //         // InfoText('Started: ${setupData[kFieldPlaying][playingId][kSubFieldStartedPlaying] != null ? setupData[kFieldPlaying][playingId][kSubFieldStartedPlaying].toDate() : 'N/A'}'),
+                        //       ],
+                        //     ),
+                        //     Row(
+                        //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        //       children: [
+                        //         InfoText('By ${Provider.of<GameHubUpdates>(context).getScreenName(setupData[kFieldSender])}'),
+                        //         // InfoText('Last move: ${setupData[kFieldPlaying][playingId][kSubFieldLatestMove] != null ? setupData[kFieldPlaying][playingId][kSubFieldLatestMove].toDate() : 'N/A'}'),
+                        //       ],
+                        //     ),
+                      ],
+                    )
+                  : SizedBox(/*child: Text('offline')*/),
+              Expanded(
+                // flex: altSol ? testing != null ? 2 : 3 : 4,
+                flex: altSol
+                    ? 3
+                    : multiDisplay != null
+                        ? 3
+                        : 4,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Text(
+                            multiDisplay == null
+                                ? 'Your score'
+                                : playerMovesReview != true
+                                    ? 'Alternative\nsolutions'
+                                    : 'Player\nmoves',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 35),
+                          ),
                           multiDisplay == null
-                              ? 'Your score'
-                              : playerMovesReview != true
-                                  ? 'Alternative\nsolutions'
-                                  : 'Player\nmoves',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 35),
-                        ),
-                        multiDisplay == null
-                            ? Center(
-                                child: Container(
-//                        color: Colors.blue,
-                                  width: 200,
-                                  child: Row(
-                                    children: <Widget>[
-                                      Expanded(
+                              ? Center(
+                                  child: Container(
+        //                        color: Colors.blue,
+                                    width: 200,
+                                    child: Row(
+                                      children: <Widget>[
+                                        Expanded(
+                                            flex: 2,
+                                            child: Text(
+                                              'beam score:',
+                                              textAlign: TextAlign.right,
+                                            )),
+                                        Expanded(
+                                          flex: 1,
+                                          child: Padding(
+                                            padding: EdgeInsets.only(right: 26.0),
+                                            child: Text(
+                                              '${thisGame.beamScore}',
+                                              textAlign: TextAlign.right,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              : SizedBox(),
+                          multiDisplay == null
+                              ? Center(
+                                  child: Container(
+        //                        color: Colors.blue,
+                                    width: 200,
+                                    child: Row(
+                                      children: <Widget>[
+                                        Expanded(
                                           flex: 2,
                                           child: Text(
-                                            'beam score:',
-                                            textAlign: TextAlign.right,
-                                          )),
-                                      Expanded(
-                                        flex: 1,
-                                        child: Padding(
-                                          padding: EdgeInsets.only(right: 26.0),
-                                          child: Text(
-                                            '${thisGame.beamScore}',
+                                            'atom penalty:',
                                             textAlign: TextAlign.right,
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                        Expanded(
+                                          child: Padding(
+                                            padding: EdgeInsets.only(right: 26.0),
+                                            child: Text('${thisGame.atomScore} ',
+                                                textAlign: TextAlign.right),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              )
-                            : SizedBox(),
-                        multiDisplay == null
-                            ? Center(
-                                child: Container(
-//                        color: Colors.blue,
-                                  width: 200,
-                                  child: Row(
-                                    children: <Widget>[
-                                      Expanded(
-                                        flex: 2,
-                                        child: Text(
-                                          'atom penalty:',
-                                          textAlign: TextAlign.right,
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Padding(
-                                          padding: EdgeInsets.only(right: 26.0),
-                                          child: Text('${thisGame.atomScore} ',
-                                              textAlign: TextAlign.right),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : SizedBox(),
-                        multiDisplay == null
-                            ? Center(
-                                child: Container(
-//                        color: Colors.blue,
-                                  width: 200,
-                                  child: Row(
-                                    children: <Widget>[
-                                      Expanded(
-                                        flex: 2,
-                                        child: Text(
-                                          'total:',
-                                          //${(thisGame.beamScore + thisGame.atomScore) < 10 ? ' ' : ''}
-                                          textAlign: TextAlign.right,
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Padding(
-                                          padding: EdgeInsets.only(right: 26.0),
+                                )
+                              : SizedBox(),
+                          multiDisplay == null
+                              ? Center(
+                                  child: Container(
+        //                        color: Colors.blue,
+                                    width: 200,
+                                    child: Row(
+                                      children: <Widget>[
+                                        Expanded(
+                                          flex: 2,
                                           child: Text(
-                                            '${thisGame.beamScore + thisGame.atomScore}',
+                                            'total:',
+                                            //${(thisGame.beamScore + thisGame.atomScore) < 10 ? ' ' : ''}
                                             textAlign: TextAlign.right,
                                             style: TextStyle(
                                                 fontWeight: FontWeight.bold),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                        Expanded(
+                                          child: Padding(
+                                            padding: EdgeInsets.only(right: 26.0),
+                                            child: Text(
+                                              '${thisGame.beamScore + thisGame.atomScore}',
+                                              textAlign: TextAlign.right,
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              )
-                            : SizedBox(),
-                      ],
-                    ),
-                    altSol ? SizedBox(height: 30) : SizedBox(),
-                    altSol
-                        ? Text(
-                            'Multiple solutions exist!',
-                            style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue),
-                          )
-                        : SizedBox(),
-                  ],
+                                )
+                              : SizedBox(),
+                        ],
+                      ),
+                      altSol ? SizedBox(height: 30) : SizedBox(),
+                      altSol
+                          ? Text(
+                              'Multiple solutions exist!',
+                              style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue),
+                            )
+                          : SizedBox(),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            //Scaffold, Center, Column, Expanded, Padding, AspectRatio, Container, Board (returns Column)
-            Expanded(
-              flex: 6,
-              child: Column(
-                children: <Widget>[
-                  multiDisplay == null
-                      ? SizedBox(child: Text('The correct answer:'), height: 30)
-                      : SizedBox(height: 30),
-                  Expanded(
-                    child: Padding(
-//              child: Padding(
-                      padding: const EdgeInsets.only(
-                          left: 8.0, top: 8.0, right: 8.0, bottom: 10),
-                      child: AspectRatio(
-                        aspectRatio: (thisGame.widthOfPlayArea + 2) /
-                            (thisGame.heightOfPlayArea + 2),
-                        child: Container(
-                          child: BoardGrid(
-                              playWidth: thisGame.widthOfPlayArea,
-                              playHeight: thisGame.heightOfPlayArea,
-                              getEdgeTiles: getEdgeElement,
-                              getMiddleTiles: getMiddleElement),
-//                          child: Column(
-//                            verticalDirection: VerticalDirection.up,
-//                            children: boardRows(playWidth: thisGame.widthOfPlayArea, playHeight: thisGame.heightOfPlayArea),
-//                          ),
+              //Scaffold, Center, Column, Expanded, Padding, AspectRatio, Container, Board (returns Column)
+              Expanded(
+                flex: 6,
+                child: Column(
+                  children: <Widget>[
+                    multiDisplay == null
+                        ? SizedBox(child: Text('The correct answer:'), height: 30)
+                        : SizedBox(height: 30),
+                    Expanded(
+                      child: Padding(
+        //              child: Padding(
+                        padding: const EdgeInsets.only(
+                            left: 8.0, top: 8.0, right: 8.0, bottom: 10),
+                        child: AspectRatio(
+                          aspectRatio: (thisGame.widthOfPlayArea + 2) /
+                              (thisGame.heightOfPlayArea + 2),
+                          child: Container(
+                            child: BoardGrid(
+                                playWidth: thisGame.widthOfPlayArea,
+                                playHeight: thisGame.heightOfPlayArea,
+                                getEdgeTiles: getEdgeElement,
+                                getMiddleTiles: getMiddleElement),
+        //                          child: Column(
+        //                            verticalDirection: VerticalDirection.up,
+        //                            children: boardRows(playWidth: thisGame.widthOfPlayArea, playHeight: thisGame.heightOfPlayArea),
+        //                          ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  altSol
-                      ? Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: MyRaisedButton(
-                            // child: ElevatedButton(
-                            child: Text('View other solutions'),
-                            onPressed: () async {
-                              int? result = 0;
-                              int gameNo = 1;
-                              // int i = 0;
-                              Play displayGame;
-                              // displayGame.edgeTileChildren = alternativeSolutions[0];
-                              // Play displayGame = Play(numberOfAtoms: thisGame.numberOfAtoms, widthOfPlayArea: thisGame.widthOfPlayArea, heightOfPlayArea: thisGame.heightOfPlayArea);
-                              // displayGame.atoms = thisGame.atoms;
-                              // displayGame.showAtomSetting= true;  // Not working... Atoms don't show up
-                              // displayGame.fireAllBeams();
-                              // Play.fireAllBeams(displayGame);  // This is only done once...
-                              do {
-                                // uniqueGame.atoms = allUniqueSetups[gameNo];
-                                // displayGame.correctAtoms = alternativeSolutions[gameNo];
-                                //
-                                // for (Atom atom in alternativeSolutions[gameNo]) {
-                                //   displayGame.correctAtoms.add(atom.position.toList());
-                                // }
-                                displayGame = alternativeSolutions![gameNo];
-                                displayGame.edgeTileChildren =
-                                    alternativeSolutions![0];
-                                print(
-                                    'alternativeSolutions[$gameNo] is ${alternativeSolutions![gameNo]}');
-                                // Returns null if "Pop" is pressed:
-                                result = await Navigator.push(context,
-                                    PageRouteBuilder(
-                                        pageBuilder: (context, anim1, anim2) {
-                                  return ResultsScreen(
-                                      thisGame: displayGame,
-                                      setupData: {},
-                                      multiDisplay: [
-                                        gameNo,
-                                        alternativeSolutions!.length - 1
-                                      ]);
-                                }));
-                                if (result != null &&
-                                    gameNo + result > 0 &&
-                                    gameNo + result <=
-                                        alternativeSolutions!.length - 1)
-                                  gameNo += result;
-                                // displayGame.correctAtoms = [];
-                                // i++;
-                              } while (result != null /*&& i < 100*/);
-                            },
-                          ))
-                      : SizedBox(),
-                  // testing == null ? SizedBox() : TestSetupsScrollWidget(testing: testing),
-                ],
+                    altSol
+                        ? Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: MyRaisedButton(
+                              // child: ElevatedButton(
+                              child: Text('View other solutions'),
+                              onPressed: () async {
+                                int? result = 0;
+                                int gameNo = 1;
+                                // int i = 0;
+                                Play displayGame;
+                                // displayGame.edgeTileChildren = alternativeSolutions[0];
+                                // Play displayGame = Play(numberOfAtoms: thisGame.numberOfAtoms, widthOfPlayArea: thisGame.widthOfPlayArea, heightOfPlayArea: thisGame.heightOfPlayArea);
+                                // displayGame.atoms = thisGame.atoms;
+                                // displayGame.showAtomSetting= true;  // Not working... Atoms don't show up
+                                // displayGame.fireAllBeams();
+                                // Play.fireAllBeams(displayGame);  // This is only done once...
+                                do {
+                                  // uniqueGame.atoms = allUniqueSetups[gameNo];
+                                  // displayGame.correctAtoms = alternativeSolutions[gameNo];
+                                  //
+                                  // for (Atom atom in alternativeSolutions[gameNo]) {
+                                  //   displayGame.correctAtoms.add(atom.position.toList());
+                                  // }
+                                  displayGame = alternativeSolutions![gameNo];
+                                  displayGame.edgeTileChildren =
+                                      alternativeSolutions![0];
+                                  print(
+                                      'alternativeSolutions[$gameNo] is ${alternativeSolutions![gameNo]}');
+                                  // Returns null if "Pop" is pressed:
+                                  result = await Navigator.push(context,
+                                      PageRouteBuilder(
+                                          pageBuilder: (context, anim1, anim2) {
+                                    return ResultsScreen(
+                                        thisGame: displayGame,
+                                        setupData: {},
+                                        multiDisplay: [
+                                          gameNo,
+                                          alternativeSolutions!.length - 1
+                                        ]);
+                                  }));
+                                  if (result != null &&
+                                      gameNo + result > 0 &&
+                                      gameNo + result <=
+                                          alternativeSolutions!.length - 1)
+                                    gameNo += result;
+                                  // displayGame.correctAtoms = [];
+                                  // i++;
+                                } while (result != null /*&& i < 100*/);
+                              },
+                            ))
+                        : SizedBox(),
+                    // testing == null ? SizedBox() : TestSetupsScrollWidget(testing: testing),
+                  ],
+                ),
               ),
-            ),
-            multiDisplay == null
-                ? SizedBox()
-                : TestSetupsScrollWidget(indexList: multiDisplay!, playerMovesReview: playerMovesReview == true,),
-          ],
+              multiDisplay == null
+                  ? SizedBox()
+                  : TestSetupsScrollWidget(indexList: multiDisplay!, playerMovesReview: playerMovesReview == true,),
+            ],
+          ),
         ),
       ),
     );

@@ -115,13 +115,23 @@ class _PlayScreenState extends State<PlayScreen> {
         if (setupData!.containsKey(kFieldPlaying) &&
             setupData![kFieldPlaying].containsKey(thisGame.playerUid)) {
           ping();
+
+          // If I already have saved PlayerMoves:
+          // TODO: $$$ What if I started a game without PlayerMoves, and continue with PlayerMoves...?
+          if (setupData![kFieldPlaying][thisGame.playerUid].containsKey(kFieldPlayerMoves)) {
+            thisGame.playerMoves = setupData![kFieldPlaying][thisGame.playerUid][kFieldPlayerMoves];
+          }
+
+          // Get the started playing string and future from setup:
           startedPlaying = Future(() => setupData![kFieldPlaying]
                   [thisGame.playerUid]
               [kSubFieldStartedPlaying]); // If it's null it's null.
+          // if (startedPlaying != null) {  // Not good because Future...
           if (setupData![kFieldPlaying][thisGame.playerUid]
                   [kSubFieldStartedPlaying] !=
               null) {
             startedString = DateFormat('d MMM, HH:mm:ss').format(
+                // startedPlaying!.toDate());
                 setupData![kFieldPlaying][thisGame.playerUid]
                         [kSubFieldStartedPlaying]
                     .toDate());
@@ -156,8 +166,7 @@ class _PlayScreenState extends State<PlayScreen> {
           for (int receivedBeamNo in playingBeams) {
             // print("receivedBeamNo is $receivedBeamNo");
             dynamic result = thisGame.sendBeam(inSlot: receivedBeamNo);
-            // TODO: The below should be done from inside thisGame.sendBeam():
-            thisGame.setEdgeTiles(inSlot: receivedBeamNo, beamResult: result);
+            // thisGame.setEdgeTiles(inSlot: receivedBeamNo, beamResult: result);
           }
           if (sendNotification)
             sendPushNotifications(kTopicResumedPlayingSetup);
@@ -183,7 +192,7 @@ class _PlayScreenState extends State<PlayScreen> {
           ping(uploadDoc: uploadDoc);
         }
       } else {
-        // If from rebuild (clear all atoms etc), so thisGame already has its values. Much less needed:
+        // If from rebuild (clear all atoms etc), thisGame already has its values. Much less needed:
         ping();
         getStartedPlaying(Future(() => null));
       }

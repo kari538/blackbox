@@ -42,7 +42,7 @@ List<Play?> gamesFromPlayerMoves({required Play thisGame}) {
       Map<String, dynamic> moveMap = move as Map<String, dynamic>;  // Cast
       int inSlot = moveMap.values.first as int;
       dynamic result = accumulatingGame.sendBeam(inSlot: inSlot);
-      accumulatingGame.setEdgeTiles(inSlot: inSlot, beamResult: result);
+      // accumulatingGame.setEdgeTiles(inSlot: inSlot, beamResult: result);
       makeAddGame(accumulatingGame: accumulatingGame, moveGames: moveGames, i: i);
       print('Correct atoms of moveGames[$i]? is ${moveGames[i]?.correctAtoms} and of moveGames[0]? is ${moveGames[0]?.correctAtoms}');
 
@@ -268,7 +268,7 @@ void updateCorrectAtoms({required Play thisGame, required Play accumulatingGame}
         correctlyPlaced = true;
         accumulatingGame.correctAtoms.add(playerAtom);
         break;
-        // TODO: $$$ Remove this as an unfound atom! (Not necessary coz correct ends up on top)
+        // TODO: ($$$ Remove this as an unfound atom! (Not necessary coz correct ends up on top))
       }
     }
     print('After break');
