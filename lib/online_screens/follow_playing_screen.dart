@@ -313,7 +313,8 @@ class _FollowPlayingScreenState extends State<FollowPlayingScreen> {
 
   void sentBeam(int receivedBeamNo) {
     print("receivedBeamNo is $receivedBeamNo");
-    dynamic result = thisGame.sendBeam(inSlot: receivedBeamNo);
+    thisGame.sendBeam(inSlot: receivedBeamNo);
+    // dynamic result = thisGame.sendBeam(inSlot: receivedBeamNo);
     // thisGame.setEdgeTiles(inSlot: receivedBeamNo, beamResult: result);
   }
 

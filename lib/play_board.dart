@@ -103,7 +103,8 @@ class _PlayBoardState extends State<PlayBoard> {
         onTap: thisGame.edgeTileChildren![slotNo - 1] != null
             ? null
             : () async {
-                dynamic result = thisGame.sendBeam(inSlot: slotNo);
+                thisGame.sendBeam(inSlot: slotNo);
+                // dynamic result = thisGame.sendBeam(inSlot: slotNo);
                 // dynamic result = thisGame.getBeamResult(
                 //   beam: Beam(start: slotNo, widthOfPlayArea: thisGame.widthOfPlayArea, heightOfPlayArea: thisGame.heightOfPlayArea),
                 // );

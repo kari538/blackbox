@@ -14,7 +14,7 @@ import 'package:blackbox/online_button.dart';
 import 'package:blackbox/my_firebase.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:blackbox/online_screens/game_hub_screen.dart';
-import 'package:google_api_availability/google_api_availability.dart';
+// import 'package:google_api_availability/google_api_availability.dart';
 import 'package:blackbox/route_names.dart';
 
 class WelcomeScreen extends StatelessWidget {

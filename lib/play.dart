@@ -123,7 +123,9 @@ class Play {
 //   dynamic getBeamResult({@required Beam beam}) {
   /// Takes the inSlot as argument and returns the beam result.
   /// Also adds the beam to sentBeams and to beamsAndResults.
-  dynamic sendBeam({required int inSlot}) {
+  /// Also sets edgeTileChildren.
+  void sendBeam({required int inSlot}) {
+  // dynamic sendBeam({required int inSlot}) {
     Beam beam = Beam(
         start: inSlot,
         widthOfPlayArea: widthOfPlayArea,
@@ -227,7 +229,7 @@ class Play {
     beamsAndResults.add([inSlot, result]);
     // print('beamsAndResults is $beamsAndResults');
     setEdgeTiles(inSlot: inSlot, beamResult: result);
-    return result;
+    // return result;
   }
 
   /// Puts the correct beam result widget in edgeTileChildren.

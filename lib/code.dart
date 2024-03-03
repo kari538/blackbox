@@ -18,8 +18,9 @@ void main() {
 
 //  dynamic result = thisGame.getBeamResult(beam: beamA, heightOfPlayArea: thisGame.heightOfPlayArea, widthOfPlayArea: thisGame.widthOfPlayArea);
 //   dynamic result = thisGame.getBeamResult(beam: beamA);
-  dynamic result = thisGame.sendBeam(inSlot: beamA.start);
-  print('result is $result');
+  thisGame.sendBeam(inSlot: beamA.start);
+  // dynamic result = thisGame.sendBeam(inSlot: beamA.start);
+  // print('result is $result');
 
   int q = (3/2).truncate();  //1.5 is 1 or 2?
   print('q is $q');

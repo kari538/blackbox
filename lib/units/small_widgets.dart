@@ -61,6 +61,16 @@ class MyRaisedButton extends StatelessWidget {
         // child: Text('$text'),
         // From ChatGPT:
         style: ButtonStyle(
+          elevation: MaterialStateProperty.resolveWith<double>(
+                (Set<MaterialState> states) {
+              if (states.contains(MaterialState.disabled)) {
+                // Return the elevation for inactive state
+                return 0; // Change to your desired inactive elevation
+              }
+              // Return the elevation for enabled state
+              return 60; // Change to your desired active elevation
+            },
+          ),
           foregroundColor: MaterialStatePropertyAll<Color>(Colors.white),
           // foregroundColor: MaterialStatePropertyAll<Color>(textColor),
           shape: MaterialStatePropertyAll<OutlinedBorder>(shape),
@@ -68,7 +78,9 @@ class MyRaisedButton extends StatelessWidget {
                 (Set<MaterialState> states) {
               if (states.contains(MaterialState.disabled)) {
                 // Return the color you want for inactive state
-                return Colors.blueGrey.shade700; // Change to your desired inactive color
+                // return Colors.black; // Change to your desired inactive color
+                // return Colors.deepPurple.shade800; // Change to your desired inactive color
+                return Colors.blueGrey.shade700.withOpacity(0.8); // Change to your desired inactive color
                 // return Colors.grey; // Change to your desired inactive color
               }
               // Return the default color for enabled state

@@ -165,7 +165,8 @@ class _PlayScreenState extends State<PlayScreen> {
               [];
           for (int receivedBeamNo in playingBeams) {
             // print("receivedBeamNo is $receivedBeamNo");
-            dynamic result = thisGame.sendBeam(inSlot: receivedBeamNo);
+            thisGame.sendBeam(inSlot: receivedBeamNo);
+            // dynamic result = thisGame.sendBeam(inSlot: receivedBeamNo);
             // thisGame.setEdgeTiles(inSlot: receivedBeamNo, beamResult: result);
           }
           if (sendNotification)
@@ -279,9 +280,9 @@ class _PlayScreenState extends State<PlayScreen> {
                 // "collapse_key": myUid + "_playing_" + setupData['i'].toString(),
               },
               // TODO: ---Change topic from Developer or my token:
-              // "token": "${await myGlobalToken}",
-              // "topic": kTopicPlayingSetup,
-              "topic": kTopicDeveloper, // For testing
+              // "token": "${await myGlobalToken}", // For testing
+              // "topic": kTopicDeveloper, // For testing
+              "topic": kTopicPlayingSetup,
             });
             // print("jsonString is $jsonString");
 

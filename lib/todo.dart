@@ -6,7 +6,6 @@
 //TODO: *** Better image in RulesScreen()...
 //TODO: Same beams when showing multiple solutions results EVEN IF setup maker has old app...
 //TODO: Improve on launch icon so that it doesn't come up with white around it in Settings - Apps and notifications. Perhaps use the launch-image as launch icon?
-//Todo: *** Make step-by-step game review
 //TODO: (Save offline games to disk)
 //TODO: *** Don't send private "playing your setup" msg when I'm the one playing (Cloud)
 //TODO: *** Pop-and-repush MakeSetupScreen(), not just pop. (For repeated offline play)
@@ -18,7 +17,6 @@
 //TODO: After failed login, don't erase what's written! (might be sorted after last Play Store version)
 //TODO: When deleting account, some process triggered by the login event causes a firebase permission error when user becomes null.
 //TODO: Debug setup 341
-//TODO: *** Make step-by-step game review
 //TODO: Save offline games to disk
 //TODO: (Do I REALLY need both a Results and a SentResults screen....??)
 //TODO: Other solutions should have the same shuffle for edgeTileChildren as thisGame.

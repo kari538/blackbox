@@ -5,7 +5,7 @@ import 'package:blackbox/play.dart';
 import 'package:flutter/cupertino.dart';
 
 /// Takes thisGame as argument, and returns a list of games for each move.
-/// Games should have correctAtoms, unfoundAtoms and wronglyPlacedAtoms,
+/// Games should have correctAtoms, unfoundAtoms and notYetCorrectAtoms,
 /// except if the game is already finished, in which case the last game
 /// should have correctAtoms, missedAtoms and misplacedAtoms.
 /// All games should also have edgeTileChildren.
@@ -25,7 +25,7 @@ List<Play?> gamesFromPlayerMoves({required Play thisGame}) {
   i = 1;
   for (dynamic move in moves) {
     // move can be a Map<String, List> or a String.
-    // The Map contains a key with the moveAction and a list of coordinates.
+    // The Map contains a key with the moveAction and a value with a list of coordinates.
     // The String contains only a moveAction, such as fill with atoms, or finish.
     String? moveAction;
 
@@ -41,7 +41,8 @@ List<Play?> gamesFromPlayerMoves({required Play thisGame}) {
       // Sent a beam
       Map<String, dynamic> moveMap = move as Map<String, dynamic>;  // Cast
       int inSlot = moveMap.values.first as int;
-      dynamic result = accumulatingGame.sendBeam(inSlot: inSlot);
+      accumulatingGame.sendBeam(inSlot: inSlot);
+      // dynamic result = accumulatingGame.sendBeam(inSlot: inSlot);
       // accumulatingGame.setEdgeTiles(inSlot: inSlot, beamResult: result);
       makeAddGame(accumulatingGame: accumulatingGame, moveGames: moveGames, i: i);
       print('Correct atoms of moveGames[$i]? is ${moveGames[i]?.correctAtoms} and of moveGames[0]? is ${moveGames[0]?.correctAtoms}');
