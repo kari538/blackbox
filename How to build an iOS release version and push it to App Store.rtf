@@ -1,0 +1,298 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2639
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset134 PingFangSC-Regular;\f2\fnil\fcharset0 AppleColorEmoji;
+}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww19960\viewh12760\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs48 \cf0 How to build an iOS release version and push it to App Store\
+\
+$ flutter build ios --release \
+\
+No valid code signing certificates were found\
+You can connect to your Apple Developer account by signing in with your Apple ID\
+in Xcode and create an iOS Development Certificate as well as a Provisioning \
+Profile for your project by:\
+  1- Open the Flutter project's Xcode target with\
+       open ios/Runner.xcworkspace\
+  2- Select the 'Runner' project in the navigator then the 'Runner' target\
+     in the project settings\
+  3- Make sure a 'Development Team' is selected under Signing & Capabilities > Team. \
+     You may need to:\
+         - Log in with your Apple ID in Xcode first\
+         - Ensure you have a valid unique Bundle ID\
+         - Register your device with your Apple Developer Account\
+         - Let Xcode automatically provision a profile for your app\
+  4- Build or run your project again\
+  5- Trust your newly created Development Certificate on your iOS device\
+     via Settings > General > Device Management > [your new certificate] > Trust\
+\
+For more information, please visit:\
+  https://developer.apple.com/library/content/documentation/IDEs/Conceptual/\
+  AppDistributionGuide/MaintainingCertificates/MaintainingCertificates.html\
+\
+Or run on an iOS simulator without code signing\
+
+\f1 \'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54
+\f0 \
+No development certificates available to code sign app for device deployment\
+\
+\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\
+I went to developer.apple.com. There, in Certificates, Identifiers & Profiles - Profiles, I saw that  my Blackbox profile was expired. So I clicked \'93Edit\'94 and then it was automatically renewed and I could download it again.\
+\
+But when I double-click it, it takes me to XCode, where if I go to Runner - Targets: Runner - Signing and Capabilities - All, unclick \'93automatic signing\'94 and choose Team: Karolina Hageg\'e5rd and Provisioning Profile: Blackbox, I get the error:\
+\
+\'93Provisioning profile "Blackbox" doesn't include signing certificate "Apple Distribution: Karolina Hagegard (92DWJ6VX23)\'94.\'94\
+\
+Dunno what to do\'85\
+\
+In Keychain Access, lots of things are popping up\'85 Oh yeah, I had to go to Preferences - Apple ID - iCloud, and tick the checkbox by Keychain Access for anything to work there\'85!\
+\
+I reset Keychain Access\'85 Now, all certificates and keys disappeared from My Certificates in Login Keychain (left panel)\'85 When I double clicked the certificate ios_distribution.cer again, it got added to System Keychain in Keychain Access\'85\
+\
+Try this: https://forums.developer.apple.com/forums/thread/99646\
+\
+\'97\'97\'97\'97\'97\
+Next morning, I opened my laptop. Now, there was one key in login - Keys, and when clicking it, you saw a certificate. \'93Apple Distribution: Karolina Hagegard (92DWJ6VX23)\'94. It wasn\'92t trusted, so I double clicked it and changed the trust setting to \'93Always\'94, typing my password as I closed the window.\
+\
+In XCode, error msg said:\
+\
+\'93Invalid trust settings. Restore system default trust settings for certificate "Apple Distribution: Karolina Hagegard (92DWJ6VX23)" in order to sign code with it.\'94,  and there was a button to \'93Repair Trust Settings\'94.\
+\
+But I had already trusted it, so I closed XCode and ran:\
+\
+$ open ios/Runner.xcworkspace\
+\
+from Android Studio again to reopen it. Next time I look in Keychain Access, there were FOUR  certificates in login - Certificates! 
+\f2 \uc0\u55357 \u56882 
+\f0  \'85 But still only one in \'93My Certificates\'94\'85 The four were the previous one plus:\
+\
+Apple Worldwide Developer Relations Certification Authority\
+Developer ID Certification Authority\
+Developer ID Certification Authority\
+\
+Yes, the last two had the same name, but very different expiry dates\'85 Were these generated when I reopened XCode?\
+\
+Same error in XCode. When I clicked the \'93Repair Trust Settings\'94 button, I got to type my password again. After that, the error msg was back to:\
+\
+\'93Provisioning profile "Blackbox" doesn't include signing certificate "Apple Distribution: Karolina Hagegard (92DWJ6VX23)\'94.\'94\
+\
+So I closesd XCode and followed my own instructions in:\
+https://stackoverflow.com/a/73434155\
+\
+When trying to export, i got: \
+\
+\'93An error has occurred. Unable to export an item.\
+\
+The specified item is no longer valid. It may have been deleted from the keychain.\'94\
+\
+Closed and reopened XCode. No change. Tried ticking \'93Automatic signing\'94 again. I had to put my Apple Developer password. Got a message saying there was already a certificate\'85 but XCode could automatically create a new one if I would let it revoke the old one. I fell for that\'85 Afterwards, I get two error messages:\
+\
+\'93Failed to create provisioning profile. There are no devices registered in your account on the developer website. Select a device run destination to have Xcode register it.\'94\
+\
+\'93No profiles for 'com.karolinadart.blackbox' were found. Xcode couldn't find any iOS App Development provisioning profiles matching 'com.karolinadart.blackbox\'92.\'94\
+\
+I think this is because automatic signing can only be done for app testing on specified physical devices. So no need to ever use that again! And now, my certificate is revoked\'85 I only ticked \'93Automatic signing\'94 coz it makes XCode update certificates\'85 Thought it might take the error msg away\'85\
+\
+When unticking \'93Automatic signing\'94 again, no provisioning profile and no team is selected. Signing certificate is also none, and it says:\
+\
+\'93"Runner" requires a provisioning profile. Select a provisioning profile in the Signing & Capabilities editor.\'94\
+\
+The plan: To close XCode. Make a new certificate. In fact, I chose iOS Distribution!\'85 All the \'93Apple Distribution\'94 ones must have been created automatically!\'85\
+\
+So the plan is to make a new iOS Distribution certificate, or re-download it.\
+\
+No. Because my instructions say that if you have already put the certificate in Keychain Access, you run into problems with the provisioning profile, the plan is to delete all certificates, then open the provisioning profile in XCode\'85 It will complain that there is no certificate. THEN we download the certificate, put it in Keychain Access and trust it\'85..\
+\
+When resetting Keychain Access, I realized there was only one certificate not in login. It was in system, and it was called \'93iPhone Distribution <something> (DW92\'8523)\'94. That might be the only certificate I downloaded myself! And it may not have been found by XCode coz it was in system\'85.? I deleted it manually.\
+\
+Correction: In system, there were also:\
+\
+com.apple.kerberos.kdc (Not verified by a third party)\
+com.apple.systemdefault (Not verified by a third party)\
+\
+I\'92m gonna go ahead and delete those too.\
+\
+I found 4 keys still in System - Keys, two private and two public, with the same names as the above certificates I just deleted\'85 I deleted those as well\'85 quite nervous I might have f*d something up now\'85\'85..\
+\
+Double-click the Blackbox provisioning profile in Finder. XCode opens, but no project. I open Blackbox by File - Open recent. No profile is selected. Blackbox is there in the drop-down menu\'85 Should I select it? I KNOW I will get an error!\'85 I don\'92t.\
+\
+I go to developer.apple.com. There are 4 certificates in Blackbox now!\'85 Apple Development, Apple Distribution and sh*t\'85 I revoke all except iOS Distribution. Then, just to be sure, I delete that in Finder and download it again. \'93ios_distribution.cer\'94. I double-click that\'85 I get:\
+\
+\'93Keychain Access is trying to modify the system keychain\'94, type password\'85\
+\
+Certificate is now in System keychain\'85 I trust it. No key anywhere\'85\
+\
+ChatGPT tells me to:\
+Associate Certificate with Private Key:\
+1. Generate Private Key:\
+In Keychain Access, go to "Keychain Access" > "Certificate Assistant" > "Create a Certificate."\
+\
+It told me to choose:\
+\
+Identity type: Leaf\
+Certificate type: Code signing\
+\
+\'93Leaf\'94 means there\'92s another certificate on \'93root\'94 level that has to also be involved in the signing, a CA, Certificate Authority. So when I tried the above, I got:\
+\
+\'93There are no valid root or intermediate certificate authorities available to sign certificates\'94\'85\
+\
+Is that because I deleted them\'85? 
+\f2 \uc0\u55357 \u56848 
+\f0 \
+\
+When I talked with ChatGPT again, it told me to generate a new Certificate Request (which I realized requests a certificate from the Certificate Authority \'93Apple Developer\'94) and download the certificate again. So I revoked my certificate from developer.apple.com, deleted all my stuff from Finder and did all that again. This time, when I double-clicked my .cer file, it ended up in the login keychain, not the System one, and it had a private key with it\'85\'85!! I trust the certificate and type my password.\
+\
+Going back to XCode to select the Blackbox provisioning profile:\
+\
+\'93Invalid trust settings. Restore system default trust settings for certificate "iPhone Distribution: Karolina Hagegard (92DWJ6VX23)" in order to sign code with it.\'94\
+Button: Repair Trust Settings\
+\
+I click button and get:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf0 \'93Provisioning profile "Blackbox" doesn't include signing certificate "iPhone Distribution: Karolina Hagegard (92DWJ6VX23)\'94.\'94\
+\
+But I just realized I don\'92t even have the Blackbox provisioning profile file anymore!\'85 So what is it even selecting??\'85 I was supposed to make the profile first\'85 wasn\'92t I?\'85 I forgot.\
+\
+I tried Cmd + Backspace (del) on the \'93Blackbox\'94 profile in the list. I got a popup that asked if I wanted to put runner.xcodeproj in the trash or just remove the reference to it. I chose remove reference\'85\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+Now, when I go to File - Open recent in XCode, and open Blackbox, there is nothing\'85 No Runner, only Pods. I ran:\
+\
+$ open ios/Runner.xcworkspace\
+\
+in Android Studio again\'85 It still opens empty. (shoot!)\
+\
+I did a flutter clean and pressed Run button in Android Studio, and now, XCode says \'93Preparing Editor Functionality, 400 files out of 4600\'94 or something like that\'85 Then, I got a popup that asked if I wanted to use the workspace saved in XCode or the one on disc, because it had been modified by another application\'85 I chose the one on disc. Now, I have a Runner again.\
+\
+And the Blackbox provisioning profile is still there!\'85 
+\f2 \uc0\u55357 \u56885 
+\f0  After all this time, and that was the one I wanted to remove\'85 Not the entire project, which is still rebuilding\'85\
+\
+Hey, when I go to XCode - File - Preferences - Accounts, it tells me my session has expired and I have to log in again. And when I do that, there are two buttons saying:\
+\
+Download manual profiles\
+Manage Certificates\
+\
+Perhaps THAT\'92S where I should manage the profiles from? 
+\f2 \uc0\u55358 \u56596 
+\f0 \
+\
+ChatGPT backs this up\'85 When I ask how to delete a profile from Xcode, it tells me to do the above and click Download manual profiles. It doesn\'92t change anything, though\'85 I have 3 profiles in my developer portal, but I still have only that one, Blackbox. Although I did just notice that it said \'93invalid\'94 because it no longer had a certificate\'85 So I had to Edit it again, and now it\'92s valid\'85\
+\
+Again, Xcode - File - Preferences - Accounts - Download manual profiles\'85 and all of a sudden, it works!! 
+\f2 \uc0\u55357 \u56837 
+\f0  So actually\'85 you\'92re not supposed to download the profile to the computer, coz Xcode doesn\'92t care! The trick is to make the certificate first in the portal, and then the profile. Or Edit the profile afterwards, so that it contains the certificate. Are you still supposed to download the certificate, though\'85? And install it into Keychain Access\'85? I suppose so\'85\'85\'85\
+\
+1. Check developer.apple.com if you have a valid certificate. If not, make a new one.\
+2. Check if you have a valid Provisioning profile for your app. If not, Edit it. You may need to add the updated certificate.\
+\
+Steps that I don\'92t know if they are necessary:\
+a. Download the certificate as a .cer file\
+b. Double-click the .cer file to install it into Keychain Access.\
+c. The certificate and it\'92s private key should appear in the login keychain. Double-click on the certificate to view it, and then trust it.\
+\
+3. In Android Studio: $ open ios/Runner.xcworkspace\
+4. In Xcode: File - Preferences - Accounts - Download manual profiles.\
+5. In Xcode: Runner - Target: Runner - Signing and Capabilities - All:\
+Deselect \'93Automatically manage signing\
+Bundle identifier: com.karolinadart.blackbox (or similar, probably comes automatically)\
+Provisioning Profile: Blackbox\
+Team: Karolina Hageg\'e5rd\
+Signing Certificate (comes up automatically, coz it\'92s included in Developer Portal developer.apple.com): iPhone Distribution: Karolina Hagegard (92DWJ6VX23) (or whatever)\
+\
+6. $ flutter build ios --release\
+\
+Message:\
+\'93Automatically signing iOS for device deployment using specified development team in Xcode project: 92DWJ6VX23\'94\
+Sounds good! 
+\f2 \uc0\u55357 \u56842 
+\f0 \
+\
+\'93codesign wants to sign using key \'93Karolina Hageg\'e5rd\'94 in your keychain. To allow this, enter the \'93login\'94 keychain password.\'94\
+\
+If you\'92ve forgotten this password, you\'92ll have to do a Keychain Access - Keychain Access - Reset \
+\
+Android Studio was stuck in \'93Compiling, linking and signing\'94.\
+\
+The popup came up 20 times, until I started clicking \'93Deny\'94 until it stopped. By that time, I had already gone to Keychain Access and noticed that the certificate was not trusted after all\'85 or rather, it was set to \'93System Default\'94 in trust settings. So I changed that to \'93Always Trust\'94. But soon after that, Android Studio still said:\
+\
+\'93Failed to build app\'94.\
+\
+I tried $ flutter build ios --release again, but this time, I got:\
+\
+\'93Error (Xcode): Invalid trust settings. Restore system default trust settings for certificate "iPhone Distribution:\
+Karolina Hagegard (92DWJ6VX23)" in order to sign code with it.\
+/Users/karolinahagegard/AndroidStudioProjects/blackbox/ios/Runner.xcodeproj\'94\
+\
+So I really HAVE to type my password 40 times\'85??! Besides, this implies that it cares for what\'92s in Keychain Access, and not just what\'92s online\'85\
+\
+I changed trust settings to \'93Default\'94 again, and did $ flutter build ios --release again\'85 and this time, after only a few minutes, it worked! 
+\f2 \uc0\u55357 \u56837 
+\f0  Without even having to sign that popup a single time\'85 
+\f2 \uc0\u55358 \u56596 
+\f0  The rain dance, indeed\'85\'85.\
+\
+\
+7. $ open ios/Runner.xcworkspace\
+In the top row of the main frame, where it probably says the name of your current simulator, click this name and choose \'93Any iOS Device (arm62)\'94.\
+In top menu:\
+Product - Build (not \'93Build for\'94)\
+\
+After building, I got two warnings:\
+\
+\pard\pardeftab720\partightenfactor0
+\cf0 \'93BoringSSL-GRPC 2 issues:\
+/Users/karolinahagegard/AndroidStudioProjects/blackbox/ios/Pods/Pods.xcodeproj The iOS deployment target 'IPHONEOS_DEPLOYMENT_TARGET' is set to 9.0, but the range of supported deployment target versions is 11.0 to 16.2.99."\
+\
+and\
+\
+"Run script build phase 'Create Symlinks to Header Folders' will be run during every build because it does not specify any outputs. To address this warning, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase."\
+\
+Before realizing that BoringSSL-GRPC is a dependency that will be updated with the next pub upgrade, I accidentally clicked on it and manually changed:\
+\
+Targets: BoringSSL-GRPC - Build Settings - Basic, Combined - Deployment - iOS Deployment Target to iOS 12.0.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+Now, I can\'92t change it back down to 9.0 as it was before. Only to 11\'85 which is within the range. Anyway!\
+\
+8. In Xcode: Product - Archive\
+\
+When done, a window comes up where you can choose to distribute app.\
+\
+9. Click Distribute App\
+Check:\
+Strip Swift Symbols\
+Upload your app\'92s symbols (not so necessary\'85)\
+Manage Version and Build number\
+\
+Next\
+\
+Team: Karolina Hageg\'e5rd\
+Distribution certificate: Default (\'85)\
+Runner.app: Blackbox\
+\
+Next\
+\
+Upload\
+\
+\'93Asset validation failed\
+\
+Invalid large app icon. The large app icon in the asset catalog in \'93Runner.app\'94 can\'92t be transparent or contain an alpha channel. For details, visit: https://developer.apple.com/design/human-interface-guidelines/app-icons. (ID: 4ffc3633-0d6e-4f6b-b121-dfea8a5ab78c)\'94\
+\
+Next time:\
+\
+\'93App Store Connect Operation Error\
+\
+SDK version issue. This app was built with the iOS 16.2 SDK. Starting April 29, 2024, all iOS and iPadOS apps must be built with the iOS 17 SDK or later, included in Xcode 15 or later, in order to be uploaded to App Store Connect or submitted for distribution.\'94\
+\
+MacOS 12.7.3 Monterey\
+\
+Xcode versions and compatibility:\
+\
+https://developer.apple.com/support/xcode/\
+\
+\
+}

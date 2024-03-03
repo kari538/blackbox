@@ -1,0 +1,15 @@
+How to remove from GitHub tracking:
+
+Add to .gitignore. Then:
+
+For files:
+
+$ git rm --cached file1 file2 file3
+
+For folders:
+
+$ git rm --cached -r folder_name_1 folder_name_2
+
+Commit, and if files and folders are unchecked, check them and make sure it says "#x files deleted" somewhere in the dialog.
+
+Push. They will now be deleted from remote (but can be found in history).
