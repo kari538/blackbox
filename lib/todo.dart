@@ -22,7 +22,8 @@
 //TODO: Save offline games to disk
 //TODO: (Do I REALLY need both a Results and a SentResults screen....??)
 //TODO: Other solutions should have the same shuffle for edgeTileChildren as thisGame.
-//TODO:
+//TODO: **** Upload games WITH RESULTS (and moves review) to game up from ResultsScreen() **** (Starting time and finish time could be upoad time... which also needs to be created)
+//TODO: *** Change look of MyRaisedButton when inactivated ***
 //TODO:
 
 //(Learn AlertDialogs:)

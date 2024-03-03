@@ -8,9 +8,51 @@
 
 \f0\fs48 \cf0 How to build an iOS release version and push it to App Store\
 \
+Assuming you have all the current and valid distribution certificates and profiles:\
+\
+$ flutter build ios --release \
+wait\'85\'85\'85. When done:\
+$ open ios/Runner.xcworkspace\
+\
+(I changed:\
+Runner - Flutter - Generated:\
+\
+FLUTTER_BUILD_NAME=1.0.5\
+FLUTTER_BUILD_NUMBER=1.0.5)\
+\
+8. In Xcode: Product - Archive\
+\
+If a popup comes up offering to handle signing automatically: Dismiss! (This only works for testing on a very limited number of named devices. Like, named with serial numbers\'85)\
+\
+Wait\'85\'85\'85\'85\'85.\
+When done, a window comes up where you can choose to distribute app.\
+\
+9. Click Distribute App\
+\
+10. Choose App Store\
+\
+Check:\
+Strip Swift Symbols\
+Upload your app\'92s symbols (not so necessary\'85)\
+Manage Version and Build number\
+\
+Next\
+\
+Team: Karolina Hageg\'e5rd\
+Distribution certificate: Default (\'85)\
+Runner.app: Blackbox\
+\
+Next\
+\
+Upload\
+\
+\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\
+If you don\'92t have the necessary certificates and/or profiles, after:\
+\
 $ flutter build ios --release \
 \
-No valid code signing certificates were found\
+\'93No valid code signing certificates were found\
+\
 You can connect to your Apple Developer account by signing in with your Apple ID\
 in Xcode and create an iOS Development Certificate as well as a Provisioning \
 Profile for your project by:\
@@ -22,8 +64,8 @@ Profile for your project by:\
      You may need to:\
          - Log in with your Apple ID in Xcode first\
          - Ensure you have a valid unique Bundle ID\
-         - Register your device with your Apple Developer Account\
-         - Let Xcode automatically provision a profile for your app\
+         - Register your device with your Apple Developer Account - NO! Only for automatic provisioning.\
+         - Let Xcode automatically provision a profile for your app - NO! Only for testing.\
   4- Build or run your project again\
   5- Trust your newly created Development Certificate on your iOS device\
      via Settings > General > Device Management > [your new certificate] > Trust\
@@ -32,7 +74,6 @@ For more information, please visit:\
   https://developer.apple.com/library/content/documentation/IDEs/Conceptual/\
   AppDistributionGuide/MaintainingCertificates/MaintainingCertificates.html\
 \
-Or run on an iOS simulator without code signing\
 
 \f1 \'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54\'a8\'54
 \f0 \
@@ -51,7 +92,7 @@ In Keychain Access, lots of things are popping up\'85 Oh yeah, I had to go to Pr
 \
 I reset Keychain Access\'85 Now, all certificates and keys disappeared from My Certificates in Login Keychain (left panel)\'85 When I double clicked the certificate ios_distribution.cer again, it got added to System Keychain in Keychain Access\'85\
 \
-Try this: https://forums.developer.apple.com/forums/thread/99646\
+Try this: https://forums.developer.apple.com/forums/thread/99646 - No, not necessary.\
 \
 \'97\'97\'97\'97\'97\
 Next morning, I opened my laptop. Now, there was one key in login - Keys, and when clicking it, you saw a certificate. \'93Apple Distribution: Karolina Hagegard (92DWJ6VX23)\'94. It wasn\'92t trusted, so I double clicked it and changed the trust setting to \'93Always\'94, typing my password as I closed the window.\
@@ -263,6 +304,9 @@ Now, I can\'92t change it back down to 9.0 as it was before. Only to 11\'85 whic
 When done, a window comes up where you can choose to distribute app.\
 \
 9. Click Distribute App\
+\
+10. Choose App Store\
+\
 Check:\
 Strip Swift Symbols\
 Upload your app\'92s symbols (not so necessary\'85)\
@@ -288,11 +332,38 @@ Next time:\
 \
 SDK version issue. This app was built with the iOS 16.2 SDK. Starting April 29, 2024, all iOS and iPadOS apps must be built with the iOS 17 SDK or later, included in Xcode 15 or later, in order to be uploaded to App Store Connect or submitted for distribution.\'94\
 \
+Despite this, it still worked! 
+\f2\fs46 \uc0\u55357 \u56835 
+\f0 \
+New app version uploaded to App Store. 
+\f2 \uc0\u55357 \u56842 
+\f0 \
+\
+\'97\'97\'97\'97\'97\
+
+\fs48 I have:\
+\
 MacOS 12.7.3 Monterey\
 \
 Xcode versions and compatibility:\
 \
 https://developer.apple.com/support/xcode/\
 \
+I need:\
+\
+Xcode 15.0.x	  -   macOS Ventura 13.5\
+\
+\
+\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\
+\
+After Product - Archive, this came up:\
+\
+\'93Xcode Cloud can automate app signing and distribution\
+\
+Once you complete setup, you will have a workflow that automatically creates an archive of your app.\
+\
+Later / Get started\'94\
+\
+I clicked Later.\
 \
 }
