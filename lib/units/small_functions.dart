@@ -1,4 +1,5 @@
-import 'package:pretty_json/pretty_json.dart';
+import 'dart:convert';
+// import 'package:pretty_json/pretty_json.dart';
 import 'package:blackbox/online_screens/game_hub_screen.dart';
 import 'package:blackbox/global.dart';
 import 'package:navigation_history_observer/navigation_history_observer.dart';
@@ -201,11 +202,33 @@ void printLargeStrings(String text) {
 
 void myPrettyPrint(var object) {
   try {
-    printLargeStrings(prettyJson(object));
+    printLargeStrings(myPrettyJson(object));
   } catch (e) {
     printLargeStrings('Not possible to prettyPrint. Printing as String:'
         '\n$object');
     // print('Not possible to prettyPrint. Printing as String:'
     //     '\n$object');
   }
+}
+
+
+///
+/// prettyJson
+/// Return a formatted, human readable, string.
+///
+/// Takes a json object and optional indent size,
+/// returns a formatted String
+///
+/// @Map<String,dynamic> json
+/// @int indent
+///
+/// I just copy-pasted this from the discontinued 'package:pretty_json/pretty_json.dart'
+String myPrettyJson(dynamic json, {int indent = 2}) {
+  var spaces = ' ' * indent;
+  var encoder = JsonEncoder.withIndent(spaces);
+  return encoder.convert(json);
+}
+
+void printPrettyJson(dynamic json, {int indent = 2}) {
+  print(myPrettyJson(json, indent: indent));
 }
